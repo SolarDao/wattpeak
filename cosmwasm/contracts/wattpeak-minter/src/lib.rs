@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
-use crate::state::ADMIN;
+use crate::state::{ADMIN, AVAILABLE_WATTPEAK_COUNT, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT};
 
 pub mod error;
 pub mod msg;
@@ -21,6 +21,12 @@ pub fn instantiate(
 
     let admin = deps.api.addr_validate(&msg.admin)?;
     ADMIN.save(deps.storage, &admin).unwrap();
+
+    PROJECT_DEALS_COUNT.save(deps.storage, &0).unwrap();
+
+    AVAILABLE_WATTPEAK_COUNT.save(deps.storage, &0).unwrap();
+
+    TOTAL_WATTPEAK_MINTED_COUNT.save(deps.storage, &0).unwrap();
 
     Ok(Response::new())
 }
@@ -42,5 +48,14 @@ mod tests {
 
         let admin = ADMIN.load(deps.as_ref().storage).unwrap();
         assert_eq!(admin, info.sender);
+
+        let project_deals_count = state::PROJECT_DEALS_COUNT.load(deps.as_ref().storage).unwrap();
+        assert_eq!(project_deals_count, 0);
+
+        let available_wattpeak_count = state::AVAILABLE_WATTPEAK_COUNT.load(deps.as_ref().storage).unwrap();
+        assert_eq!(available_wattpeak_count, 0);
+
+        let total_wattpeak_minted = state::TOTAL_WATTPEAK_MINTED_COUNT.load(deps.as_ref().storage).unwrap();
+        assert_eq!(total_wattpeak_minted, 0);
     }
 }
