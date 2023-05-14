@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use crate::state::Project;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -22,4 +23,23 @@ pub enum ExecuteMsg {
 
 #[cw_serde]
 #[derive(QueryResponses)]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+    #[returns(ProjectsResponse)]
+    Projects {
+        /// The maximum number of listings to return as part of this
+        /// query. If no limit is set a max of 30 listings will be
+        /// returned.
+        limit: Option<u64>,
+        /// The address of the listing to start the query after. If
+        /// this is set, the listing with this address will not be
+        /// included in the results.
+        start_after: Option<u64>,
+    },
+    #[returns(Project)]
+    Project { id: u64 },
+}
+
+#[cw_serde]
+pub struct ProjectsResponse {
+    pub projects: Vec<Project>,
+}
