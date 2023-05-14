@@ -168,6 +168,7 @@ mod tests {
             assert_eq!(project.description, "test description");
             assert_eq!(project.document_deal_link, "ipfs://test-link");
             assert_eq!(project.max_wattpeak, 1000);
+            assert_eq!(project.minted_wattpeak_count, 0);
         }
 
         #[test]
