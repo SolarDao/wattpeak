@@ -1,9 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use crate::state::Project;
+use crate::state::{Config, Project};
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub admin: String,
+    pub config: Config,
 }
 
 #[cw_serde]
@@ -19,11 +19,14 @@ pub enum ExecuteMsg {
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
     },
+    // TODO: add config update message
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(Config)]
+    Config {},
     #[returns(ProjectsResponse)]
     Projects {
         /// The maximum number of listings to return as part of this

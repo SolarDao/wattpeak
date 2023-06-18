@@ -2,7 +2,7 @@ use cosmwasm_std::{entry_point, Deps, Env, StdResult, Binary, to_binary, Order};
 use cw_storage_plus::Bound;
 
 use crate::msg::{ProjectsResponse, QueryMsg};
-use crate::state::{Project, PROJECTS};
+use crate::state::{CONFIG, Config, Project, PROJECTS};
 
 pub const DEFAULT_LIMIT: u64 = 30;
 
@@ -11,6 +11,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Projects { limit, start_after} => to_binary(&projects(deps, start_after, limit)?),
         QueryMsg::Project { id } => to_binary(&project(deps, id)?),
+        QueryMsg::Config { .. } => to_binary(&config(deps)?),
     }
 }
 
@@ -39,8 +40,27 @@ pub fn project(deps: Deps, id: u64) -> StdResult<Project> {
     Ok(project)
 }
 
+pub fn config(deps: Deps) -> StdResult<Config> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(config)
+}
+
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::{Addr, coin, Decimal};
+    use crate::state::Config;
+
+    const MOCK_ADMIN: &str = "admin";
+    fn mock_config() -> Config {
+        Config {
+            admin: Addr::unchecked(MOCK_ADMIN),
+            minting_payment_address: Addr::unchecked("mock_address_1"),
+            minting_fee_percentage: Decimal::percent(5),
+            minting_price: coin(1, "umpwr"),
+            minting_fee_address: Addr::unchecked("mock_address_2"),
+        }
+    }
+
     mod test_query_projects {
         use cosmwasm_std::{coins, from_binary};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
@@ -48,12 +68,13 @@ mod tests {
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg, ProjectsResponse, QueryMsg};
         use crate::query::query;
+        use crate::query::tests::{MOCK_ADMIN, mock_config};
 
         #[test]
         fn test_query_projects() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let res  = query(deps.as_ref(), mock_env(), QueryMsg::Projects {
                 limit: None,
@@ -96,8 +117,8 @@ mod tests {
         #[test]
         fn test_query_projects_limit_and_start() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             // Loop to create 10 projects
             for i in 0..10 {
@@ -145,12 +166,13 @@ mod tests {
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
         use crate::query::query;
+        use crate::query::tests::{MOCK_ADMIN, mock_config};
 
         #[test]
         fn test_query_project() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let upload_first = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -174,8 +196,8 @@ mod tests {
         #[test]
         fn test_query_project_not_found() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let err = query(deps.as_ref(), mock_env(), crate::msg::QueryMsg::Project {
                 id: 1,

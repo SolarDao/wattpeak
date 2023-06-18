@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
-use crate::state::{ADMIN, AVAILABLE_WATTPEAK_COUNT, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT};
+use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT};
 
 pub mod error;
 pub mod msg;
@@ -19,8 +19,8 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 
-    let admin = deps.api.addr_validate(&msg.admin)?;
-    ADMIN.save(deps.storage, &admin).unwrap();
+    msg.config.validate(deps.as_ref())?;
+    CONFIG.save(deps.storage, &msg.config)?;
 
     PROJECT_DEALS_COUNT.save(deps.storage, &0).unwrap();
 
@@ -35,7 +35,8 @@ pub fn instantiate(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins};
+    use cosmwasm_std::{Addr, coin, coins, Decimal};
+    use crate::state::Config;
 
     #[test]
     fn test_initialization() {
@@ -43,11 +44,18 @@ mod tests {
 
         let info = mock_info("creator", &coins(1, "umpwr"));
 
-        let res = instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg{ admin: info.sender.to_string() }).unwrap();
+        let config = Config {
+            admin: info.sender.clone(),
+            minting_payment_address: Addr::unchecked("mock_address_1"),
+            minting_fee_percentage: Decimal::percent(5),
+            minting_price: coin(1, "umpwr"),
+            minting_fee_address: Addr::unchecked("mock_address_2"),
+        };
+        let res = instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg{ config: config.clone() }).unwrap();
         assert_eq!(0, res.messages.len());
 
-        let admin = ADMIN.load(deps.as_ref().storage).unwrap();
-        assert_eq!(admin, info.sender);
+        let loaded_config = CONFIG.load(deps.as_ref().storage).unwrap();
+        assert_eq!(loaded_config, config);
 
         let project_deals_count = state::PROJECT_DEALS_COUNT.load(deps.as_ref().storage).unwrap();
         assert_eq!(project_deals_count, 0);

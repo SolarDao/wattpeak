@@ -1,6 +1,6 @@
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
 use crate::{msg::ExecuteMsg, error::ContractError};
-use crate::state::{ADMIN, AVAILABLE_WATTPEAK_COUNT, Project, PROJECT_DEALS_COUNT, PROJECTS};
+use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, Project, PROJECT_DEALS_COUNT, PROJECTS};
 
 #[entry_point]
 pub fn execute(deps: DepsMut, _env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result<Response, ContractError> {
@@ -16,8 +16,8 @@ pub fn upload_project(
     max_wattpeak: u64,
 ) -> Result<Response, ContractError> {
     // Only admin can upload a new project
-    let admin = ADMIN.load(deps.as_ref().storage).unwrap();
-    if admin != info.sender {
+    let config = CONFIG.load(deps.as_ref().storage).unwrap();
+    if config.admin != info.sender {
         return Err(ContractError::Unauthorized {});
     }
 
@@ -47,20 +47,35 @@ pub fn upload_project(
 
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::{Addr, coin, Decimal};
+    use crate::state::Config;
+
+    const MOCK_ADMIN: &str = "admin";
+    fn mock_config() -> Config {
+        Config {
+            admin: Addr::unchecked(MOCK_ADMIN),
+            minting_payment_address: Addr::unchecked("mock_address_1"),
+            minting_fee_percentage: Decimal::percent(5),
+            minting_price: coin(1, "umpwr"),
+            minting_fee_address: Addr::unchecked("mock_address_2"),
+        }
+    }
+
     mod upload_project_tests {
         use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::{instantiate, state};
+        use crate::execute::tests::{MOCK_ADMIN, mock_config};
         use crate::msg::InstantiateMsg;
         use crate::state::{PROJECT_DEALS_COUNT, PROJECTS};
 
         #[test]
         fn test_upload_project() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -94,8 +109,8 @@ mod tests {
         #[test]
         fn invalid_upload_project() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -110,8 +125,8 @@ mod tests {
         #[test]
         fn test_upload_project_unauthorized() {
             let mut deps = mock_dependencies();
-            let info = mock_info("creator", &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { admin: info.sender.to_string() }).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
