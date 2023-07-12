@@ -17,7 +17,19 @@ through smart contracts and oracles.
 
 For WattPeak to work there are multiple components and actors involved.
 
-<!-- TODO: Write step-by-step how it works -->
+### WattPeak minter
+
+The WattPeak minter is the smart contract that controls the minting of new WattPeak tokens. 
+It is owned and governed by the SolarDAO.
+
+Before any WattPeak can be minted, the contract needs Projects with available capacity to be uploaded.
+
+Projects are real-world solar projects in which the WattPeak minter has been given purchasing rights.
+Minting 1 WattPeak tokens means 1 watt-peak of solar energy production capacity is purchases from one of the 
+available Projects.
+
+The minting cost (minus fees) are sent to the legal entity in charge of buying the production capacity.
+Fees for minting WattPeak are sent to the SolarDAO.
 
 ![SolarDAO and Minter](solardao_and_minter.png)
 
