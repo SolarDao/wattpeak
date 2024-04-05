@@ -1,10 +1,48 @@
-use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
-use crate::{msg::ExecuteMsg, error::ContractError};
-use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, Project, PROJECT_DEALS_COUNT, PROJECTS};
+use crate::state::{
+    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT,
+};
+use crate::{error::ContractError, msg::ExecuteMsg};
+use cosmwasm_std::{
+    entry_point, Addr, Coin, Decimal, DepsMut, Env, MessageInfo, Response, StdResult,
+};
 
 #[entry_point]
-pub fn execute(deps: DepsMut, _env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result<Response, ContractError> {
-    match msg { ExecuteMsg::UploadProject { name, description, document_deal_link, max_wattpeak } => upload_project(deps, info, name, description, document_deal_link, max_wattpeak) }
+pub fn execute(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::UploadProject {
+            name,
+            description,
+            document_deal_link,
+            max_wattpeak,
+        } => upload_project(
+            deps,
+            info,
+            name,
+            description,
+            document_deal_link,
+            max_wattpeak,
+        ),
+        ExecuteMsg::UpdateConfig {
+            admin,
+            minting_price,
+            minting_payment_address,
+            minting_fee_percentage,
+            minting_fee_address,
+        } => update_config(
+            deps,
+            info,
+            admin,
+            minting_price,
+            minting_payment_address,
+            minting_fee_percentage,
+            minting_fee_address,
+        ),
+    }
 }
 
 pub fn upload_project(
@@ -36,19 +74,48 @@ pub fn upload_project(
     };
     PROJECTS.save(deps.storage, id, &project)?;
 
-    AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| StdResult::Ok(available_wattpeak_count + project.max_wattpeak))?;
+    AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
+        StdResult::Ok(available_wattpeak_count + project.max_wattpeak)
+    })?;
 
     Ok(Response::new()
         .add_attribute("action", "upload_project")
         .add_attribute("project_id", id.to_string())
-        .add_attribute("new_wattpeak", project.max_wattpeak.to_string())
-    )
+        .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
+}
+
+pub fn update_config(
+    deps: DepsMut,
+    info: MessageInfo,
+    admin: Addr,
+    minting_price: Coin,
+    minting_payment_address: Addr,
+    minting_fee_percentage: Decimal,
+    minting_fee_address: Addr,
+) -> Result<Response, ContractError> {
+    // Only admin can update the contract configuration
+    let config = CONFIG.load(deps.as_ref().storage)?;
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let new_config = Config {
+        admin,
+        minting_price,
+        minting_payment_address,
+        minting_fee_percentage,
+        minting_fee_address,
+    };
+
+    CONFIG.save(deps.storage, &new_config)?;
+
+    Ok(Response::new())
 }
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{Addr, coin, Decimal};
     use crate::state::Config;
+    use cosmwasm_std::{coin, Addr, Decimal};
 
     const MOCK_ADMIN: &str = "admin";
     fn mock_config() -> Config {
@@ -62,20 +129,28 @@ mod tests {
     }
 
     mod upload_project_tests {
-        use cosmwasm_std::coins;
-        use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::error::ContractError;
         use crate::execute::execute;
-        use crate::{instantiate, state};
-        use crate::execute::tests::{MOCK_ADMIN, mock_config};
+        use crate::execute::tests::{mock_config, MOCK_ADMIN};
         use crate::msg::InstantiateMsg;
-        use crate::state::{PROJECT_DEALS_COUNT, PROJECTS};
+        use crate::state::{PROJECTS, PROJECT_DEALS_COUNT};
+        use crate::{instantiate, state};
+        use cosmwasm_std::coins;
+        use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 
         #[test]
         fn test_upload_project() {
             let mut deps = mock_dependencies();
             let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -85,9 +160,18 @@ mod tests {
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
-            assert_eq!(res.attributes[0], ("action".to_string(), "upload_project".to_string()));
-            assert_eq!(res.attributes[1], ("project_id".to_string(), "1".to_string()));
-            assert_eq!(res.attributes[2], ("new_wattpeak".to_string(), "1000".to_string()));
+            assert_eq!(
+                res.attributes[0],
+                ("action".to_string(), "upload_project".to_string())
+            );
+            assert_eq!(
+                res.attributes[1],
+                ("project_id".to_string(), "1".to_string())
+            );
+            assert_eq!(
+                res.attributes[2],
+                ("new_wattpeak".to_string(), "1000".to_string())
+            );
 
             let project_deals_count = PROJECT_DEALS_COUNT.load(deps.as_ref().storage).unwrap();
             assert_eq!(project_deals_count, 1);
@@ -99,10 +183,14 @@ mod tests {
             assert_eq!(project_deal.max_wattpeak, 1000);
             assert_eq!(project_deal.minted_wattpeak_count, 0);
 
-            let available_wattpeak_count = state::AVAILABLE_WATTPEAK_COUNT.load(deps.as_ref().storage).unwrap();
+            let available_wattpeak_count = state::AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
             assert_eq!(available_wattpeak_count, 1000);
 
-            let total_wattpeak_minted_count = state::TOTAL_WATTPEAK_MINTED_COUNT.load(deps.as_ref().storage).unwrap();
+            let total_wattpeak_minted_count = state::TOTAL_WATTPEAK_MINTED_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
             assert_eq!(total_wattpeak_minted_count, 0);
         }
 
@@ -110,7 +198,15 @@ mod tests {
         fn invalid_upload_project() {
             let mut deps = mock_dependencies();
             let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -126,13 +222,96 @@ mod tests {
         fn test_upload_project_unauthorized() {
             let mut deps = mock_dependencies();
             let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
-            instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg { config: mock_config() }).unwrap();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+            };
+            let non_admin_info = mock_info("non_admin", &[]);
+            let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
+            assert_eq!(err, ContractError::Unauthorized {});
+        }
+    }
+    mod update_config_tests {
+        use crate::error::ContractError;
+        use crate::execute::execute;
+        use crate::execute::tests::{mock_config, MOCK_ADMIN};
+        use crate::msg::ExecuteMsg;
+        use crate::state::CONFIG;
+        use crate::instantiate;
+        use cosmwasm_std::coins;
+        use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+        use cosmwasm_std::{Addr, Coin, Decimal};
+
+        #[test]
+        fn test_update_config() {
+            let info = mock_info("admin", &[]);
+            let mut deps = mock_dependencies();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                crate::msg::InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            let new_admin = Addr::unchecked("new_admin");
+            let new_minting_price: Coin = Coin::new(2, "new_WattPeak".to_string());
+            let new_minting_payment_address = Addr::unchecked("new_minting_payment_address");
+            let new_minting_fee_percentage = Decimal::percent(10);
+            let new_minting_fee_address = Addr::unchecked("new_minting_fee_address");
+
+            let msg = ExecuteMsg::UpdateConfig {
+                admin: new_admin.clone(),
+                minting_price: new_minting_price.clone(),
+                minting_payment_address: new_minting_payment_address.clone(),
+                minting_fee_percentage: new_minting_fee_percentage,
+                minting_fee_address: new_minting_fee_address.clone(),
+            };
+            let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            assert_eq!(res.attributes.len(), 0);
+
+            let config = CONFIG.load(deps.as_ref().storage).unwrap();
+            assert_eq!(config.admin, new_admin);
+            assert_eq!(config.minting_price, new_minting_price);
+            assert_eq!(config.minting_payment_address, new_minting_payment_address);
+            assert_eq!(config.minting_fee_percentage, new_minting_fee_percentage);
+            assert_eq!(config.minting_fee_address, new_minting_fee_address);
+        }
+
+        #[test]
+        fn test_update_config_unauthorized() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                crate::msg::InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            let msg = crate::msg::ExecuteMsg::UpdateConfig {
+                admin: Addr::unchecked("new_admin"),
+                minting_price: Coin::new(2, "WattPeak".to_string()),
+                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
+                minting_fee_percentage: Decimal::percent(10),
+                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
