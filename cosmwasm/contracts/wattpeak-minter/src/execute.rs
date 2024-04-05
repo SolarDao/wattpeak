@@ -107,6 +107,8 @@ pub fn update_config(
         minting_fee_address,
     };
 
+    new_config.validate(deps.as_ref())?;
+
     CONFIG.save(deps.storage, &new_config)?;
 
     Ok(Response::new())
@@ -247,12 +249,12 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
+        use crate::instantiate;
         use crate::msg::ExecuteMsg;
         use crate::state::CONFIG;
-        use crate::instantiate;
         use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{Addr, Coin, Decimal};
+        use cosmwasm_std::{Addr, Coin, Decimal, StdError};
 
         #[test]
         fn test_update_config() {
@@ -316,6 +318,110 @@ mod tests {
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
             assert_eq!(err, ContractError::Unauthorized {});
+        }
+        #[test]
+        fn test_update_config_invalid_minting_price() {
+            // Set up environment and existing config
+            let info = mock_info(MOCK_ADMIN, &[]);
+            let mut deps = mock_dependencies();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                crate::msg::InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            // Define new configuration with an invalid minting price (zero amount)
+            let invalid_minting_price: Coin = Coin::new(0, "WattPeak".to_string());
+            let msg = crate::msg::ExecuteMsg::UpdateConfig {
+                admin: Addr::unchecked("new_admin"),
+                minting_price: invalid_minting_price.clone(),
+                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
+                minting_fee_percentage: Decimal::percent(10),
+                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+            };
+
+            // Call the update_config function and expect an error
+            let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+
+            // Assert that the error is due to invalid minting price
+            assert_eq!(
+                err,
+                ContractError::Std(StdError::generic_err("minting_price cannot be zero"))
+            );
+        }
+        #[test]
+        fn test_update_config_invalid_minting_price_denom() {
+            // Set up environment and existing config
+            let info = mock_info(MOCK_ADMIN, &[]);
+            let mut deps = mock_dependencies();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                crate::msg::InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            // Define new configuration with an invalid minting price (empty denom)
+            let invalid_minting_price: Coin = Coin::new(1, "".to_string());
+            let msg = crate::msg::ExecuteMsg::UpdateConfig {
+                admin: Addr::unchecked("new_admin"),
+                minting_price: invalid_minting_price.clone(),
+                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
+                minting_fee_percentage: Decimal::percent(10),
+                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+            };
+
+            // Call the update_config function and expect an error
+            let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+
+            // Assert that the error is due to invalid minting price denom
+            assert_eq!(
+                err,
+                ContractError::Std(StdError::generic_err("minting_price denom cannot be empty"))
+            );
+        }
+        #[test]
+        fn test_update_config_invalid_minting_fee_percentage() {
+            // Set up environment and existing config
+            let info = mock_info(MOCK_ADMIN, &[]);
+            let mut deps = mock_dependencies();
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                crate::msg::InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            // Define new configuration with an invalid minting fee percentage
+            let invalid_minting_fee_percentage = Decimal::percent(101);
+            let msg = crate::msg::ExecuteMsg::UpdateConfig {
+                admin: Addr::unchecked("new_admin"),
+                minting_price: Coin::new(1, "WattPeak".to_string()),
+                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
+                minting_fee_percentage: invalid_minting_fee_percentage,
+                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+            };
+
+            // Call the update_config function and expect an error
+            let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+
+            // Assert that the error is due to invalid minting fee percentage
+            assert_eq!(
+                err,
+                ContractError::Std(StdError::generic_err(
+                    "minting_fee_percentage cannot be greater than 100%"
+                ))
+            );
         }
     }
 }
