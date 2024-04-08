@@ -1,5 +1,6 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
 use crate::state::{Config, Project};
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::{Addr, Coin, Decimal};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -19,9 +20,20 @@ pub enum ExecuteMsg {
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
     },
-    // TODO: add config update message
+    /// Update contract configuration
+    UpdateConfig {
+        /// new admin address
+        admin: Addr,
+        /// new minting price
+        minting_price: Coin,
+        /// new minting payment address
+        minting_payment_address: Addr,
+        /// new minting fee percentage
+        minting_fee_percentage: Decimal,
+        /// new minting fee address
+        minting_fee_address: Addr,
+    },
 }
-
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
