@@ -1,4 +1,6 @@
-use crate::state::{Project, Config, AVAILABLE_WATTPEAK_COUNT, PROJECTS, CONFIG, PROJECT_DEALS_COUNT};
+use crate::state::{
+    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT,
+};
 use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
     entry_point, Addr, Coin, Decimal, DepsMut, Env, MessageInfo, Response, StdResult,
@@ -95,7 +97,6 @@ pub fn upload_project(
         .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
 }
 
-
 pub fn edit_project(
     deps: DepsMut,
     info: MessageInfo,
@@ -121,7 +122,10 @@ pub fn edit_project(
 
     PROJECTS.save(deps.storage, id, &project)?;
 
-    Ok(Response::new())
+    Ok(Response::new()
+        .add_attribute("action", "edit_project")
+        .add_attribute("project_id", id.to_string())
+        .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
 }
 
 pub fn update_config(
@@ -151,7 +155,7 @@ pub fn update_config(
 
     CONFIG.save(deps.storage, &new_config)?;
 
-    Ok(Response::new())
+    Ok(Response::new().add_attribute("action", "update_config"))
 }
 
 #[cfg(test)]
