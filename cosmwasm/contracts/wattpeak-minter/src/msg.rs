@@ -1,6 +1,6 @@
 use crate::state::{Config, Project};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Decimal};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -40,7 +40,7 @@ pub enum ExecuteMsg {
         /// The denomination of the tokens to mint
         denom: String,
         /// The amount of tokens to mint
-        amount: u128,
+        amount: Uint128,
     },
 }
 #[cw_serde]

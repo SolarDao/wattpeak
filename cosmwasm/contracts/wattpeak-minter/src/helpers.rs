@@ -3,19 +3,18 @@ use crate::{
     state::{Config, AVAILABLE_WATTPEAK_COUNT, CONFIG, TOTAL_WATTPEAK_MINTED_COUNT},
 };
 use cosmwasm_std::{
-    BankMsg, Coin, CosmosMsg, Deps, Fraction, MessageInfo, Response, StdResult, Uint128,
+    BankMsg, Coin, CosmosMsg, DepsMut, Fraction, MessageInfo, Response, StdResult, Uint128,
 };
 use token_bindings::TokenFactoryMsg;
 
 // Assuming this is your existing function signature, you might need to adjust it based on your actual use case
 pub fn mint_tokens_msg(
-    deps: Deps,
+    deps: DepsMut,
     info: MessageInfo,
-    config: Config, // Assuming you pass the loaded Config here
     address: String,
     denom: String,
     amount: Uint128,
-) -> Result<Response, ContractError> {
+) -> Result<Response<TokenFactoryMsg>, ContractError>  {
     // Validate sender is authorized to mint
     let config = CONFIG.load(deps.storage).unwrap();
     if config.admin != info.sender {
@@ -56,7 +55,7 @@ pub fn mint_tokens_msg(
     Ok(Response::new()
         .add_message(payment_msg)
         .add_message(fee_msg)
-        // Add any additional CosmosMsg required for minting
+        .add_message(mint_msg)
         .add_attribute("action", "mint_tokens"))
 }
 

@@ -10,6 +10,8 @@ cosmwasm-std = { workspace = true }
 cw-storage-plus = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
+token-bindings = { workspace = true }
+juno-tokenfactory-types = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }

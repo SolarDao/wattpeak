@@ -6,6 +6,7 @@ use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
     entry_point, Addr, Coin, Decimal, DepsMut, Env, MessageInfo, Response, StdResult,
 };
+use token_bindings::TokenFactoryMsg;
 
 #[entry_point]
 pub fn execute(
@@ -13,7 +14,7 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
     match msg {
         ExecuteMsg::UploadProject {
             name,
@@ -47,7 +48,13 @@ pub fn execute(
             address,
             denom,
             amount,
-        } => mint_tokens_msg(deps, info, address, denom, amount),
+        } => mint_tokens_msg(
+            deps,
+            info,
+            address,
+            denom,
+            amount,
+        ),
     }
 }
 
@@ -58,7 +65,7 @@ pub fn upload_project(
     description: String,
     document_deal_link: String,
     max_wattpeak: u64,
-) -> Result<Response, ContractError> {
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can upload a new project
     let config = CONFIG.load(deps.as_ref().storage).unwrap();
     if config.admin != info.sender {
@@ -98,7 +105,7 @@ pub fn update_config(
     minting_payment_address: Addr,
     minting_fee_percentage: Decimal,
     minting_fee_address: Addr,
-) -> Result<Response, ContractError> {
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can update the contract configuration
     let config = CONFIG.load(deps.as_ref().storage)?;
     if config.admin != info.sender {
@@ -435,12 +442,10 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
-        use crate::msg::ExecuteMsg;
         use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, TOTAL_WATTPEAK_MINTED_COUNT};
-        use crate::state::Config;
         use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{Addr, Decimal, Uint128};
+        use cosmwasm_std::Uint128;
 
         #[test]
         fn test_mint_tokens() {
@@ -454,9 +459,10 @@ mod tests {
             let msg = crate::msg::ExecuteMsg::MintTokens {
                 address: "address".to_string(),
                 denom: "WattPeak".to_string(),
-                amount: 100,
+                amount: Uint128::from(100u128),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            println!("{:?}", res);
             assert_eq!(res.attributes.len(), 1);
             assert_eq!(res.attributes[0], ("action".to_string(), "mint_tokens".to_string()));
 
@@ -474,7 +480,6 @@ mod tests {
         #[test]
         fn test_mint_tokens_unauthorized() {
             let mut deps = mock_dependencies();
-            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
             let config = mock_config();
             CONFIG.save(deps.as_mut().storage, &config).unwrap();
             AVAILABLE_WATTPEAK_COUNT.save(deps.as_mut().storage, &1000).unwrap();
@@ -483,7 +488,7 @@ mod tests {
             let msg = crate::msg::ExecuteMsg::MintTokens {
                 address: "address".to_string(),
                 denom: "WattPeak".to_string(),
-                amount: 100,
+                amount: Uint128::from(100u128),
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();

@@ -441,6 +441,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "453ad9f582a441959e5f0d088b02ce04cfe8d51a8eaf077f12ac6d3e94164ca6"
 
 [[package]]
+name = "juno-tokenfactory-types"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74ccbc2c6ebd9dc895e805a2bea7596b5c3543f21d517655ad98361a25ee0b30"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+ "token-bindings 0.10.3",
+]
+
+[[package]]
 name = "k256"
 version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -747,6 +760,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "token-bindings"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "752a7997ebaa191cf3d8436261e449732e65268e552e8bea6133c3b21b48fe36"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "token-bindings"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9be1c893c90d2993320d9722516ece705460f464616313a62edadb9e71df4502"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -790,8 +827,10 @@ dependencies = [
  "cosmwasm-std",
  "cw-multi-test",
  "cw-storage-plus",
+ "juno-tokenfactory-types",
  "serde",
  "thiserror",
+ "token-bindings 0.11.0",
 ]
 
 [[package]]
