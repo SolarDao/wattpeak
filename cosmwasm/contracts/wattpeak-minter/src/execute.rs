@@ -1,3 +1,4 @@
+use crate::helpers::mint_tokens_msg;
 use crate::state::{
     Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT,
 };
@@ -42,6 +43,11 @@ pub fn execute(
             minting_fee_percentage,
             minting_fee_address,
         ),
+        ExecuteMsg::MintTokens {
+            address,
+            denom,
+            amount,
+        } => mint_tokens_msg(deps, info, address, denom, amount),
     }
 }
 
@@ -422,6 +428,66 @@ mod tests {
                     "minting_fee_percentage cannot be greater than 100%"
                 ))
             );
+        }
+    }
+
+    mod mint_tokens_tests {
+        use crate::error::ContractError;
+        use crate::execute::execute;
+        use crate::execute::tests::{mock_config, MOCK_ADMIN};
+        use crate::msg::ExecuteMsg;
+        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, TOTAL_WATTPEAK_MINTED_COUNT};
+        use crate::state::Config;
+        use cosmwasm_std::coins;
+        use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+        use cosmwasm_std::{Addr, Decimal, Uint128};
+
+        #[test]
+        fn test_mint_tokens() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            let config = mock_config();
+            CONFIG.save(deps.as_mut().storage, &config).unwrap();
+            AVAILABLE_WATTPEAK_COUNT.save(deps.as_mut().storage, &1000).unwrap();
+            TOTAL_WATTPEAK_MINTED_COUNT.save(deps.as_mut().storage, &0).unwrap();
+
+            let msg = crate::msg::ExecuteMsg::MintTokens {
+                address: "address".to_string(),
+                denom: "WattPeak".to_string(),
+                amount: 100,
+            };
+            let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            assert_eq!(res.attributes.len(), 1);
+            assert_eq!(res.attributes[0], ("action".to_string(), "mint_tokens".to_string()));
+
+            let available_wattpeak_count = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(available_wattpeak_count, 900);
+
+            let total_wattpeak_minted_count = TOTAL_WATTPEAK_MINTED_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(total_wattpeak_minted_count, 100);
+        }
+
+        #[test]
+        fn test_mint_tokens_unauthorized() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            let config = mock_config();
+            CONFIG.save(deps.as_mut().storage, &config).unwrap();
+            AVAILABLE_WATTPEAK_COUNT.save(deps.as_mut().storage, &1000).unwrap();
+            TOTAL_WATTPEAK_MINTED_COUNT.save(deps.as_mut().storage, &0).unwrap();
+
+            let msg = crate::msg::ExecuteMsg::MintTokens {
+                address: "address".to_string(),
+                denom: "WattPeak".to_string(),
+                amount: 100,
+            };
+            let non_admin_info = mock_info("non_admin", &[]);
+            let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
+            assert_eq!(err, ContractError::Unauthorized {});
         }
     }
 }

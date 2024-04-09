@@ -10,6 +10,7 @@ pub mod msg;
 pub mod execute;
 pub mod query;
 pub mod state;
+pub mod helpers;
 
 #[entry_point]
 pub fn instantiate(

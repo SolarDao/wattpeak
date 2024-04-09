@@ -33,6 +33,15 @@ pub enum ExecuteMsg {
         /// new minting fee address
         minting_fee_address: Addr,
     },
+
+    MintTokens {
+        /// The address to mint the tokens to
+        address: String,
+        /// The denomination of the tokens to mint
+        denom: String,
+        /// The amount of tokens to mint
+        amount: u128,
+    },
 }
 #[cw_serde]
 #[derive(QueryResponses)]
