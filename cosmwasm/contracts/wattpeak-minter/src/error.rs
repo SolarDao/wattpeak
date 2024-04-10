@@ -11,4 +11,7 @@ pub enum ContractError {
 
     #[error("invalid max wattpeak")]
     InvalidMaxWattpeak {},
+
+    #[error("insufficient funds to pay for minting")]
+    InsufficientFunds {},
 }

@@ -7,23 +7,28 @@ use cosmwasm_std::{
 };
 use token_bindings::TokenFactoryMsg;
 
-// Assuming this is your existing function signature, you might need to adjust it based on your actual use case
 pub fn mint_tokens_msg(
     deps: DepsMut,
     info: MessageInfo,
     address: String,
     denom: String,
     amount: Uint128,
-) -> Result<Response<TokenFactoryMsg>, ContractError>  {
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Validate sender is authorized to mint
     let config = CONFIG.load(deps.storage).unwrap();
-    if config.admin != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
 
     // Calculate the total cost and fee based on the amount to mint
     let total_cost = calculate_total_cost(&config, amount)?;
     let minting_fee = calculate_minting_fee(&config, amount)?;
+
+    if info.funds.iter().any(|coin| {
+        coin.denom == config.minting_price.denom
+            && coin.amount >= total_cost.amount + minting_fee.amount
+    }) {
+        // Proceed with minting
+    } else {
+        return Err(ContractError::InsufficientFunds {});
+    }
 
     // Prepare messages for the payment and fee transfers
     let payment_msg = CosmosMsg::Bank(BankMsg::Send {
@@ -61,7 +66,6 @@ pub fn mint_tokens_msg(
 
 fn calculate_total_cost(config: &Config, amount: Uint128) -> Result<Coin, ContractError> {
     // Example: Calculate the total cost based on minting_price and amount
-    // This is a simplified calculation. Adjust the logic to fit your contract's requirements.
     let price_per_unit = config.minting_price.amount;
     let total_cost_amount = price_per_unit.multiply_ratio(amount.u128(), 1u128);
     Ok(Coin {
