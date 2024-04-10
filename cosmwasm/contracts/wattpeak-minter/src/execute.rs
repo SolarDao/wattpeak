@@ -41,7 +41,7 @@ pub fn execute(
             description,
             document_deal_link,
             max_wattpeak,
-        ), // Added closing parenthesis here
+        ),
         ExecuteMsg::UpdateConfig {
             admin,
             minting_price,
@@ -336,7 +336,7 @@ mod tests {
                 max_wattpeak: 2000,
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
-            assert_eq!(res.attributes.len(), 0);
+            assert_eq!(res.attributes.len(), 3);
 
             let project_deal = PROJECTS.load(deps.as_ref().storage, 1).unwrap();
             assert_eq!(project_deal.name, "new name");
@@ -359,7 +359,8 @@ mod tests {
                 },
             )
             .unwrap();
-
+        
+            // First, successfully upload a project
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
@@ -367,22 +368,56 @@ mod tests {
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-
-            let edit_msg = crate::msg::ExecuteMsg::EditProject {
+        
+            // Attempt to edit the project with an invalid max_wattpeak
+            let edit_msg_max_wattpeak = crate::msg::ExecuteMsg::EditProject {
                 id: 1,
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 0,
             };
-            let err = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap_err();
+            let err_max_wattpeak = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_max_wattpeak).unwrap_err();
             assert_eq!(
-                err,
+                err_max_wattpeak,
                 crate::error::ContractError::Std(StdError::generic_err(
                     "max_wattpeak cannot be zero".to_string()
                 ))
             );
-        }
+        
+            // Attempt to edit the project with an empty name
+            let edit_msg_empty_name = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "".to_string(),
+                description: "new description".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 500,
+            };
+            let err_empty_name = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
+            assert_eq!(
+                err_empty_name,
+                crate::error::ContractError::Std(StdError::generic_err(
+                    "name cannot be empty".to_string()
+                ))
+            );
+        
+            // Attempt to edit the project with an empty description
+            let edit_msg_empty_description = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "new name".to_string(),
+                description: "".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 500,
+            };
+            let err_empty_description = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_description).unwrap_err();
+            assert_eq!(
+                err_empty_description,
+                crate::error::ContractError::Std(StdError::generic_err(
+                    "description cannot be empty".to_string()
+                ))
+            );
+        }        
+
         #[test]
         fn test_edit_project_unauthorized() {
             let mut deps = mock_dependencies();
@@ -457,7 +492,7 @@ mod tests {
                 minting_fee_address: new_minting_fee_address.clone(),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-            assert_eq!(res.attributes.len(), 0);
+            assert_eq!(res.attributes.len(), 1);
 
             let config = CONFIG.load(deps.as_ref().storage).unwrap();
             assert_eq!(config.admin, new_admin);
