@@ -14,4 +14,13 @@ pub enum ContractError {
 
     #[error("insufficient funds to pay for minting")]
     InsufficientFunds {},
+
+    #[error("insufficient wattpeak available")]
+    InsufficientWattpeak {},
+
+    #[error("too much funds sent in")]
+    ToomuchFunds {},
+
+    #[error("project not found")]
+    ProjectNotFound {},
 }

@@ -1,10 +1,8 @@
 use crate::{
     error::ContractError,
-    state::{Config, AVAILABLE_WATTPEAK_COUNT, CONFIG, TOTAL_WATTPEAK_MINTED_COUNT},
+    state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, TOTAL_WATTPEAK_MINTED_COUNT},
 };
-use cosmwasm_std::{
-    BankMsg, Coin, CosmosMsg, DepsMut, Fraction, MessageInfo, Response, StdResult, Uint128,
-};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128};
 use token_bindings::TokenFactoryMsg;
 
 pub fn mint_tokens_msg(
@@ -13,32 +11,54 @@ pub fn mint_tokens_msg(
     address: String,
     denom: String,
     amount: Uint128,
+    project_name: String,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Validate sender is authorized to mint
     let config = CONFIG.load(deps.storage).unwrap();
+    // Search for the project by name
+    let projects = PROJECTS.range(deps.storage, None, None, cosmwasm_std::Order::Ascending);
+    let mut project_opt = None;
+    for item in projects {
+        let (_, project) = item?;
+        if project.name == project_name {
+            project_opt = Some(project);
+            break;
+        }
+    }
+    let project = project_opt.ok_or(ContractError::ProjectNotFound {})?;
+
+    if amount.u128() > (project.max_wattpeak - project.minted_wattpeak_count) as u128 {
+        return Err(ContractError::InsufficientWattpeak {});
+    }
 
     // Calculate the total cost and fee based on the amount to mint
-    let total_cost = calculate_total_cost(&config, amount)?;
-    let minting_fee = calculate_minting_fee(&config, amount)?;
+    let minting_price = amount * config.minting_price.amount;
 
-    if info.funds.iter().any(|coin| {
-        coin.denom == config.minting_price.denom
-            && coin.amount >= total_cost.amount + minting_fee.amount
-    }) {
-        // Proceed with minting
-    } else {
+    let minting_fee = minting_price * config.minting_fee_percentage;
+    let total_cost = Uint128::from(minting_price) + Uint128::from(minting_fee);
+
+    if info.funds.iter().any(|coin| coin.amount < total_cost) {
         return Err(ContractError::InsufficientFunds {});
+    }
+    if info.funds.iter().any(|coin| coin.amount > total_cost) {
+        return Err(ContractError::ToomuchFunds {});
     }
 
     // Prepare messages for the payment and fee transfers
     let payment_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: config.minting_payment_address.to_string(),
-        amount: vec![total_cost.clone()],
+        amount: vec![Coin {
+            denom: config.minting_price.denom.clone(),
+            amount: minting_price,
+        }],
     });
 
     let fee_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: config.minting_fee_address.to_string(),
-        amount: vec![minting_fee],
+        amount: vec![Coin {
+            denom: config.minting_price.denom.clone(),
+            amount: minting_fee,
+        }],
     });
 
     // Prepare the minting message
@@ -62,25 +82,4 @@ pub fn mint_tokens_msg(
         .add_message(fee_msg)
         .add_message(mint_msg)
         .add_attribute("action", "mint_tokens"))
-}
-
-fn calculate_total_cost(config: &Config, amount: Uint128) -> Result<Coin, ContractError> {
-    // Example: Calculate the total cost based on minting_price and amount
-    let price_per_unit = config.minting_price.amount;
-    let total_cost_amount = price_per_unit.multiply_ratio(amount.u128(), 1u128);
-    Ok(Coin {
-        denom: config.minting_price.denom.clone(),
-        amount: total_cost_amount,
-    })
-}
-
-fn calculate_minting_fee(config: &Config, amount: Uint128) -> Result<Coin, ContractError> {
-    // Calculate the minting fee based on minting_fee_percentage
-    let fee_percentage = config.minting_fee_percentage;
-    let fee_amount =
-        amount.multiply_ratio(fee_percentage.numerator(), fee_percentage.denominator());
-    Ok(Coin {
-        denom: config.minting_price.denom.clone(), // Assuming the fee is paid in the same denom as minting price
-        amount: fee_amount,
-    })
 }

@@ -41,6 +41,8 @@ pub enum ExecuteMsg {
         denom: String,
         /// The amount of tokens to mint
         amount: Uint128,
+
+        project_name: String,
     },
 }
 #[cw_serde]

@@ -48,13 +48,8 @@ pub fn execute(
             address,
             denom,
             amount,
-        } => mint_tokens_msg(
-            deps,
-            info,
-            address,
-            denom,
-            amount,
-        ),
+            project_name,
+        } => mint_tokens_msg(deps, info, address, denom, amount, project_name),
     }
 }
 
@@ -138,7 +133,7 @@ mod tests {
             admin: Addr::unchecked(MOCK_ADMIN),
             minting_payment_address: Addr::unchecked("mock_address_1"),
             minting_fee_percentage: Decimal::percent(5),
-            minting_price: coin(1, "umpwr"),
+            minting_price: coin(5, "umpwr"),
             minting_fee_address: Addr::unchecked("mock_address_2"),
         }
     }
@@ -438,61 +433,196 @@ mod tests {
         }
     }
 
-    mod mint_tokens_tests {
+    mod mint_token_tests {
         use crate::error::ContractError;
         use crate::execute::execute;
-        use crate::execute::tests::{mock_config, MOCK_ADMIN};
-        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, TOTAL_WATTPEAK_MINTED_COUNT};
-        use cosmwasm_std::coins;
+        use crate::instantiate;
+        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG};
+
+        use super::*;
+        use crate::helpers::mint_tokens_msg; // Add missing import statement
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::Uint128;
+        use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdResult, Uint128};
+        use token_bindings::TokenFactoryMsg;
 
         #[test]
-        fn test_mint_tokens() {
+        fn test_mint_tokens_exact_funds() {
             let mut deps = mock_dependencies();
-            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
             let config = mock_config();
-            CONFIG.save(deps.as_mut().storage, &config).unwrap();
-            AVAILABLE_WATTPEAK_COUNT.save(deps.as_mut().storage, &1000).unwrap();
-            TOTAL_WATTPEAK_MINTED_COUNT.save(deps.as_mut().storage, &0).unwrap();
-
-            let msg = crate::msg::ExecuteMsg::MintTokens {
-                address: "address".to_string(),
-                denom: "WattPeak".to_string(),
-                amount: Uint128::from(100u128),
+            let msg = InstantiateMsg {
+                config: config.clone(),
             };
-            let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-            println!("{:?}", res);
-            assert_eq!(res.attributes.len(), 1);
-            assert_eq!(res.attributes[0], ("action".to_string(), "mint_tokens".to_string()));
+            CONFIG.save(deps.as_mut().storage, &config).unwrap();
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let available_wattpeak_count = AVAILABLE_WATTPEAK_COUNT
-                .load(deps.as_ref().storage)
-                .unwrap();
-            assert_eq!(available_wattpeak_count, 900);
+            let _ = AVAILABLE_WATTPEAK_COUNT
+                .update(&mut deps.storage, |available_wattpeak_count| {
+                    StdResult::Ok(available_wattpeak_count + 1000)
+                });
 
-            let total_wattpeak_minted_count = TOTAL_WATTPEAK_MINTED_COUNT
-                .load(deps.as_ref().storage)
-                .unwrap();
-            assert_eq!(total_wattpeak_minted_count, 100);
+            let amount_to_mint = Uint128::new(500);
+
+            // Scenario: Exact funds provided
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            let res = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                "test name".to_string(),
+            )
+            .unwrap();
+            assert_eq!(3, res.messages.len()); // Expecting two BankMsgs for payment and fee, and one WasmMsg for minting
+            assert_eq!(
+                res.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "mock_address_1".to_string(),
+                    amount: vec![Coin::new(2500, "umpwr".to_string())],
+                })
+            );
+            assert_eq!(
+                res.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "mock_address_2".to_string(),
+                    amount: vec![Coin::new(125, "umpwr".to_string())],
+                })
+            );
+            assert_eq!(
+                res.messages[2].msg,
+                CosmosMsg::Custom(TokenFactoryMsg::MintTokens {
+                    denom: "WattPeak".to_string(),
+                    amount: amount_to_mint,
+                    mint_to_address: "mint_to_addr".to_string(),
+                })
+            );
+
+            assert_eq!(res.attributes, vec![("action", "mint_tokens")]);
         }
 
         #[test]
-        fn test_mint_tokens_unauthorized() {
+        fn test_mint_tokens_insufficient_funds() {
             let mut deps = mock_dependencies();
-            let config = mock_config();
-            CONFIG.save(deps.as_mut().storage, &config).unwrap();
-            AVAILABLE_WATTPEAK_COUNT.save(deps.as_mut().storage, &1000).unwrap();
-            TOTAL_WATTPEAK_MINTED_COUNT.save(deps.as_mut().storage, &0).unwrap();
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
 
-            let msg = crate::msg::ExecuteMsg::MintTokens {
-                address: "address".to_string(),
-                denom: "WattPeak".to_string(),
-                amount: Uint128::from(100u128),
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
             };
-            let non_admin_info = mock_info("non_admin", &[]);
-            let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
-            assert_eq!(err, ContractError::Unauthorized {});
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(100);
+
+            // Scenario: Insufficient funds provided
+            let insufficient_funds = coins(0, "mpwr"); // Define the insufficient_funds variable with the appropriate value
+            let info = mock_info("user", &insufficient_funds);
+
+            let err = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "ujuno".to_string(),
+                amount_to_mint,
+                "test name".to_string(),
+            )
+            .unwrap_err();
+
+            assert_eq!(err, ContractError::InsufficientFunds {});
+        }
+
+        #[test]
+        fn test_minting_more_than_available() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(1001);
+
+            // Scenario: Minting more than available
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            let err = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                "test name".to_string(),
+            )
+            .unwrap_err();
+
+            assert_eq!(err, ContractError::InsufficientWattpeak {});
+        }
+
+        #[test]
+        fn test_minting_with_too_much_funds() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            // Scenario: Minting with too much funds
+            let funds_provided = coins(Uint128::new(2626).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            let err = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                "test name".to_string(),
+            )
+            .unwrap_err();
+
+            assert_eq!(err, ContractError::ToomuchFunds {});
         }
     }
 }
