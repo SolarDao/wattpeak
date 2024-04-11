@@ -51,6 +51,8 @@ pub struct Project {
     pub max_wattpeak: u64,
     /// minted_wattpeak_count is the number of wattpeak that have been minted for this project
     pub minted_wattpeak_count: u64,
+    /// pub is the id of the project
+    pub id: u64,
 }
 
 /// CONFIG is the configuration of the contract

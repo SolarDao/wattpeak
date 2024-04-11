@@ -11,7 +11,7 @@ pub fn mint_tokens_msg(
     address: String,
     denom: String,
     amount: Uint128,
-    project_name: String,
+    project_id: u64,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Validate sender is authorized to mint
     let config = CONFIG.load(deps.storage).unwrap();
@@ -20,7 +20,7 @@ pub fn mint_tokens_msg(
     let mut project_opt = None;
     for item in projects {
         let (_, project) = item?;
-        if project.name == project_name {
+        if project.id == project_id {
             project_opt = Some(project);
             break;
         }

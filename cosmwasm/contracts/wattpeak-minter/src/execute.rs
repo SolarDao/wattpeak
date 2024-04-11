@@ -48,8 +48,8 @@ pub fn execute(
             address,
             denom,
             amount,
-            project_name,
-        } => mint_tokens_msg(deps, info, address, denom, amount, project_name),
+            project_id,
+        } => mint_tokens_msg(deps, info, address, denom, amount, project_id),
     }
 }
 
@@ -79,6 +79,7 @@ pub fn upload_project(
         document_deal_link,
         max_wattpeak,
         minted_wattpeak_count: 0,
+        id,
     };
     PROJECTS.save(deps.storage, id, &project)?;
 
@@ -251,6 +252,38 @@ mod tests {
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
             assert_eq!(err, ContractError::Unauthorized {});
+        }
+        #[test]
+        fn test_upload_project_id_increase() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project = PROJECTS.load(deps.as_ref().storage, 2).unwrap();
+            assert_eq!(project.id, 2 as u64); // Cast the integer value to u64
         }
     }
     mod update_config_tests {
@@ -481,7 +514,7 @@ mod tests {
                 "mint_to_addr".to_string(),
                 "WattPeak".to_string(),
                 amount_to_mint,
-                "test name".to_string(),
+                1,
             )
             .unwrap();
             assert_eq!(3, res.messages.len()); // Expecting two BankMsgs for payment and fee, and one WasmMsg for minting
@@ -542,7 +575,7 @@ mod tests {
                 "mint_to_addr".to_string(),
                 "ujuno".to_string(),
                 amount_to_mint,
-                "test name".to_string(),
+                1,
             )
             .unwrap_err();
 
@@ -580,7 +613,7 @@ mod tests {
                 "mint_to_addr".to_string(),
                 "WattPeak".to_string(),
                 amount_to_mint,
-                "test name".to_string(),
+                1,
             )
             .unwrap_err();
 
@@ -618,7 +651,7 @@ mod tests {
                 "mint_to_addr".to_string(),
                 "WattPeak".to_string(),
                 amount_to_mint,
-                "test name".to_string(),
+                1,
             )
             .unwrap_err();
 
