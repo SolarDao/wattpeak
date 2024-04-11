@@ -20,6 +20,13 @@ pub enum ExecuteMsg {
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
     },
+    EditProject {
+        id: u64,
+        name: String,
+        description: String,
+        document_deal_link: String,
+        max_wattpeak: u64,
+    },
     /// Update contract configuration
     UpdateConfig {
         /// new admin address
