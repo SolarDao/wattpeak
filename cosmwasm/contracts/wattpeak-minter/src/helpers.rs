@@ -1,5 +1,19 @@
+use cosmwasm_std::Uint128;
 use token_bindings::{DenomUnit, Metadata, TokenFactoryMsg};
-use crate::msg::NewDenom;
+
+
+pub struct NewDenom {
+    pub name: String,
+    pub description: Option<String>,
+    pub symbol: String,
+    pub decimals: u32,
+    pub initial_balances: Option<Vec<InitialBalance>>,
+}
+
+pub struct InitialBalance {
+    pub address: String,
+    pub amount: Uint128,
+}
 
 pub fn create_denom_msg(subdenom: String, full_denom: String, denom: NewDenom) -> TokenFactoryMsg {
     TokenFactoryMsg::CreateDenom {

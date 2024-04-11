@@ -4,8 +4,7 @@ use crate::state::{
     AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT, DECIMALS, DESCRIPTION, FULL_DENOM, NAME, SUBDENOM, SYMBOL,
 };
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response};
-use helpers::create_denom_msg;
-use msg::NewDenom;
+use helpers::{NewDenom, create_denom_msg};
 use token_bindings::TokenFactoryMsg;
 
 pub mod error;
