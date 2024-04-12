@@ -20,6 +20,13 @@ pub enum ExecuteMsg {
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
     },
+    EditProject {
+        id: u64,
+        name: String,
+        description: String,
+        document_deal_link: String,
+        max_wattpeak: u64,
+    },
     /// Update contract configuration
     UpdateConfig {
         /// new admin address
@@ -45,6 +52,22 @@ pub enum ExecuteMsg {
         project_id: u64,
     },
 }
+
+#[cw_serde]
+pub struct NewDenom {
+    pub name: String,
+    pub description: Option<String>,
+    pub symbol: String,
+    pub decimals: u32,
+    pub initial_balances: Option<Vec<InitialBalance>>,
+}
+
+#[cw_serde]
+pub struct InitialBalance {
+    pub address: String,
+    pub amount: Uint128,
+}
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {

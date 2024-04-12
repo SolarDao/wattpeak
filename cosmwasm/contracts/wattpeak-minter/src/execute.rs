@@ -29,6 +29,21 @@ pub fn execute(
             document_deal_link,
             max_wattpeak,
         ),
+        ExecuteMsg::EditProject {
+            id,
+            name,
+            description,
+            document_deal_link,
+            max_wattpeak,
+        } => edit_project(
+            deps,
+            info,
+            id,
+            name,
+            description,
+            document_deal_link,
+            max_wattpeak,
+        ),
         ExecuteMsg::UpdateConfig {
             admin,
             minting_price,
@@ -67,11 +82,6 @@ pub fn upload_project(
         return Err(ContractError::Unauthorized {});
     }
 
-    // Check if the project is valid
-    if max_wattpeak == 0 {
-        return Err(ContractError::InvalidMaxWattpeak {});
-    }
-
     let id = PROJECT_DEALS_COUNT.update(deps.storage, |id| StdResult::Ok(id + 1))?;
     let project = Project {
         name,
@@ -81,6 +91,9 @@ pub fn upload_project(
         minted_wattpeak_count: 0,
         id,
     };
+
+    project.validate()?;
+
     PROJECTS.save(deps.storage, id, &project)?;
 
     AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
@@ -89,6 +102,37 @@ pub fn upload_project(
 
     Ok(Response::new()
         .add_attribute("action", "upload_project")
+        .add_attribute("project_id", id.to_string())
+        .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
+}
+
+pub fn edit_project(
+    deps: DepsMut,
+    info: MessageInfo,
+    id: u64,
+    name: String,
+    description: String,
+    document_deal_link: String,
+    max_wattpeak: u64,
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
+    // Only admin can edit a project
+    let config = CONFIG.load(deps.as_ref().storage).unwrap();
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let mut project = PROJECTS.load(deps.storage, id)?;
+    project.name = name;
+    project.description = description;
+    project.document_deal_link = document_deal_link;
+    project.max_wattpeak = max_wattpeak;
+
+    project.validate()?;
+
+    PROJECTS.save(deps.storage, id, &project)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "edit_project")
         .add_attribute("project_id", id.to_string())
         .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
 }
@@ -120,7 +164,7 @@ pub fn update_config(
 
     CONFIG.save(deps.storage, &new_config)?;
 
-    Ok(Response::new())
+    Ok(Response::new().add_attribute("action", "update_config"))
 }
 
 #[cfg(test)]
@@ -148,6 +192,7 @@ mod tests {
         use crate::{instantiate, state};
         use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+        use cosmwasm_std::StdError;
 
         #[test]
         fn test_upload_project() {
@@ -226,7 +271,12 @@ mod tests {
                 max_wattpeak: 0,
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
-            assert_eq!(err, ContractError::InvalidMaxWattpeak {});
+            assert_eq!(
+                err,
+                ContractError::Std(StdError::generic_err(
+                    "max_wattpeak cannot be zero".to_string()
+                ))
+            );
         }
 
         #[test]
@@ -286,6 +336,164 @@ mod tests {
             assert_eq!(project.id, 2 as u64); // Cast the integer value to u64
         }
     }
+    #[cfg(test)]
+    mod edit_project_tests {
+        use crate::execute::execute;
+        use crate::execute::tests::{mock_config, MOCK_ADMIN};
+        use crate::instantiate;
+        use crate::msg::InstantiateMsg;
+        use crate::state::PROJECTS;
+        use cosmwasm_std::coins;
+        use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+        use cosmwasm_std::StdError;
+
+        #[test]
+        fn test_edit_project() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+            let edit_msg = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "new name".to_string(),
+                description: "new description".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 2000,
+            };
+            let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
+            assert_eq!(res.attributes.len(), 3);
+
+            let project_deal = PROJECTS.load(deps.as_ref().storage, 1).unwrap();
+            assert_eq!(project_deal.name, "new name");
+            assert_eq!(project_deal.description, "new description");
+            assert_eq!(project_deal.document_deal_link, "ipfs://new-link");
+            assert_eq!(project_deal.max_wattpeak, 2000);
+            assert_eq!(project_deal.minted_wattpeak_count, 0);
+        }
+
+        #[test]
+        fn invalid_edit_project() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+        
+            // First, successfully upload a project
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+        
+            // Attempt to edit the project with an invalid max_wattpeak
+            let edit_msg_max_wattpeak = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "new name".to_string(),
+                description: "new description".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 0,
+            };
+            let err_max_wattpeak = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_max_wattpeak).unwrap_err();
+            assert_eq!(
+                err_max_wattpeak,
+                crate::error::ContractError::Std(StdError::generic_err(
+                    "max_wattpeak cannot be zero".to_string()
+                ))
+            );
+        
+            // Attempt to edit the project with an empty name
+            let edit_msg_empty_name = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "".to_string(),
+                description: "new description".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 500,
+            };
+            let err_empty_name = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
+            assert_eq!(
+                err_empty_name,
+                crate::error::ContractError::Std(StdError::generic_err(
+                    "name cannot be empty".to_string()
+                ))
+            );
+        
+            // Attempt to edit the project with an empty description
+            let edit_msg_empty_description = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "new name".to_string(),
+                description: "".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 500,
+            };
+            let err_empty_description = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_description).unwrap_err();
+            assert_eq!(
+                err_empty_description,
+                crate::error::ContractError::Std(StdError::generic_err(
+                    "description cannot be empty".to_string()
+                ))
+            );
+        }        
+
+        #[test]
+        fn test_edit_project_unauthorized() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
+            instantiate(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                InstantiateMsg {
+                    config: mock_config(),
+                },
+            )
+            .unwrap();
+
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+            let edit_msg = crate::msg::ExecuteMsg::EditProject {
+                id: 1,
+                name: "new name".to_string(),
+                description: "new description".to_string(),
+                document_deal_link: "ipfs://new-link".to_string(),
+                max_wattpeak: 2000,
+            };
+            let non_admin_info = mock_info("non_admin", &[]);
+            let err =
+                execute(deps.as_mut(), mock_env(), non_admin_info.clone(), edit_msg).unwrap_err();
+            assert_eq!(err, crate::error::ContractError::Unauthorized {});
+        }
+    }
     mod update_config_tests {
         use crate::error::ContractError;
         use crate::execute::execute;
@@ -325,7 +533,7 @@ mod tests {
                 minting_fee_address: new_minting_fee_address.clone(),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-            assert_eq!(res.attributes.len(), 0);
+            assert_eq!(res.attributes.len(), 1);
 
             let config = CONFIG.load(deps.as_ref().storage).unwrap();
             assert_eq!(config.admin, new_admin);

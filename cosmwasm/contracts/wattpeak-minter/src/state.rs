@@ -55,6 +55,21 @@ pub struct Project {
     pub id: u64,
 }
 
+impl Project {
+    pub fn validate(&self) -> StdResult<()> {
+        if self.max_wattpeak == 0 {
+            return Err(StdError::generic_err("max_wattpeak cannot be zero"));
+        }
+        if self.name.is_empty() {
+            return Err(StdError::generic_err("name cannot be empty"));
+        }
+        if self.description.is_empty() {
+            return Err(StdError::generic_err("description cannot be empty"));
+        }
+        Ok(())
+    }
+}
+
 /// CONFIG is the configuration of the contract
 pub const CONFIG: Item<Config> = Item::new("config");
 
@@ -70,3 +85,10 @@ pub const AVAILABLE_WATTPEAK_COUNT: Item<u64> = Item::new("available_wattpeak_co
 
 /// TOTAL_WATTPEAK_MINTED_COUNT is the total number of wattpeak that have been minted
 pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_minted");
+
+pub const SUBDENOM: &str = "WattPeak";
+pub const FULL_DENOM: &str = "WattPeak";
+pub const DESCRIPTION: &str = "WattPeak is a token that represents the amount of wattpeak that a solarpanel represents";
+pub const SYMBOL: &str = "WattPeak";
+pub const DECIMALS: u32 = 0;
+pub const NAME: &str = "WattPeak";
