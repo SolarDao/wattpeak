@@ -1,6 +1,6 @@
 use crate::state::{Config, Project};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Decimal};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -41,6 +41,22 @@ pub enum ExecuteMsg {
         minting_fee_address: Addr,
     },
 }
+
+#[cw_serde]
+pub struct NewDenom {
+    pub name: String,
+    pub description: Option<String>,
+    pub symbol: String,
+    pub decimals: u32,
+    pub initial_balances: Option<Vec<InitialBalance>>,
+}
+
+#[cw_serde]
+pub struct InitialBalance {
+    pub address: String,
+    pub amount: Uint128,
+}
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
