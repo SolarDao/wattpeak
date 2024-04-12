@@ -44,6 +44,7 @@ pub fn mint_tokens_msg(
         return Err(ContractError::ToomuchFunds {});
     }
 
+
     // Prepare messages for the payment and fee transfers
     let payment_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: config.minting_payment_address.to_string(),
@@ -70,6 +71,12 @@ pub fn mint_tokens_msg(
 
     AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
         StdResult::Ok(available_wattpeak_count - amount.u128() as u64)
+    })?;
+
+    PROJECTS.update(deps.storage, project_id, |project| {
+        let mut project = project.unwrap();
+        project.minted_wattpeak_count += amount.u128() as u64;
+        StdResult::Ok(project)
     })?;
 
     TOTAL_WATTPEAK_MINTED_COUNT.update(deps.storage, |total_wattpeak_minted_count| {

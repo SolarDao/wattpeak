@@ -471,12 +471,12 @@ mod tests {
         use crate::execute::execute;
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
-        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG};
+        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
 
         use super::*;
         use crate::helpers::mint_tokens_msg; // Add missing import statement
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdResult, Uint128};
+        use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, Uint128};
         use token_bindings::TokenFactoryMsg;
 
         #[test]
@@ -497,11 +497,6 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let _ = AVAILABLE_WATTPEAK_COUNT
-                .update(&mut deps.storage, |available_wattpeak_count| {
-                    StdResult::Ok(available_wattpeak_count + 1000)
-                });
-
             let amount_to_mint = Uint128::new(500);
 
             // Scenario: Exact funds provided
@@ -517,7 +512,17 @@ mod tests {
                 1,
             )
             .unwrap();
-            assert_eq!(3, res.messages.len()); // Expecting two BankMsgs for payment and fee, and one WasmMsg for minting
+
+            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(wp_after_mint, 500);
+            let project_wattpeak_after_mint = PROJECTS
+                .load(deps.as_ref().storage, 1)
+                .unwrap()
+                .minted_wattpeak_count;
+            assert_eq!(project_wattpeak_after_mint, 500);
+            assert_eq!(3, res.messages.len());
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
