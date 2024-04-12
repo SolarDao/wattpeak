@@ -53,6 +53,21 @@ pub struct Project {
     pub minted_wattpeak_count: u64,
 }
 
+impl Project {
+    pub fn validate(&self) -> StdResult<()> {
+        if self.max_wattpeak == 0 {
+            return Err(StdError::generic_err("max_wattpeak cannot be zero"));
+        }
+        if self.name.is_empty() {
+            return Err(StdError::generic_err("name cannot be empty"));
+        }
+        if self.description.is_empty() {
+            return Err(StdError::generic_err("description cannot be empty"));
+        }
+        Ok(())
+    }
+}
+
 /// CONFIG is the configuration of the contract
 pub const CONFIG: Item<Config> = Item::new("config");
 
