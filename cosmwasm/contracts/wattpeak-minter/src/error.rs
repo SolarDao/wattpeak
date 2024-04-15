@@ -23,4 +23,16 @@ pub enum ContractError {
 
     #[error("project not found")]
     ProjectNotFound {},
+
+    #[error("max wattpeak cannot be zero")]
+    MaxWattpeakCannotBeZero {},
+
+    #[error("name cannot be empty")]
+    NameCannotBeEmpty {},
+
+    #[error("description cannot be empty")]
+    DescriptionCannotBeEmpty {},
+
+    #[error("minted_wattpeak_count cannot be greater than max_wattpeak")]
+    MintedWattpeakCountCannotBeGreaterThanMaxWattpeak {},
 }

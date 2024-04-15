@@ -131,6 +131,10 @@ pub fn edit_project(
 
     PROJECTS.save(deps.storage, id, &project)?;
 
+    AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
+        StdResult::Ok(available_wattpeak_count + project.max_wattpeak)
+    })?;
+
     Ok(Response::new()
         .add_attribute("action", "edit_project")
         .add_attribute("project_id", id.to_string())
@@ -688,6 +692,7 @@ mod tests {
     }
 
     mod mint_token_tests {
+
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::instantiate;
@@ -697,7 +702,7 @@ mod tests {
         use super::*;
         use crate::helpers::mint_tokens_msg; // Add missing import statement
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, Uint128};
+        use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdError, Uint128};
         use token_bindings::TokenFactoryMsg;
 
         #[test]
@@ -983,6 +988,138 @@ mod tests {
                 .unwrap()
                 .minted_wattpeak_count;
             assert_eq!(project2_wattpeak_after_mint, 500);
+        }
+        #[test]
+        fn mint_out_a_project_then_increase_it() {
+            let mut deps = mock_dependencies();
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info(MOCK_ADMIN, &funds_provided);
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 500,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap();
+
+            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(wp_after_mint, 0);
+            let project_wattpeak_after_mint1 = PROJECTS
+                .load(deps.as_ref().storage, 1)
+                .unwrap()
+                .minted_wattpeak_count;
+            println!(
+                "project_wattpeak_after_mint: {}",
+                project_wattpeak_after_mint1
+            );
+            //assert_eq!(project_wattpeak_after_mint, 0);
+
+            let project_msg = ExecuteMsg::EditProject {
+                id: 1,
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 2000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap();
+            let project_wattpeak_after_mint2 = PROJECTS
+                .load(deps.as_ref().storage, 1)
+                .unwrap()
+                .minted_wattpeak_count;
+            assert_eq!(project_wattpeak_after_mint2, 1000);
+        }
+        #[test]
+        fn mint_then_edit_project_minted_wattpeak_higher_than_available() {
+            let mut deps = mock_dependencies();
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info(MOCK_ADMIN, &funds_provided);
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 500,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap();
+
+            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(wp_after_mint, 0);
+            let project_wattpeak_after_mint1 = PROJECTS
+                .load(deps.as_ref().storage, 1)
+                .unwrap()
+                .minted_wattpeak_count;
+            assert_eq!(project_wattpeak_after_mint1, 500);
+
+            let project_msg = ExecuteMsg::EditProject {
+                id: 1,
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 400,
+            };
+            let err = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
+            assert_eq!(
+                err.unwrap_err(),
+                crate::ContractError::Std(StdError::generic_err(
+                    "minted_wattpeak_count cannot be greater than max_wattpeak"
+                ))
+            );
         }
     }
 }

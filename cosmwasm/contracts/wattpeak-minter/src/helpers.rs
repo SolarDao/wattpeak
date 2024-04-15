@@ -147,6 +147,7 @@ pub fn mint_tokens_msg(
         }
     }
     let project = project_opt.ok_or(ContractError::ProjectNotFound {})?;
+    println!("Project: {:?}", project);
 
     if amount.u128() > (project.max_wattpeak - project.minted_wattpeak_count) as u128 {
         return Err(ContractError::InsufficientWattpeak {});
@@ -194,11 +195,11 @@ pub fn mint_tokens_msg(
         StdResult::Ok(available_wattpeak_count - amount.u128() as u64)
     })?;
 
-    PROJECTS.update(deps.storage, project_id, |project| {
-        let mut project = project.unwrap();
-        project.minted_wattpeak_count += amount.u128() as u64;
-        StdResult::Ok(project)
-    })?;
+    let mut project_update = PROJECTS.load(deps.storage, project.id)?;
+    project_update.minted_wattpeak_count += amount.u128() as u64;
+    PROJECTS.save(deps.storage, project.id, &project_update)?;
+
+    println!("Project: {:?}", project);
 
     TOTAL_WATTPEAK_MINTED_COUNT.update(deps.storage, |total_wattpeak_minted_count| {
         StdResult::Ok(total_wattpeak_minted_count + amount.u128() as u64)
