@@ -400,7 +400,7 @@ mod tests {
                 },
             )
             .unwrap();
-        
+
             // First, successfully upload a project
             let msg = crate::msg::ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
@@ -409,7 +409,7 @@ mod tests {
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-        
+
             // Attempt to edit the project with an invalid max_wattpeak
             let edit_msg_max_wattpeak = crate::msg::ExecuteMsg::EditProject {
                 id: 1,
@@ -418,14 +418,20 @@ mod tests {
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 0,
             };
-            let err_max_wattpeak = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_max_wattpeak).unwrap_err();
+            let err_max_wattpeak = execute(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                edit_msg_max_wattpeak,
+            )
+            .unwrap_err();
             assert_eq!(
                 err_max_wattpeak,
                 crate::error::ContractError::Std(StdError::generic_err(
                     "max_wattpeak cannot be zero".to_string()
                 ))
             );
-        
+
             // Attempt to edit the project with an empty name
             let edit_msg_empty_name = crate::msg::ExecuteMsg::EditProject {
                 id: 1,
@@ -434,14 +440,15 @@ mod tests {
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 500,
             };
-            let err_empty_name = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
+            let err_empty_name =
+                execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
             assert_eq!(
                 err_empty_name,
                 crate::error::ContractError::Std(StdError::generic_err(
                     "name cannot be empty".to_string()
                 ))
             );
-        
+
             // Attempt to edit the project with an empty description
             let edit_msg_empty_description = crate::msg::ExecuteMsg::EditProject {
                 id: 1,
@@ -450,14 +457,20 @@ mod tests {
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 500,
             };
-            let err_empty_description = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_description).unwrap_err();
+            let err_empty_description = execute(
+                deps.as_mut(),
+                mock_env(),
+                info.clone(),
+                edit_msg_empty_description,
+            )
+            .unwrap_err();
             assert_eq!(
                 err_empty_description,
                 crate::error::ContractError::Std(StdError::generic_err(
                     "description cannot be empty".to_string()
                 ))
             );
-        }        
+        }
 
         #[test]
         fn test_edit_project_unauthorized() {
@@ -869,6 +882,107 @@ mod tests {
             .unwrap_err();
 
             assert_eq!(err, ContractError::ToomuchFunds {});
+        }
+        #[test]
+        fn mint_a_project_that_doesnt_exist() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            let err = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap_err();
+
+            assert_eq!(err, ContractError::ProjectNotFound {});
+        }
+        #[test]
+        fn multiple_projects_minted() {
+            let mut deps = mock_dependencies();
+            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name2".to_string(),
+                description: "test description2".to_string(),
+                document_deal_link: "ipfs://test-link2".to_string(),
+                max_wattpeak: 1000,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(500);
+
+            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let info = mock_info("user", &funds_provided);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap();
+
+            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(wp_after_mint, 1500);
+            let project_wattpeak_after_mint = PROJECTS
+                .load(deps.as_ref().storage, 1)
+                .unwrap()
+                .minted_wattpeak_count;
+            assert_eq!(project_wattpeak_after_mint, 500);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                2,
+            )
+            .unwrap();
+
+            let wp_after_mint2 = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(wp_after_mint2, 1000);
+            let project2_wattpeak_after_mint = PROJECTS
+                .load(deps.as_ref().storage, 2)
+                .unwrap()
+                .minted_wattpeak_count;
+            assert_eq!(project2_wattpeak_after_mint, 500);
         }
     }
 }
