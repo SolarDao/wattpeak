@@ -9,9 +9,6 @@ pub enum ContractError {
     #[error("unauthorized")]
     Unauthorized {},
 
-    #[error("invalid max wattpeak")]
-    InvalidMaxWattpeak {},
-
     #[error("insufficient funds to pay for minting")]
     InsufficientFunds {},
 
@@ -23,19 +20,4 @@ pub enum ContractError {
 
     #[error("project not found")]
     ProjectNotFound {},
-
-    #[error("max wattpeak cannot be zero")]
-    MaxWattpeakCannotBeZero {},
-
-    #[error("name cannot be empty")]
-    NameCannotBeEmpty {},
-
-    #[error("description cannot be empty")]
-    DescriptionCannotBeEmpty {},
-
-    #[error("minted_wattpeak_count cannot be greater than max_wattpeak")]
-    MintedWattpeakCountCannotBeGreaterThanMaxWattpeak {},
-
-    #[error("calculation error")]
-    CalculationError {},
 }

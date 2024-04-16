@@ -1265,7 +1265,7 @@ mod tests {
             )
             .unwrap_err();
 
-            assert_eq!(err, ContractError::InsufficientWattpeak {});
+            assert_eq!(err, ContractError::InsufficientWattpeak{});
         }
     }
 }
