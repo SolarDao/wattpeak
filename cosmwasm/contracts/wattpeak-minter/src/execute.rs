@@ -1,11 +1,13 @@
 use std::str::FromStr;
 
 use crate::state::{
-    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT, SUBDENOM, TOTAL_WATTPEAK_MINTED_COUNT,
+    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT, SUBDENOM,
+    TOTAL_WATTPEAK_MINTED_COUNT,
 };
 use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
-    entry_point, Addr, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128
+    entry_point, Addr, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response,
+    StdResult, Uint128,
 };
 use token_bindings::TokenFactoryMsg;
 
@@ -89,7 +91,6 @@ pub fn upload_project(
         document_deal_link,
         max_wattpeak,
         minted_wattpeak_count: 0,
-        id,
     };
 
     project.validate()?;
@@ -194,11 +195,14 @@ pub fn mint_tokens_msg(
 
     // Calculate the total cost and fee based on the amount to mint
     let minting_price = amount.checked_mul(config.minting_price.amount).unwrap();
-    let minting_fee_calculation = Decimal::from_str(&minting_price.to_string()).unwrap().checked_mul(config.minting_fee_percentage).unwrap();
+    let minting_fee_calculation = Decimal::from_str(&minting_price.to_string())
+        .unwrap()
+        .checked_mul(config.minting_fee_percentage)
+        .unwrap();
     let minting_fee = Uint128::from(minting_fee_calculation.to_string().parse::<u128>().unwrap());
     let total_cost = minting_price.checked_add(minting_fee).unwrap();
-    
-    if info.funds.iter().any(|coin| coin.amount < total_cost)   {
+
+    if info.funds.iter().any(|coin| coin.amount < total_cost) {
         return Err(ContractError::InsufficientFunds {});
     }
     if info.funds.iter().any(|coin| coin.amount > total_cost) {
@@ -233,7 +237,7 @@ pub fn mint_tokens_msg(
         StdResult::Ok(available_wattpeak_count - amount.u128() as u64)
     })?;
 
-    PROJECTS.update(deps.storage, project.id, |project| {
+    PROJECTS.update(deps.storage, project_id, |project| {
         let mut project = project.unwrap();
         project.minted_wattpeak_count += amount.u128() as u64;
         StdResult::Ok(project)
@@ -387,7 +391,7 @@ mod tests {
             assert_eq!(err, ContractError::Unauthorized {});
         }
         #[test]
-        fn test_upload_project_id_increase() {
+        fn test_upload_multiple_projects() {
             let mut deps = mock_dependencies();
             let info = mock_info(MOCK_ADMIN, &coins(2, "token"));
             instantiate(
@@ -409,14 +413,41 @@ mod tests {
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
             let msg = crate::msg::ExecuteMsg::UploadProject {
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                max_wattpeak: 1000,
+                name: "test name2".to_string(),
+                description: "test description2".to_string(),
+                document_deal_link: "ipfs://test-link2".to_string(),
+                max_wattpeak: 3000,
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
-            let project = PROJECTS.load(deps.as_ref().storage, 2).unwrap();
-            assert_eq!(project.id, 2 as u64); // Cast the integer value to u64
+
+            let msg = crate::msg::ExecuteMsg::UploadProject {
+                name: "test name3".to_string(),
+                description: "test description3".to_string(),
+                document_deal_link: "ipfs://test-link3".to_string(),
+                max_wattpeak: 3000,
+            };
+            let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+            let project_deals_count = PROJECT_DEALS_COUNT.load(deps.as_ref().storage).unwrap();
+            assert_eq!(project_deals_count, 3);
+
+            let project1 = PROJECTS.load(deps.as_ref().storage, 1).unwrap();
+            assert_eq!(project1.name, "test name");
+            assert_eq!(project1.description, "test description");
+            assert_eq!(project1.document_deal_link, "ipfs://test-link");
+            assert_eq!(project1.max_wattpeak, 1000);
+
+            let project2 = PROJECTS.load(deps.as_ref().storage, 2).unwrap();
+            assert_eq!(project2.name, "test name2");
+            assert_eq!(project2.description, "test description2");
+            assert_eq!(project2.document_deal_link, "ipfs://test-link2");
+            assert_eq!(project2.max_wattpeak, 3000);
+
+            let project3 = PROJECTS.load(deps.as_ref().storage, 3).unwrap();
+            assert_eq!(project3.name, "test name3");
+            assert_eq!(project3.description, "test description3");
+            assert_eq!(project3.document_deal_link, "ipfs://test-link3");
+            assert_eq!(project3.max_wattpeak, 3000);
         }
     }
     #[cfg(test)]
