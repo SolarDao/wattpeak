@@ -194,9 +194,8 @@ mod tests {
         use crate::msg::InstantiateMsg;
         use crate::state::{PROJECTS, PROJECT_DEALS_COUNT};
         use crate::{instantiate, state};
-        use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::StdError;
+        use cosmwasm_std::{coins, StdError};
 
         #[test]
         fn test_upload_project() {
@@ -347,9 +346,8 @@ mod tests {
         use crate::instantiate;
         use crate::msg::InstantiateMsg;
         use crate::state::PROJECTS;
-        use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::StdError;
+        use cosmwasm_std::{coins, StdError};
 
         #[test]
         fn test_edit_project() {
@@ -518,9 +516,8 @@ mod tests {
         use crate::instantiate;
         use crate::msg::ExecuteMsg;
         use crate::state::CONFIG;
-        use cosmwasm_std::coins;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{Addr, Coin, Decimal, StdError};
+        use cosmwasm_std::{coins, Addr, Coin, Decimal, StdError};
 
         #[test]
         fn test_update_config() {
@@ -693,14 +690,13 @@ mod tests {
 
     mod mint_token_tests {
 
+        use super::*;
         use crate::error::ContractError;
         use crate::execute::execute;
+        use crate::helpers::mint_tokens_msg;
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
         use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
-
-        use super::*;
-        use crate::helpers::mint_tokens_msg; // Add missing import statement
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdError, Uint128};
         use token_bindings::TokenFactoryMsg;
@@ -1029,11 +1025,7 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            println!(
-                "project_wattpeak_after_mint: {}",
-                project_wattpeak_after_mint1
-            );
-            //assert_eq!(project_wattpeak_after_mint, 0);
+            assert_eq!(project_wattpeak_after_mint1, 500);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
@@ -1120,6 +1112,62 @@ mod tests {
                     "minted_wattpeak_count cannot be greater than max_wattpeak"
                 ))
             );
+        }
+        #[test]
+        fn mint_then_edit_project_lowering_max_wattpeak() {
+            let mut deps = mock_dependencies();
+            let mut funds_provided = coins(Uint128::new(1575).into(), "umpwr");
+            let mut info = mock_info(MOCK_ADMIN, &funds_provided);
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 500,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let amount_to_mint = Uint128::new(300);
+
+            mint_tokens_msg(
+                deps.as_mut(),
+                info.clone(),
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                amount_to_mint,
+                1,
+            )
+            .unwrap();
+
+            let project_msg = ExecuteMsg::EditProject {
+                id: 1,
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                max_wattpeak: 300,
+            };
+            let _ = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
+
+            funds_provided = coins(Uint128::new(24).into(), "umpwr");
+            info = mock_info(MOCK_ADMIN, &funds_provided);
+
+            let err = mint_tokens_msg(
+                deps.as_mut(),
+                info,
+                "mint_to_addr".to_string(),
+                "WattPeak".to_string(),
+                Uint128::new(4),
+                1,
+            )
+            .unwrap_err();
+
+            assert_eq!(err, ContractError::InsufficientWattpeak {});
         }
     }
 }
