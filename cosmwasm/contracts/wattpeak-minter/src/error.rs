@@ -20,4 +20,7 @@ pub enum ContractError {
 
     #[error("project not found")]
     ProjectNotFound {},
+
+    #[error("overflows")]
+    Overflow {},
 }
