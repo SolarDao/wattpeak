@@ -44,8 +44,6 @@ pub enum ExecuteMsg {
     MintTokens {
         /// The address to mint the tokens to
         address: String,
-        /// The denomination of the tokens to mint
-        denom: String,
         /// The amount of tokens to mint
         amount: Uint128,
         /// The project id to mint tokens for

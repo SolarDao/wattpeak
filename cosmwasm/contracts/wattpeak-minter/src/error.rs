@@ -19,7 +19,7 @@ pub enum ContractError {
     InsufficientWattpeak {},
 
     #[error("too much funds sent in")]
-    ToomuchFunds {},
+    TooMuchFunds {},
 
     #[error("project not found")]
     ProjectNotFound {},
@@ -35,4 +35,7 @@ pub enum ContractError {
 
     #[error("minted_wattpeak_count cannot be greater than max_wattpeak")]
     MintedWattpeakCountCannotBeGreaterThanMaxWattpeak {},
+
+    #[error("calculation error")]
+    CalculationError {},
 }

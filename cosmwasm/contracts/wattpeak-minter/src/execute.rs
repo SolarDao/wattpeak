@@ -1,10 +1,11 @@
-use crate::helpers::mint_tokens_msg;
+use std::str::FromStr;
+
 use crate::state::{
-    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT,
+    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT, SUBDENOM, TOTAL_WATTPEAK_MINTED_COUNT,
 };
 use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
-    entry_point, Addr, Coin, Decimal, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, Addr, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdResult, Uint128
 };
 use token_bindings::TokenFactoryMsg;
 
@@ -61,10 +62,9 @@ pub fn execute(
         ),
         ExecuteMsg::MintTokens {
             address,
-            denom,
             amount,
             project_id,
-        } => mint_tokens_msg(deps, info, address, denom, amount, project_id),
+        } => mint_tokens_msg(deps, info, address, amount, project_id),
     }
 }
 
@@ -169,6 +169,86 @@ pub fn update_config(
     CONFIG.save(deps.storage, &new_config)?;
 
     Ok(Response::new().add_attribute("action", "update_config"))
+}
+
+pub fn mint_tokens_msg(
+    deps: DepsMut,
+    info: MessageInfo,
+    address: String,
+    amount: Uint128,
+    project_id: u64,
+) -> Result<Response<TokenFactoryMsg>, ContractError> {
+    let config = CONFIG.load(deps.storage).unwrap();
+    // Search for the project by name
+    let project = PROJECTS.load(deps.storage, project_id);
+
+    if !project.is_ok() {
+        return Err(ContractError::ProjectNotFound {});
+    }
+
+    let project = project.unwrap();
+
+    if amount.u128() > (project.max_wattpeak - project.minted_wattpeak_count) as u128 {
+        return Err(ContractError::InsufficientWattpeak {});
+    }
+
+    // Calculate the total cost and fee based on the amount to mint
+    let minting_price = amount.checked_mul(config.minting_price.amount).unwrap();
+    let minting_fee_calculation = Decimal::from_str(&minting_price.to_string()).unwrap().checked_mul(config.minting_fee_percentage).unwrap();
+    let minting_fee = Uint128::from(minting_fee_calculation.to_string().parse::<u128>().unwrap());
+    let total_cost = minting_price.checked_add(minting_fee).unwrap();
+    
+    if info.funds.iter().any(|coin| coin.amount < total_cost)   {
+        return Err(ContractError::InsufficientFunds {});
+    }
+    if info.funds.iter().any(|coin| coin.amount > total_cost) {
+        return Err(ContractError::TooMuchFunds {});
+    }
+
+    // Prepare messages for the payment and fee transfers
+    let payment_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: config.minting_payment_address.to_string(),
+        amount: vec![Coin {
+            denom: config.minting_price.denom.clone(),
+            amount: minting_price,
+        }],
+    });
+
+    let fee_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: config.minting_fee_address.to_string(),
+        amount: vec![Coin {
+            denom: config.minting_price.denom.clone(),
+            amount: minting_fee,
+        }],
+    });
+
+    // Prepare the minting message
+    let mint_msg = TokenFactoryMsg::MintTokens {
+        denom: SUBDENOM.to_string(),
+        amount,
+        mint_to_address: address,
+    };
+
+    AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
+        StdResult::Ok(available_wattpeak_count - amount.u128() as u64)
+    })?;
+
+    PROJECTS.update(deps.storage, project.id, |project| {
+        let mut project = project.unwrap();
+        project.minted_wattpeak_count += amount.u128() as u64;
+        StdResult::Ok(project)
+    })?;
+
+    TOTAL_WATTPEAK_MINTED_COUNT.update(deps.storage, |total_wattpeak_minted_count| {
+        StdResult::Ok(total_wattpeak_minted_count + amount.u128() as u64)
+    })?;
+
+    // Assuming your contract's execution logic proceeds with these messages
+    Ok(Response::new()
+        .add_message(payment_msg)
+        .add_message(fee_msg)
+        .add_message(mint_msg)
+        .add_attribute("action", "mint_tokens"))
 }
 
 #[cfg(test)]
@@ -692,8 +772,7 @@ mod tests {
 
         use super::*;
         use crate::error::ContractError;
-        use crate::execute::execute;
-        use crate::helpers::mint_tokens_msg;
+        use crate::execute::{execute, mint_tokens_msg};
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
         use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
@@ -729,7 +808,6 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -800,7 +878,6 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -838,7 +915,6 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -876,13 +952,12 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
             .unwrap_err();
 
-            assert_eq!(err, ContractError::ToomuchFunds {});
+            assert_eq!(err, ContractError::TooMuchFunds {});
         }
         #[test]
         fn mint_a_project_that_doesnt_exist() {
@@ -905,7 +980,6 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -949,7 +1023,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -969,7 +1042,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 2,
             )
@@ -1011,7 +1083,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -1045,7 +1116,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -1082,7 +1152,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -1139,7 +1208,6 @@ mod tests {
                 deps.as_mut(),
                 info.clone(),
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
@@ -1161,7 +1229,6 @@ mod tests {
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "WattPeak".to_string(),
                 Uint128::new(4),
                 1,
             )
