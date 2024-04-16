@@ -793,14 +793,14 @@ mod tests {
             let amount_to_mint = Uint128::new(100);
 
             // Scenario: Insufficient funds provided
-            let insufficient_funds = coins(0, "mpwr"); // Define the insufficient_funds variable with the appropriate value
+            let insufficient_funds = coins(0, "mpwr");
             let info = mock_info("user", &insufficient_funds);
 
             let err = mint_tokens_msg(
                 deps.as_mut(),
                 info,
                 "mint_to_addr".to_string(),
-                "ujuno".to_string(),
+                "WattPeak".to_string(),
                 amount_to_mint,
                 1,
             )
