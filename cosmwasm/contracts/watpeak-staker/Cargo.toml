@@ -1,0 +1,16 @@
+[package]
+name = "wattpeak-staker"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std = { workspace = true }
+cw-storage-plus = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+token-bindings = "0.11.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
