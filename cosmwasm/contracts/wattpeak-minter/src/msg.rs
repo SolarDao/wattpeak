@@ -40,6 +40,15 @@ pub enum ExecuteMsg {
         /// new minting fee address
         minting_fee_address: Addr,
     },
+
+    MintTokens {
+        /// The address to mint the tokens to
+        address: String,
+        /// The amount of tokens to mint
+        amount: Uint128,
+        /// The project id to mint tokens for
+        project_id: u64,
+    },
 }
 
 #[cw_serde]

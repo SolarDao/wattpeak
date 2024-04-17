@@ -11,7 +11,7 @@ cw-storage-plus = { workspace = true }
 juno-tokenfactory-types = "0.0.2"
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
-token-bindings = "0.11.0"
+token-bindings = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }

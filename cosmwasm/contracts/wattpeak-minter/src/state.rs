@@ -64,6 +64,9 @@ impl Project {
         if self.description.is_empty() {
             return Err(StdError::generic_err("description cannot be empty"));
         }
+        if self.minted_wattpeak_count > self.max_wattpeak {
+            return Err(StdError::generic_err("minted_wattpeak_count cannot be greater than max_wattpeak"));
+        }
         Ok(())
     }
 }

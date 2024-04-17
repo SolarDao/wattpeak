@@ -8,4 +8,19 @@ pub enum ContractError {
 
     #[error("unauthorized")]
     Unauthorized {},
+
+    #[error("insufficient funds to pay for minting")]
+    InsufficientFunds {},
+
+    #[error("insufficient wattpeak available")]
+    InsufficientWattpeak {},
+
+    #[error("too much funds sent in")]
+    TooMuchFunds {},
+
+    #[error("project not found")]
+    ProjectNotFound {},
+
+    #[error("overflows")]
+    Overflow {},
 }
