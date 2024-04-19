@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Decimal, Uint128};
 
 use crate::state::Config;
 
@@ -12,7 +12,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     UpdateConfig {
         admin: Option<String>,
-        rewards_percentage: Option<Uint128>,
+        rewards_percentage: Option<Decimal>,
     },
     Stake { 
         amount: Uint128

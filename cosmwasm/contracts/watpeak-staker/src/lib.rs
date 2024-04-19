@@ -37,7 +37,7 @@ mod tests {
     use super::*;
     use crate::{msg::InstantiateMsg, state::Config};
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, mock_info}, Addr, Timestamp, Uint128
+        testing::{mock_dependencies, mock_env, mock_info}, Addr, Decimal, Timestamp, Uint128
     };
 
     #[test]
@@ -49,7 +49,7 @@ mod tests {
         let msg = InstantiateMsg {
             config: Config {
                 admin: Addr::unchecked("admin"),
-                rewards_percentage: From::from(10u128),
+                rewards_percentage: Decimal::from_ratio(10u128, 1u128),
             },
         };
 
@@ -59,7 +59,7 @@ mod tests {
 
         let saved_config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(saved_config.admin, Addr::unchecked("admin"));
-        assert_eq!(saved_config.rewards_percentage, Uint128::from(10u128));
+        assert_eq!(saved_config.rewards_percentage, Decimal::from_ratio(10u128, 1u128));
 
         let saved_epoch_state = EPOCH_STATE.load(deps.as_ref().storage).unwrap();
         assert_eq!(saved_epoch_state.epoch_length, 86000);

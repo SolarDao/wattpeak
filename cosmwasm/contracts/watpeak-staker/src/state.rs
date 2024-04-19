@@ -1,11 +1,11 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Env, Uint128};
+use cosmwasm_std::{Addr, Decimal, Env, Uint128};
 use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
 pub struct Config {
     pub admin: Addr,
-    pub rewards_percentage: Uint128,
+    pub rewards_percentage: Decimal,
 }
 
 #[cw_serde]
@@ -30,9 +30,9 @@ impl EpochState {
 pub struct Staker {
     pub address: Addr,
     pub wattpeak_staked: Uint128,
-    pub interest_wattpeak: Uint128,
+    pub interest_wattpeak: Decimal,
     pub stake_start_time: u64,
-    pub claimable_rewards: Uint128,
+    pub claimable_rewards: Decimal,
 }
 
 /// CONFIG is the configuration of the contract
@@ -43,5 +43,7 @@ pub const EPOCH_STATE: Item<EpochState> = Item::new("epoch_state");
 pub const STAKERS: Map<Addr, Staker> = Map::new("stakers");
 
 pub const TOTAL_WATTPEAK_STAKED: Item<Uint128> = Item::new("total_wattpeak_in_contract");
+
+pub const TOTAL_INTEREST_WATTPEAK: Item<Decimal> = Item::new("total_interest_wattpeak_in_contract");
 
 pub const TOTAL_REWARDS: Item<Uint128> = Item::new("total_rewards_in_contract");
