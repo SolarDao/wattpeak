@@ -10,7 +10,18 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    UpdateConfig {
+        admin: Option<String>,
+        rewards_percentage: Option<Uint128>,
+    },
     Stake { 
+        amount: Uint128
+    },
+    Unstake { 
+        amount: Uint128
+    },
+    ClaimReward {},
+    DepositRewards {
         amount: Uint128
     },
 }

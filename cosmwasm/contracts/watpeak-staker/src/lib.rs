@@ -37,7 +37,7 @@ mod tests {
     use super::*;
     use crate::{msg::InstantiateMsg, state::Config};
     use cosmwasm_std::{
-        testing::{mock_dependencies, mock_env, mock_info}, Addr, Decimal, Timestamp, Uint128
+        testing::{mock_dependencies, mock_env, mock_info}, Addr, Timestamp, Uint128
     };
 
     #[test]
