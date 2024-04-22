@@ -307,7 +307,7 @@ mod tests {
         use crate::{instantiate, msg::InstantiateMsg, state::Config};
         use cosmwasm_std::{
             testing::{mock_dependencies, mock_env, mock_info},
-            Addr, BankMsg, Coin, CosmosMsg, Decimal, Timestamp, Uint128,
+            Addr, Coin, Decimal, Timestamp, Uint128,
         };
 
         #[test]
@@ -395,6 +395,36 @@ mod tests {
             let total_wattpeak: Uint128 =
                 TOTAL_WATTPEAK_STAKED.load(deps.as_ref().storage).unwrap();
             assert_eq!(total_wattpeak, Uint128::from(200u128));
+        }
+        #[test]
+        fn stake_incorrect_amount() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(10),
+                },
+            };
+
+            let info = mock_info("creator", &[Coin::new(100u128, "WattPeak")]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
+            let amount = Uint128::from(200u128);
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info.clone(),
+                ExecuteMsg::Stake { amount },
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: Must send the correct amount of WattPeak tokens"
+            );
         }
     }
 
@@ -541,6 +571,83 @@ mod tests {
             );
         }
     }
+    mod deposit_rewards_tests {
+        use super::*;
+        use crate::{instantiate, msg::InstantiateMsg, state::Config};
+        use cosmwasm_std::{
+            testing::{mock_dependencies, mock_env, mock_info},
+            Addr, Coin, Decimal, Timestamp, Uint128,
+        };
+
+        #[test]
+        fn deposit_rewards() {
+        }
+        #[test]
+        fn deposit_rewards_unauthorized() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                },
+            };
+
+            let info = mock_info("creator", &[Coin::new(100u128, "WattPeak")]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+            let deposit_amount = Uint128::from(574u128);
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                info.clone(),
+                ExecuteMsg::DepositRewards {
+                    amount: deposit_amount,
+                },
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: Unauthorized"
+            );
+        }
+
+        #[test]
+        fn deposit_rewards_incorrect_amount() {
+            let mut deps = mock_dependencies();
+            // Initialize environment with current block time
+            let current_time = 1_600_000_000; // This should match your context's needs
+            let mut env = mock_env();
+            env.block.time = Timestamp::from_seconds(current_time);
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                },
+            };
+
+            let info = mock_info("admin", &[Coin::new(200u128, "WattPeak")]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                info.clone(),
+                ExecuteMsg::DepositRewards {
+                    amount: Uint128::from(100u128),
+                },
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: Must send the correct amount of WattPeak tokens"
+            );
+        }
+    }
+
     mod claim_rewards_test {
         use super::*;
         use crate::{
