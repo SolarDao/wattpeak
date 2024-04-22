@@ -104,7 +104,7 @@ mod tests {
         );
 
         let serialized = serialize_message(&msg).unwrap();
-        let deserialized: TokenFactoryMsg = cosmwasm_std::from_slice(&serialized).unwrap();
+        let deserialized: TokenFactoryMsg = cosmwasm_std::from_json(&serialized).unwrap();
 
         // Assertions to check the deserialized content matches the original message
         match deserialized {

@@ -91,5 +91,5 @@ pub const SUBDENOM: &str = "WattPeak";
 pub const FULL_DENOM: &str = "WattPeak";
 pub const DESCRIPTION: &str = "WattPeak is a token that represents the amount of wattpeak that a solarpanel represents";
 pub const SYMBOL: &str = "WattPeak";
-pub const DECIMALS: u32 = 0;
+pub const DECIMALS: u32 = 6;
 pub const NAME: &str = "WattPeak";

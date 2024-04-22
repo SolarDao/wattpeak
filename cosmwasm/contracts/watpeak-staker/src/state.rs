@@ -21,7 +21,6 @@ impl EpochState {
             self.current_epoch += 1;
             self.epoch_start_time = env.block.time.seconds();
 
-            //The update rewards calculation should be done here
         }
     }
 }
@@ -45,5 +44,3 @@ pub const STAKERS: Map<Addr, Staker> = Map::new("stakers");
 pub const TOTAL_WATTPEAK_STAKED: Item<Uint128> = Item::new("total_wattpeak_in_contract");
 
 pub const TOTAL_INTEREST_WATTPEAK: Item<Decimal> = Item::new("total_interest_wattpeak_in_contract");
-
-pub const TOTAL_REWARDS: Item<Uint128> = Item::new("total_rewards_in_contract");

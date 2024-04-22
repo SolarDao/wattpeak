@@ -13,42 +13,26 @@ pub fn calculate_interest_after_epoch(deps: DepsMut, env: Env) -> StdResult<()> 
         let time_staked = Decimal::from_ratio(staker.stake_start_time, 1u64);
         let current_time = Decimal::from_ratio(env.block.time.seconds(), 1u64);
         let time_staked_seconds = current_time.checked_sub(time_staked).unwrap();
-        println!("Current time: {:?}", current_time);
         let one_year = Decimal::from_ratio(31556926u64, 1u64);
-        println!("Time staked: {:?}", time_staked_seconds);
         let percentage_of_year = time_staked_seconds.checked_div(one_year).unwrap();
-        println!("Percentage of year: {:?}", percentage_of_year);
         let interest_rate = CONFIG.load(deps.storage)?.rewards_percentage;
-        println!("Interest rate: {:?}", interest_rate);
 
         let wattpeak_staked = Decimal::from_ratio(staker.wattpeak_staked, 1u64);
-        println!("Wattpeak staked: {:?}", wattpeak_staked);
         let wattpeak_interest_per_year = wattpeak_staked.checked_mul(interest_rate).unwrap();
-        println!(
-            "Wattpeak interest per year: {:?}",
-            wattpeak_interest_per_year
-        );
         let wattpeak_interest_earned = wattpeak_interest_per_year
             .checked_mul(percentage_of_year)
             .unwrap();
-        println!("Wattpeak interest earned: {:?}", wattpeak_interest_earned);
         total_wattpeak_interest_earned_during_period = total_wattpeak_interest_earned_during_period
             .checked_add(wattpeak_interest_earned)
             .unwrap();
-        println!("Wattpeak interest earned: {:?}", wattpeak_interest_earned);
         staker.interest_wattpeak = staker
             .interest_wattpeak
             .checked_add(wattpeak_interest_earned)
             .unwrap();
-        println!("Staker: {:?}", staker);
 
         // Save the updated staker information
         STAKERS.save(deps.storage, key, &staker)?;
     }
-    println!(
-        "Total interest earned during period: {:?}",
-        total_wattpeak_interest_earned_during_period
-    );
     TOTAL_INTEREST_WATTPEAK.save(deps.storage, &total_wattpeak_interest_earned_during_period)?;
 
     Ok(())
@@ -60,23 +44,18 @@ pub fn calculate_staker_share_of_reward(
     amount: Uint128,
 ) -> StdResult<()> {
     let total_interest_wattpeak = TOTAL_INTEREST_WATTPEAK.load(deps.storage)?;
-    println!("Total interest wattpeak: {:?}", total_interest_wattpeak);
     let stakers = STAKERS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let decimal_amount = Decimal::from_str(&amount.to_string()).unwrap();
-    println!("Decimal amount: {:?}", decimal_amount);
 
     for (key, mut staker) in stakers {
         let share = staker
             .interest_wattpeak
             .checked_div(total_interest_wattpeak)
             .unwrap();
-        println!("Share: {:?}", share);
         let reward = decimal_amount.checked_mul(share).unwrap();
-        println!("Reward: {:?}", reward);
         staker.claimable_rewards = staker.claimable_rewards.checked_add(reward).unwrap();
-        println!("Staker: {:?}", staker);
         staker.interest_wattpeak = Decimal::zero();
         TOTAL_INTEREST_WATTPEAK.save(deps.storage, &Decimal::zero())?;
 
@@ -160,11 +139,6 @@ mod tests {
             total_interest.unwrap(),
             Decimal::from_ratio(16566886140937806u128, 100000000000000000u128)
         );
-
-        println!("Staker 1: {:?}", updated_staker1);
-        println!("Staker 2: {:?}", updated_staker2);
-        println!("Staker 3: {:?}", updated_staker3);
-
         assert_eq!(
             updated_staker1.interest_wattpeak,
             Decimal::from_ratio(1584438230770639u128, 100000000000000000u128)
