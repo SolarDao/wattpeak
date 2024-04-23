@@ -59,23 +59,23 @@ pub fn calculate_staker_share_of_reward(
         let reward = decimal_amount.checked_mul(share).unwrap();
         staker.claimable_rewards = staker.claimable_rewards.checked_add(reward).unwrap();
         staker.interest_wattpeak = Decimal::zero();
-        TOTAL_INTEREST_WATTPEAK.save(deps.storage, &Decimal::zero())?;
 
         // Save the updated staker information
         STAKERS.save(deps.storage, key, &staker)?;
     }
+    TOTAL_INTEREST_WATTPEAK.save(deps.storage, &Decimal::zero())?;
     Ok(())
 }
 #[cfg(test)]
 mod tests {
 
-    use crate::{instantiate, msg::InstantiateMsg, state::{Config, Staker}};
-    use cosmwasm_std::{testing::mock_info, Decimal};
-
+    use crate::{instantiate, msg::{ExecuteMsg, InstantiateMsg}, state::Config};
+    use cosmwasm_std::{testing::mock_info, Coin, Decimal};
+    use crate::execute::execute;
     use super::*;
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env},
-        Addr, Uint128,
+        Addr,
     };
 
     #[test]
@@ -92,49 +92,46 @@ mod tests {
         let env = mock_env();
         let info = mock_info("anyone", &[]);
         let msg = InstantiateMsg { config };
-        let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+        
+        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "WattPeak")]);
+        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "WattPeak")]);
+        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "WattPeak")]);
 
-        // Example stakers setup
-        let stakers = [
-            Staker {
-                address: Addr::unchecked("addr1"),
-                wattpeak_staked: Uint128::from(100000000u128),
-                interest_wattpeak: Decimal::zero(),
-                stake_start_time: 100000,
-                claimable_rewards: Decimal::zero(),
-            },
-            Staker {
-                address: Addr::unchecked("addr2"),
-                wattpeak_staked: Uint128::from(200000000u128),
-                interest_wattpeak: Decimal::zero(),
-                stake_start_time: 1000,
-                claimable_rewards: Decimal::zero(),
-            },
-            Staker {
-                address: Addr::unchecked("addr3"),
-                wattpeak_staked: Uint128::from(300000000u128),
-                interest_wattpeak: Decimal::zero(),
-                stake_start_time: 1000,
-                claimable_rewards: Decimal::zero(),
-            },
-        ];
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info1.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
 
-        for staker in &stakers {
-            STAKERS
-                .save(&mut deps.storage, staker.address.clone(), staker)
-                .unwrap();
-        }
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info2.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info3.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
 
         calculate_interest_after_epoch(deps.as_mut()).unwrap();
 
         let updated_staker1 = STAKERS
-            .load(&deps.storage, stakers[0].address.clone())
+            .load(&deps.storage, staker_info1.sender)
             .unwrap();
         let updated_staker2 = STAKERS
-            .load(&deps.storage, stakers[1].address.clone())
+            .load(&deps.storage, staker_info2.sender)
             .unwrap();
         let updated_staker3 = STAKERS
-            .load(&deps.storage, stakers[2].address.clone())
+            .load(&deps.storage, staker_info3.sender)
             .unwrap();
 
         let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);

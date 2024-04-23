@@ -15,19 +15,14 @@ pub enum ExecuteMsg {
         rewards_percentage: Option<Decimal>,
         epoch_length: Option<u64>,
     },
-    Stake { 
-        amount: Uint128
-    },
-    Unstake { 
-        amount: Uint128
+    Stake {},
+    Unstake {
+        amount: Uint128,
     },
     ClaimReward {},
-    DepositRewards {
-        amount: Uint128
-    },
+    DepositRewards {},
     NewEpoch {},
 }
-
 
 #[cw_serde]
 #[derive(QueryResponses)]

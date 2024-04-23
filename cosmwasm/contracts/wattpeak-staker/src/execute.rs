@@ -4,7 +4,10 @@ use cosmwasm_std::{
 };
 
 use crate::{
-    helpers::{calculate_interest_after_epoch, calculate_percentage_of_year, calculate_staker_share_of_reward},
+    helpers::{
+        calculate_interest_after_epoch, calculate_percentage_of_year,
+        calculate_staker_share_of_reward,
+    },
     msg::ExecuteMsg,
     state::{Staker, CONFIG, STAKERS, TOTAL_WATTPEAK_STAKED},
 };
@@ -17,9 +20,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
             rewards_percentage,
             epoch_length,
         } => update_config(deps, env, info, admin, epoch_length, rewards_percentage),
-        ExecuteMsg::Stake { amount } => stake_wattpeak(deps, env, info, amount),
+        ExecuteMsg::Stake {} => stake_wattpeak(deps, env, info),
         ExecuteMsg::Unstake { amount } => unstake_wattpeak(deps, env, info, amount),
-        ExecuteMsg::DepositRewards { amount } => deposit_rewards(deps, env, info, amount),
+        ExecuteMsg::DepositRewards {} => deposit_rewards(deps, env, info),
         ExecuteMsg::ClaimReward {} => claim_rewards(deps, env, info),
         ExecuteMsg::NewEpoch {} => calculate_interest_after_epoch(deps),
     }
@@ -61,28 +64,27 @@ fn update_config(
         })?;
         calculate_percentage_of_year(deps, epoch_length)?;
     }
-    
 
     Ok(Response::new().add_attribute("action", "update_config"))
 }
 
-fn stake_wattpeak(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    amount: Uint128,
-) -> StdResult<Response> {
+fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let staker_address = &info.sender;
-
-    // Verify the correct amount of tokens was sent to the contract
-    if !info
+    let amount = info
         .funds
         .iter()
-        .any(|coin| coin.denom == "WattPeak" && coin.amount == amount)
-    {
+        .find(|coin| coin.denom == "WattPeak")
+        .map(|coin| coin.amount)
+        .unwrap_or_else(Uint128::zero);
+    // Verify the correct amount of tokens was sent to the contract
+    if !info.funds.iter().any(|coin| coin.denom == "WattPeak") {
         return Err(StdError::generic_err(
-            "Must send the correct amount of WattPeak tokens",
+            "Must stake WattPeak tokens to the contract",
         ));
+    }
+
+    if !info.funds.iter().all(|coin| coin.amount > Uint128::zero()) {
+        return Err(StdError::generic_err("Stake amount can't be zero"));
     }
 
     // Check if the staker already exists
@@ -96,7 +98,6 @@ fn stake_wattpeak(
         None => {
             // If the staker does not exist, create a new record
             staker = Some(Staker {
-                address: staker_address.clone(),
                 wattpeak_staked: amount,
                 interest_wattpeak: Decimal::zero(),
                 stake_start_time: env.block.time.seconds(),
@@ -118,26 +119,27 @@ fn stake_wattpeak(
         .add_attribute("amount", amount.to_string()))
 }
 
-fn deposit_rewards(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    amount: Uint128,
-) -> StdResult<Response> {
+fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
+    let amount = info
+        .funds
+        .iter()
+        .find(|coin| coin.denom == "WattPeak")
+        .map(|coin| coin.amount)
+        .unwrap_or_else(Uint128::zero);
+
     // Check if the sender is the admin
     if info.sender != CONFIG.load(deps.storage)?.admin {
         return Err(StdError::generic_err("Unauthorized"));
     }
 
-    // Verify that the correct amount of tokens was sent to the contract
-    if !info
-        .funds
-        .iter()
-        .any(|coin| coin.denom == "WattPeak" && coin.amount == amount)
-    {
+    if !info.funds.iter().any(|coin| coin.denom == "WattPeak") {
         return Err(StdError::generic_err(
-            "Must send the correct amount of WattPeak tokens",
+            "Must stake WattPeak tokens to the contract",
         ));
+    }
+
+    if !info.funds.iter().all(|coin| coin.amount > Uint128::zero()) {
+        return Err(StdError::generic_err("Deposit amount can't be zero"));
     }
     // Calculate the share of rewards for each staker
     calculate_staker_share_of_reward(deps, env, amount)
@@ -155,22 +157,19 @@ fn unstake_wattpeak(
     info: MessageInfo,
     amount: Uint128,
 ) -> StdResult<Response> {
-    let staker_address = &info.sender;
-
-    // Check if the staker exists
-    let staker = STAKERS.may_load(deps.storage, staker_address.clone())?;
-
-    if staker.is_none() {
-        return Err(StdError::generic_err("Staker does not exist"));
+    if amount == Uint128::zero() {
+        return Err(StdError::generic_err("Unstake amount can't be zero"));
     }
 
+    let staker_address = &info.sender;
+
+    let mut staker = STAKERS.load(deps.storage, staker_address.clone()).map_err(|_| StdError::generic_err("Staker does not exist"))?;
+
     // Check if the staker has enough wattpeak staked
-    if staker.clone().unwrap().wattpeak_staked < amount {
+    if staker.wattpeak_staked < amount {
         return Err(StdError::generic_err("Insufficient staked wattpeak"));
     }
 
-    // Update the staker's staked wattpeak
-    let mut staker = staker.unwrap();
     staker.wattpeak_staked -= amount;
 
     // Save the updated staker record
@@ -201,8 +200,6 @@ fn claim_rewards(deps: DepsMut, _env: Env, info: MessageInfo) -> StdResult<Respo
 
     // Check if the staker exists
     let mut staker = STAKERS.load(deps.storage, staker_address.clone())?;
-
-    // Calculate the rewards to be claimed
     let rewards = staker.claimable_rewards;
 
     // Convert the rewards from Decimal to Uint128
@@ -321,14 +318,13 @@ mod tests {
         use crate::{instantiate, msg::InstantiateMsg, state::Config};
         use cosmwasm_std::{
             testing::{mock_dependencies, mock_env, mock_info},
-            Addr, Coin, Decimal, Timestamp, Uint128,
+            Addr, Coin, Decimal, Uint128,
         };
 
         #[test]
         fn stake_wattpeak() {
             let mut deps = mock_dependencies();
-            let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(1_600_000_000); // Example fixed time for testing
+            let env = mock_env();
 
             let msg = InstantiateMsg {
                 config: Config {
@@ -342,13 +338,12 @@ mod tests {
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
             let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
-            let amount = Uint128::from(100u128);
 
             let res = execute(
                 deps.as_mut(),
                 env.clone(),
                 staker_info.clone(),
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             )
             .unwrap();
 
@@ -357,11 +352,11 @@ mod tests {
             let staker = STAKERS
                 .load(deps.as_ref().storage, staker_info.sender)
                 .unwrap();
-            assert_eq!(staker.wattpeak_staked, amount);
+            assert_eq!(staker.wattpeak_staked, Uint128::from(100u128));
 
             let total_wattpeak: Uint128 =
                 TOTAL_WATTPEAK_STAKED.load(deps.as_ref().storage).unwrap();
-            assert_eq!(total_wattpeak, amount);
+            assert_eq!(total_wattpeak, Uint128::from(100u128));
         }
 
         #[test]
@@ -381,13 +376,12 @@ mod tests {
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
             let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
-            let amount = Uint128::from(100u128);
 
             let _res = execute(
                 deps.as_mut(),
                 env.clone(),
                 staker_info.clone(),
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             )
             .unwrap();
 
@@ -397,7 +391,7 @@ mod tests {
                 deps.as_mut(),
                 env.clone(),
                 staker_info2,
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             )
             .unwrap();
 
@@ -413,7 +407,7 @@ mod tests {
             assert_eq!(total_wattpeak, Uint128::from(200u128));
         }
         #[test]
-        fn stake_incorrect_amount() {
+        fn stake_zero_amount() {
             let mut deps = mock_dependencies();
             let env = mock_env();
 
@@ -428,19 +422,48 @@ mod tests {
             let info = mock_info("creator", &[Coin::new(100u128, "WattPeak")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
-            let amount = Uint128::from(200u128);
+            let staker_info = mock_info("staker", &[Coin::new(0u128, "WattPeak")]);
 
             let res = execute(
                 deps.as_mut(),
                 env.clone(),
                 staker_info.clone(),
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             );
 
             assert_eq!(
                 res.err().unwrap().to_string(),
-                "Generic error: Must send the correct amount of WattPeak tokens"
+                "Generic error: Stake amount can't be zero"
+            );
+        }
+        #[test]
+        fn stake_incorrect_denom() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(10),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("creator", &[Coin::new(100u128, "WattPeak")]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "random")]);
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info.clone(),
+                ExecuteMsg::Stake {},
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: Must stake WattPeak tokens to the contract"
             );
         }
     }
@@ -450,17 +473,13 @@ mod tests {
         use crate::{instantiate, msg::InstantiateMsg, state::Config};
         use cosmwasm_std::{
             testing::{mock_dependencies, mock_env, mock_info},
-            Addr, BankMsg, Coin, CosmosMsg, Decimal, Timestamp, Uint128,
+            Addr, BankMsg, Coin, CosmosMsg, Decimal, Uint128,
         };
 
         #[test]
         fn unstake_wattpeak() {
             let mut deps = mock_dependencies();
-            // Initialize environment with current block time
-            let current_time = 1_600_000_000; // This should match your context's needs
-            let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(current_time);
-
+            let env = mock_env();
             let msg = InstantiateMsg {
                 config: Config {
                     admin: Addr::unchecked("admin"),
@@ -473,16 +492,15 @@ mod tests {
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
             let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
-            let amount = Uint128::from(100u128);
 
             let _res = execute(
                 deps.as_mut(),
                 env.clone(),
                 staker_info.clone(),
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             )
             .unwrap();
-
+            let amount = Uint128::from(100u128);
             let res = execute(
                 deps.as_mut(),
                 env.clone(),
@@ -515,10 +533,7 @@ mod tests {
         #[test]
         fn unstake_insufficient_stake() {
             let mut deps = mock_dependencies();
-            // Initialize environment with current block time
-            let current_time = 1_600_000_000; // This should match your context's needs
-            let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(current_time);
+            let env = mock_env();
 
             let msg = InstantiateMsg {
                 config: Config {
@@ -532,13 +547,12 @@ mod tests {
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
             let staker_info = mock_info("staker", &[Coin::new(100u128, "WattPeak")]);
-            let amount = Uint128::from(100u128);
 
             let _res = execute(
                 deps.as_mut(),
                 env.clone(),
                 staker_info.clone(),
-                ExecuteMsg::Stake { amount },
+                ExecuteMsg::Stake {},
             )
             .unwrap();
 
@@ -559,10 +573,7 @@ mod tests {
         #[test]
         fn unstake_staker_doesnt_exist() {
             let mut deps = mock_dependencies();
-            // Initialize environment with current block time
-            let current_time = 1_600_000_000; // This should match your context's needs
-            let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(current_time);
+            let env = mock_env();
 
             let msg = InstantiateMsg {
                 config: Config {
@@ -590,18 +601,50 @@ mod tests {
                 "Generic error: Staker does not exist"
             );
         }
+        #[test]
+        fn unstake_amount_is_zero() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("creator", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info = mock_info("staker", &[Coin::new(0u128, "WattPeak")]);
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info.clone(),
+                ExecuteMsg::Unstake {
+                    amount: Uint128::zero(),
+                },
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: Unstake amount can't be zero"
+            );
+        
+        }
     }
     mod deposit_rewards_tests {
         use super::*;
         use crate::{instantiate, msg::InstantiateMsg, state::Config};
         use cosmwasm_std::{
             testing::{mock_dependencies, mock_env, mock_info},
-            Addr, Coin, Decimal, Timestamp, Uint128,
+            Addr, Coin, Decimal, Uint128,
         };
 
         #[test]
-        fn deposit_rewards() {
-        }
+        fn deposit_rewards() {}
         #[test]
         fn deposit_rewards_unauthorized() {
             let mut deps = mock_dependencies();
@@ -619,14 +662,17 @@ mod tests {
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let deposit_amount = Uint128::from(574u128);
+            let funds = Coin {
+                denom: "WattPeak".to_string(),
+                amount: deposit_amount,
+            };
+            let info = mock_info("random", &[funds]);
 
             let res = execute(
                 deps.as_mut(),
                 env.clone(),
                 info.clone(),
-                ExecuteMsg::DepositRewards {
-                    amount: deposit_amount,
-                },
+                ExecuteMsg::DepositRewards {},
             );
 
             assert_eq!(
@@ -636,12 +682,9 @@ mod tests {
         }
 
         #[test]
-        fn deposit_rewards_incorrect_amount() {
+        fn deposit_rewards_zero_amount() {
             let mut deps = mock_dependencies();
-            // Initialize environment with current block time
-            let current_time = 1_600_000_000; // This should match your context's needs
-            let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(current_time);
+            let env = mock_env();
 
             let msg = InstantiateMsg {
                 config: Config {
@@ -651,21 +694,19 @@ mod tests {
                 },
             };
 
-            let info = mock_info("admin", &[Coin::new(200u128, "WattPeak")]);
+            let info = mock_info("admin", &[Coin::new(0u128, "WattPeak")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let res = execute(
                 deps.as_mut(),
                 env.clone(),
                 info.clone(),
-                ExecuteMsg::DepositRewards {
-                    amount: Uint128::from(100u128),
-                },
+                ExecuteMsg::DepositRewards {},
             );
 
             assert_eq!(
                 res.err().unwrap().to_string(),
-                "Generic error: Must send the correct amount of WattPeak tokens"
+                "Generic error: Deposit amount can't be zero"
             );
         }
     }
@@ -697,39 +738,32 @@ mod tests {
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("addr1", &[]);
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "WattPeak")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "WattPeak")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "WattPeak")]);
             let deposit_amount = Uint128::from(574u128);
 
-            // Example stakers setup
-            let stakers = [
-                Staker {
-                    address: Addr::unchecked("addr1"),
-                    wattpeak_staked: Uint128::from(100u128),
-                    interest_wattpeak: Decimal::zero(),
-                    stake_start_time: 100000,
-                    claimable_rewards: Decimal::zero(),
-                },
-                Staker {
-                    address: Addr::unchecked("addr2"),
-                    wattpeak_staked: Uint128::from(200u128),
-                    interest_wattpeak: Decimal::zero(),
-                    stake_start_time: 1000,
-                    claimable_rewards: Decimal::zero(),
-                },
-                Staker {
-                    address: Addr::unchecked("addr3"),
-                    wattpeak_staked: Uint128::from(300u128),
-                    interest_wattpeak: Decimal::zero(),
-                    stake_start_time: 1000,
-                    claimable_rewards: Decimal::zero(),
-                },
-            ];
-
-            for staker in &stakers {
-                STAKERS
-                    .save(&mut deps.storage, staker.address.clone(), staker)
-                    .unwrap();
-            }
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info1.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info2.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info3.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
 
             calculate_interest_after_epoch(deps.as_mut()).unwrap();
 
@@ -744,9 +778,7 @@ mod tests {
                 deps.as_mut(),
                 env.clone(),
                 info.clone(),
-                ExecuteMsg::DepositRewards {
-                    amount: deposit_amount,
-                },
+                ExecuteMsg::DepositRewards {},
             )
             .unwrap();
 
@@ -765,7 +797,7 @@ mod tests {
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
-                    to_address: staker_info.sender.to_string(),
+                    to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
                         denom: "WattPeak".to_string(),
                         amount: Uint128::from(95u128),
@@ -774,7 +806,7 @@ mod tests {
             );
 
             let staker = STAKERS
-                .load(deps.as_ref().storage, staker_info.sender)
+                .load(deps.as_ref().storage, staker_info1.sender)
                 .unwrap();
             assert_eq!(staker.claimable_rewards, Decimal::zero());
         }

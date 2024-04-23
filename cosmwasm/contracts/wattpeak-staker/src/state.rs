@@ -11,8 +11,9 @@ pub struct Config {
 }
 #[cw_serde]
 pub struct Staker {
-    pub address: Addr,
+    // Total amount of Wattpeak staked
     pub wattpeak_staked: Uint128,
+    // Total amount of interest earned in interest_wattpeak, represents a pro rata fraction of total wattpeak interest earned
     pub interest_wattpeak: Decimal,
     pub stake_start_time: u64,
     pub claimable_rewards: Decimal,

@@ -100,7 +100,6 @@ mod tests {
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
 
         let staker = Staker {
-            address: Addr::unchecked("addr0000"),
             wattpeak_staked: Uint128::from(100u128),
             interest_wattpeak: Decimal::percent(5),
             stake_start_time: 1_600_000_000,
@@ -129,14 +128,12 @@ mod tests {
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
 
         let staker1 = Staker {
-            address: Addr::unchecked("addr0000"),
             wattpeak_staked: Uint128::from(100u128),
             interest_wattpeak: Decimal::zero(),
             stake_start_time: 1_600_000_000,
             claimable_rewards: Decimal::zero(),
         };
         let staker2 = Staker {
-            address: Addr::unchecked("addr0001"),
             wattpeak_staked: Uint128::from(200u128),
             interest_wattpeak: Decimal::zero(),
             stake_start_time: 1_600_000_000,
