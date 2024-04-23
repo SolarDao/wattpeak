@@ -4,24 +4,24 @@ use cosmwasm_std::{
 };
 
 use crate::{
-    helpers::calculate_staker_share_of_reward,
+    helpers::{calculate_interest_after_epoch, calculate_percentage_of_year, calculate_staker_share_of_reward},
     msg::ExecuteMsg,
-    state::{EpochState, Staker, CONFIG, EPOCH_STATE, STAKERS, TOTAL_WATTPEAK_STAKED},
+    state::{Staker, CONFIG, STAKERS, TOTAL_WATTPEAK_STAKED},
 };
 
 #[entry_point]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
-    EpochState::check_update_epoch(&mut EPOCH_STATE.load(deps.storage)?, &env);
-
     match msg {
         ExecuteMsg::UpdateConfig {
             admin,
             rewards_percentage,
-        } => update_config(deps, env, info, admin, rewards_percentage),
+            epoch_length,
+        } => update_config(deps, env, info, admin, epoch_length, rewards_percentage),
         ExecuteMsg::Stake { amount } => stake_wattpeak(deps, env, info, amount),
         ExecuteMsg::Unstake { amount } => unstake_wattpeak(deps, env, info, amount),
         ExecuteMsg::DepositRewards { amount } => deposit_rewards(deps, env, info, amount),
         ExecuteMsg::ClaimReward {} => claim_rewards(deps, env, info),
+        ExecuteMsg::NewEpoch {} => calculate_interest_after_epoch(deps),
     }
 }
 
@@ -30,6 +30,7 @@ fn update_config(
     _env: Env,
     info: MessageInfo,
     admin: Option<String>,
+    epoch_length: Option<u64>,
     rewards_percentage: Option<Decimal>,
 ) -> StdResult<Response> {
     // Check if the sender is the admin
@@ -52,6 +53,15 @@ fn update_config(
             Ok(config)
         })?;
     }
+
+    if let Some(epoch_length) = epoch_length {
+        CONFIG.update(deps.storage, |mut config| -> StdResult<_> {
+            config.epoch_length = epoch_length;
+            Ok(config)
+        })?;
+        calculate_percentage_of_year(deps, epoch_length)?;
+    }
+    
 
     Ok(Response::new().add_attribute("action", "update_config"))
 }
@@ -133,7 +143,6 @@ fn deposit_rewards(
     calculate_staker_share_of_reward(deps, env, amount)
         .map_err(|e| StdError::generic_err(format!("Failed to calculate staker shares: {}", e)))?;
 
-    // Construct the response
     Ok(Response::new()
         .add_attribute("method", "deposit_rewards")
         .add_attribute("from", info.sender.to_string())
@@ -258,6 +267,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -266,6 +276,7 @@ mod tests {
             let msg = ExecuteMsg::UpdateConfig {
                 admin: Some("new_admin".to_string()),
                 rewards_percentage: Some(Decimal::percent(5)),
+                epoch_length: Some(86400),
             };
             execute(deps.as_mut(), env.clone(), info, msg).unwrap();
             CONFIG
@@ -274,6 +285,7 @@ mod tests {
                     &Config {
                         admin: Addr::unchecked("admin"),
                         rewards_percentage: Decimal::percent(10),
+                        epoch_length: 86400,
                     },
                 )
                 .unwrap();
@@ -289,6 +301,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -297,6 +310,7 @@ mod tests {
             let msg = ExecuteMsg::UpdateConfig {
                 admin: Some("new_admin".to_string()),
                 rewards_percentage: Some(Decimal::percent(5)),
+                epoch_length: Some(86400),
             };
             let res = execute(deps.as_mut(), env.clone(), mock_info("random", &[]), msg);
             assert_eq!(res.unwrap_err().to_string(), "Generic error: Unauthorized");
@@ -320,6 +334,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -358,6 +373,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(10),
+                    epoch_length: 86400,
                 },
             };
 
@@ -405,6 +421,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(10),
+                    epoch_length: 86400,
                 },
             };
 
@@ -448,6 +465,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -506,6 +524,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -549,6 +568,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -591,6 +611,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -626,6 +647,7 @@ mod tests {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -656,21 +678,19 @@ mod tests {
         };
         use cosmwasm_std::{
             testing::{mock_dependencies, mock_env, mock_info},
-            Addr, BankMsg, Coin, CosmosMsg, Decimal, Timestamp, Uint128,
+            Addr, BankMsg, Coin, CosmosMsg, Decimal, Uint128,
         };
 
         #[test]
         fn claim_rewards() {
             let mut deps = mock_dependencies();
-            // Initialize environment with current block time
-            let current_time = 1_600_000_000; // This should match your context's needs
             let mut env = mock_env();
-            env.block.time = Timestamp::from_seconds(current_time);
 
             let msg = InstantiateMsg {
                 config: Config {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
                 },
             };
 
@@ -686,21 +706,21 @@ mod tests {
                     address: Addr::unchecked("addr1"),
                     wattpeak_staked: Uint128::from(100u128),
                     interest_wattpeak: Decimal::zero(),
-                    stake_start_time: current_time - 50000,
+                    stake_start_time: 100000,
                     claimable_rewards: Decimal::zero(),
                 },
                 Staker {
                     address: Addr::unchecked("addr2"),
                     wattpeak_staked: Uint128::from(200u128),
                     interest_wattpeak: Decimal::zero(),
-                    stake_start_time: current_time - 86400,
+                    stake_start_time: 1000,
                     claimable_rewards: Decimal::zero(),
                 },
                 Staker {
                     address: Addr::unchecked("addr3"),
                     wattpeak_staked: Uint128::from(300u128),
                     interest_wattpeak: Decimal::zero(),
-                    stake_start_time: current_time - 100000,
+                    stake_start_time: 1000,
                     claimable_rewards: Decimal::zero(),
                 },
             ];
@@ -711,7 +731,7 @@ mod tests {
                     .unwrap();
             }
 
-            calculate_interest_after_epoch(deps.as_mut(), env).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
 
             env = mock_env();
             let funds = Coin {
@@ -748,7 +768,7 @@ mod tests {
                     to_address: staker_info.sender.to_string(),
                     amount: vec![Coin {
                         denom: "WattPeak".to_string(),
-                        amount: Uint128::from(54u128),
+                        amount: Uint128::from(95u128),
                     }],
                 })
             );

@@ -5,7 +5,7 @@ use cosmwasm_std::{
 use crate::{
     msg::{QueryMsg, StakersResponse},
     state::{
-        Config, EpochState, Staker, CONFIG, EPOCH_STATE, STAKERS, TOTAL_INTEREST_WATTPEAK,
+        Config, Staker, CONFIG, STAKERS, TOTAL_INTEREST_WATTPEAK,
         TOTAL_WATTPEAK_STAKED,
     },
 };
@@ -18,7 +18,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Stakers {} => to_json_binary(&query_stakers(deps)?),
         QueryMsg::TotalWattpeakStaked {} => to_json_binary(&query_total_wattpeak_staked(deps)?),
         QueryMsg::TotalInterestWattpeak {} => to_json_binary(&query_total_interest_wattpeak(deps)?),
-        QueryMsg::EpochState {} => to_json_binary(&query_epoch_state(deps)?),
     }
 }
 
@@ -53,11 +52,6 @@ fn query_total_interest_wattpeak(deps: Deps) -> StdResult<Decimal> {
     Ok(total_interest_wattpeak)
 }
 
-fn query_epoch_state(deps: Deps) -> StdResult<EpochState> {
-    let epoch_state = EPOCH_STATE.load(deps.storage)?;
-    Ok(epoch_state)
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -81,6 +75,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
+                epoch_length: 86400,
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -99,6 +94,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
+                epoch_length: 86400,
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -127,6 +123,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
+                epoch_length: 86400,
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -166,6 +163,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
+                epoch_length: 86400,
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -182,6 +180,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
+                epoch_length: 86400,
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -192,22 +191,5 @@ mod tests {
 
         let res = query_total_interest_wattpeak(deps.as_ref()).unwrap();
         assert_eq!(res, total_interest_wattpeak);
-    }
-    #[test]
-    fn test_query_epoch_state() {
-        let mut deps = mock_dependencies();
-        let env = mock_env();
-        let info = mock_info("anyone", &[]);
-        let msg = InstantiateMsg {
-            config: Config {
-                admin: Addr::unchecked("admin"),
-                rewards_percentage: Decimal::percent(10),
-            },
-        };
-        let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
-
-        let res = query_epoch_state(deps.as_ref()).unwrap();
-        assert_eq!(res.epoch_length, 86000);
-        assert_eq!(res.current_epoch, 1);
     }
 }

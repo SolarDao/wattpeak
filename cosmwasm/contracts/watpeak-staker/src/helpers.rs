@@ -1,22 +1,24 @@
 use std::str::FromStr;
 
-use crate::state::{CONFIG, STAKERS, TOTAL_INTEREST_WATTPEAK};
-use cosmwasm_std::{Decimal, DepsMut, Env, Order, StdResult, Uint128};
+use crate::state::{CONFIG, PERCENTAGE_OF_YEAR, STAKERS, TOTAL_INTEREST_WATTPEAK};
+use cosmwasm_std::{Decimal, DepsMut, Env, Order, Response, StdResult, Uint128};
 
-pub fn calculate_interest_after_epoch(deps: DepsMut, env: Env) -> StdResult<()> {
+pub fn calculate_percentage_of_year(deps: DepsMut, epoch_length: u64) -> StdResult<()> {
+    let time_staked = Decimal::from_ratio(epoch_length, 1u64);
+    let one_year = Decimal::from_ratio(31556926u64, 1u64);
+    let percentage_of_year = time_staked.checked_div(one_year).unwrap();
+    PERCENTAGE_OF_YEAR.save(deps.storage, &percentage_of_year)?;
+    Ok(())
+}
+
+pub fn calculate_interest_after_epoch(deps: DepsMut) -> StdResult<Response> {
     let stakers = STAKERS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let mut total_wattpeak_interest_earned_during_period = Decimal::zero();
-
+    let percentage_of_year = PERCENTAGE_OF_YEAR.load(deps.storage)?;
+    let interest_rate = CONFIG.load(deps.storage)?.rewards_percentage;
     for (key, mut staker) in stakers {
-        let time_staked = Decimal::from_ratio(staker.stake_start_time, 1u64);
-        let current_time = Decimal::from_ratio(env.block.time.seconds(), 1u64);
-        let time_staked_seconds = current_time.checked_sub(time_staked).unwrap();
-        let one_year = Decimal::from_ratio(31556926u64, 1u64);
-        let percentage_of_year = time_staked_seconds.checked_div(one_year).unwrap();
-        let interest_rate = CONFIG.load(deps.storage)?.rewards_percentage;
-
         let wattpeak_staked = Decimal::from_ratio(staker.wattpeak_staked, 1u64);
         let wattpeak_interest_per_year = wattpeak_staked.checked_mul(interest_rate).unwrap();
         let wattpeak_interest_earned = wattpeak_interest_per_year
@@ -35,7 +37,7 @@ pub fn calculate_interest_after_epoch(deps: DepsMut, env: Env) -> StdResult<()> 
     }
     TOTAL_INTEREST_WATTPEAK.save(deps.storage, &total_wattpeak_interest_earned_during_period)?;
 
-    Ok(())
+    Ok(Response::default())
 }
 
 pub fn calculate_staker_share_of_reward(
@@ -67,51 +69,52 @@ pub fn calculate_staker_share_of_reward(
 #[cfg(test)]
 mod tests {
 
-    use crate::state::{Config, Staker};
-    use cosmwasm_std::Decimal;
+    use crate::{instantiate, msg::InstantiateMsg, state::{Config, Staker}};
+    use cosmwasm_std::{testing::mock_info, Decimal};
 
     use super::*;
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env},
-        Addr, Timestamp, Uint128,
+        Addr, Uint128,
     };
 
     #[test]
     fn test_calculate_interest_after_epoch() {
         let mut deps = mock_dependencies();
 
-        // Initialize environment with current block time
-        let current_time = 1_600_000_000; // This should match your context's needs
-        let mut env = mock_env();
-        env.block.time = Timestamp::from_seconds(current_time);
-
         let config = Config {
             admin: Addr::unchecked("admin"),          // Example admin address
             rewards_percentage: Decimal::percent(10), // Example rewards percentage
+            epoch_length: 86000,                      // Example epoch length
         };
         CONFIG.save(&mut deps.storage, &config).unwrap();
+
+        let env = mock_env();
+        let info = mock_info("anyone", &[]);
+        let msg = InstantiateMsg { config };
+        let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
 
         // Example stakers setup
         let stakers = [
             Staker {
                 address: Addr::unchecked("addr1"),
-                wattpeak_staked: Uint128::from(100u128),
+                wattpeak_staked: Uint128::from(100000000u128),
                 interest_wattpeak: Decimal::zero(),
-                stake_start_time: current_time - 50000,
+                stake_start_time: 100000,
                 claimable_rewards: Decimal::zero(),
             },
             Staker {
                 address: Addr::unchecked("addr2"),
-                wattpeak_staked: Uint128::from(200u128),
+                wattpeak_staked: Uint128::from(200000000u128),
                 interest_wattpeak: Decimal::zero(),
-                stake_start_time: current_time - 86400,
+                stake_start_time: 1000,
                 claimable_rewards: Decimal::zero(),
             },
             Staker {
                 address: Addr::unchecked("addr3"),
-                wattpeak_staked: Uint128::from(300u128),
+                wattpeak_staked: Uint128::from(300000000u128),
                 interest_wattpeak: Decimal::zero(),
-                stake_start_time: current_time - 100000,
+                stake_start_time: 1000,
                 claimable_rewards: Decimal::zero(),
             },
         ];
@@ -122,7 +125,7 @@ mod tests {
                 .unwrap();
         }
 
-        calculate_interest_after_epoch(deps.as_mut(), env).unwrap();
+        calculate_interest_after_epoch(deps.as_mut()).unwrap();
 
         let updated_staker1 = STAKERS
             .load(&deps.storage, stakers[0].address.clone())
@@ -137,19 +140,19 @@ mod tests {
         let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);
         assert_eq!(
             total_interest.unwrap(),
-            Decimal::from_ratio(16566886140937806u128, 100000000000000000u128)
+            Decimal::from_ratio(16351402541553u128, 100000000u128)
         );
         assert_eq!(
             updated_staker1.interest_wattpeak,
-            Decimal::from_ratio(1584438230770639u128, 100000000000000000u128)
+            Decimal::from_ratio(27252337569255u128, 1000000000u128)
         );
         assert_eq!(
             updated_staker2.interest_wattpeak,
-            Decimal::from_ratio(547581852554333u128, 10000000000000000u128)
+            Decimal::from_ratio(5450467513851u128, 100000000u128)
         );
         assert_eq!(
             updated_staker3.interest_wattpeak,
-            Decimal::from_ratio(9506629384623837u128, 100000000000000000u128)
+            Decimal::from_ratio(81757012707765u128, 1000000000u128)
         );
     }
 }

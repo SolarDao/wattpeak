@@ -9,25 +9,23 @@ pub mod helpers;
 use crate::msg::InstantiateMsg;
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
 use error::ContractError;
-use state::{EpochState, CONFIG, TOTAL_WATTPEAK_STAKED, EPOCH_STATE};
+use helpers::calculate_percentage_of_year;
+use state:: {CONFIG, TOTAL_WATTPEAK_STAKED};
 
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response<ContractError>>{
 
-    let epoch_state = EpochState {
-        epoch_length: 86000,
-        current_epoch: 1,
-        epoch_start_time: env.block.time.seconds(),
-    };
-
     CONFIG.save(deps.storage, &msg.config)?;
-    EPOCH_STATE.save(deps.storage, &epoch_state)?; // Fix the save method call
     TOTAL_WATTPEAK_STAKED.save(deps.storage, &0u64.into())?;
+
+    let epoch_length = msg.config.epoch_length;
+
+    calculate_percentage_of_year(deps, epoch_length)?;
 
     Ok(Response::new().add_attribute("method", "instantiate"))
 }
@@ -50,6 +48,7 @@ mod tests {
             config: Config {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::from_ratio(10u128, 1u128),
+                epoch_length: 86400,
             },
         };
 
@@ -60,11 +59,6 @@ mod tests {
         let saved_config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(saved_config.admin, Addr::unchecked("admin"));
         assert_eq!(saved_config.rewards_percentage, Decimal::from_ratio(10u128, 1u128));
-
-        let saved_epoch_state = EPOCH_STATE.load(deps.as_ref().storage).unwrap();
-        assert_eq!(saved_epoch_state.epoch_length, 86000);
-        assert_eq!(saved_epoch_state.current_epoch, 1);
-        assert_eq!(saved_epoch_state.epoch_start_time, 1_600_000_000);
 
         let total_wattpeak: u128 = TOTAL_WATTPEAK_STAKED.load(deps.as_ref().storage).unwrap().into();
         assert_eq!(total_wattpeak, Uint128::zero().into());
