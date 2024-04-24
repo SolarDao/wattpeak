@@ -152,4 +152,80 @@ mod tests {
             Decimal::from_ratio(81757012707765u128, 1000000000u128)
         );
     }
+    #[test]
+    fn multiple_epoch_calculation() {
+        let mut deps = mock_dependencies();
+
+        let config = Config {
+            admin: Addr::unchecked("admin"),          // Example admin address
+            rewards_percentage: Decimal::percent(10), // Example rewards percentage
+            epoch_length: 86000,                      // Example epoch length
+        };
+        CONFIG.save(&mut deps.storage, &config).unwrap();
+
+        let env = mock_env();
+        let info = mock_info("anyone", &[]);
+        let msg = InstantiateMsg { config };
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+        
+        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "WattPeak")]);
+        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "WattPeak")]);
+        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "WattPeak")]);
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info1.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info2.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info3.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        calculate_interest_after_epoch(deps.as_mut()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut()).unwrap();
+
+        let updated_staker1 = STAKERS
+            .load(&deps.storage, staker_info1.sender)
+            .unwrap();
+        let updated_staker2 = STAKERS
+            .load(&deps.storage, staker_info2.sender)
+            .unwrap();
+        let updated_staker3 = STAKERS
+            .load(&deps.storage, staker_info3.sender)
+            .unwrap();
+        let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);
+        assert_eq!(
+            total_interest.unwrap(),
+            Decimal::from_ratio(16351402541553u128, 100000000u128)
+        );
+        assert_eq!(
+            updated_staker1.interest_wattpeak,
+            Decimal::from_ratio(81757012707765u128, 1000000000u128)
+        );
+        assert_eq!(
+            updated_staker2.interest_wattpeak,
+            Decimal::from_ratio(16351402541553u128, 100000000u128)
+        );
+        assert_eq!(
+            updated_staker3.interest_wattpeak,
+            Decimal::from_ratio(245271038123295u128, 1000000000u128)
+        );
+
+    }
 }
