@@ -29,3 +29,5 @@ pub const TOTAL_WATTPEAK_STAKED: Item<Uint128> = Item::new("total_wattpeak_in_co
 pub const TOTAL_INTEREST_WATTPEAK: Item<Decimal> = Item::new("total_interest_wattpeak_in_contract");
 
 pub const PERCENTAGE_OF_YEAR: Item<Decimal> = Item::new("percentage_of_year");
+
+pub const EPOCH_COUNT: Item<u64> = Item::new("epoch_count");

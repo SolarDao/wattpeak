@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::state::{CONFIG, PERCENTAGE_OF_YEAR, STAKERS, TOTAL_INTEREST_WATTPEAK};
+use crate::state::{CONFIG, EPOCH_COUNT, PERCENTAGE_OF_YEAR, STAKERS, TOTAL_INTEREST_WATTPEAK};
 use cosmwasm_std::{Decimal, DepsMut, Env, Order, Response, StdResult, Uint128};
 
 pub fn calculate_percentage_of_year(deps: DepsMut, epoch_length: u64) -> StdResult<()> {
@@ -36,6 +36,7 @@ pub fn calculate_interest_after_epoch(deps: DepsMut) -> StdResult<Response> {
         STAKERS.save(deps.storage, key, &staker)?;
     }
     TOTAL_INTEREST_WATTPEAK.save(deps.storage, &total_wattpeak_interest_earned_during_period)?;
+    EPOCH_COUNT.update(deps.storage, |count| -> StdResult<_> { Ok(count + 1) })?;
 
     Ok(Response::default())
 }
@@ -151,6 +152,10 @@ mod tests {
             updated_staker3.interest_wattpeak,
             Decimal::from_ratio(81757012707765u128, 1000000000u128)
         );
+        assert_eq!(
+            EPOCH_COUNT.load(&deps.storage).unwrap(),
+            1
+        )
     }
     #[test]
     fn multiple_epoch_calculation() {
@@ -226,6 +231,10 @@ mod tests {
             updated_staker3.interest_wattpeak,
             Decimal::from_ratio(245271038123295u128, 1000000000u128)
         );
+        assert_eq!(
+            EPOCH_COUNT.load(&deps.storage).unwrap(),
+            3
+        )
 
     }
 }

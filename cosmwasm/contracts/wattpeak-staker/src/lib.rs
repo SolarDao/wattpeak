@@ -10,7 +10,7 @@ use crate::msg::InstantiateMsg;
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
 use error::ContractError;
 use helpers::calculate_percentage_of_year;
-use state:: {CONFIG, TOTAL_WATTPEAK_STAKED};
+use state:: {CONFIG, EPOCH_COUNT, TOTAL_WATTPEAK_STAKED};
 
 #[entry_point]
 pub fn instantiate(
@@ -22,6 +22,7 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &msg.config)?;
     TOTAL_WATTPEAK_STAKED.save(deps.storage, &0u64.into())?;
+    EPOCH_COUNT.save(deps.storage, &0u64)?;
 
     let epoch_length = msg.config.epoch_length;
 
