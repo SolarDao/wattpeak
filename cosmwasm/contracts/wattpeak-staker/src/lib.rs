@@ -8,7 +8,6 @@ pub mod helpers;
 
 use crate::msg::InstantiateMsg;
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
-use error::ContractError;
 use helpers::calculate_percentage_of_year;
 use state:: {CONFIG, EPOCH_COUNT, TOTAL_WATTPEAK_STAKED};
 
@@ -18,7 +17,7 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response<ContractError>>{
+) -> StdResult<Response<>>{
 
     CONFIG.save(deps.storage, &msg.config)?;
     TOTAL_WATTPEAK_STAKED.save(deps.storage, &0u64.into())?;

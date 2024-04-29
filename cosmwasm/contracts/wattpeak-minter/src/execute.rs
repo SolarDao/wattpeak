@@ -888,7 +888,7 @@ mod tests {
             assert_eq!(
                 res.messages[2].msg,
                 CosmosMsg::Custom(TokenFactoryMsg::MintTokens {
-                    denom: "WattPeak".to_string(),
+                    denom: "uwattpeak".to_string(),
                     amount: amount_to_mint,
                     mint_to_address: "mint_to_addr".to_string(),
                 })
