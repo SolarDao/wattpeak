@@ -6,7 +6,7 @@ use crate::state::{
 };
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response};
 use helpers::{create_denom_msg, NewDenom};
-use state::SUBDENOM;
+use state::{FULL_DENOM, SUBDENOM};
 use token_bindings::TokenFactoryMsg;
 
 pub mod error;
@@ -33,7 +33,8 @@ pub fn instantiate(
     TOTAL_WATTPEAK_MINTED_COUNT.save(deps.storage, &0).unwrap();
 
     let full_denom = format!("factory/{}/{}", env.contract.address, SUBDENOM);
-
+    FULL_DENOM.save(deps.storage, &full_denom)?;
+    
     let denom = NewDenom {
         name: NAME.to_string(),
         description: Some(DESCRIPTION.to_string()),
