@@ -95,9 +95,9 @@ mod tests {
         let msg = InstantiateMsg { config };
         let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         
-        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "WattPeak")]);
-        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "WattPeak")]);
-        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "WattPeak")]);
+        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
 
         execute(
             deps.as_mut(),
@@ -173,9 +173,9 @@ mod tests {
         let msg = InstantiateMsg { config };
         let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         
-        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "WattPeak")]);
-        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "WattPeak")]);
-        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "WattPeak")]);
+        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
 
         execute(
             deps.as_mut(),
