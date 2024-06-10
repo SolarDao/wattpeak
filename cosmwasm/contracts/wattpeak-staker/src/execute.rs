@@ -7,7 +7,7 @@ use crate::{
     helpers::{
         calculate_interest_after_epoch, calculate_staker_share_of_reward, set_yearly_percentage
     },
-    msg::{self, ExecuteMsg},
+    msg::ExecuteMsg,
     state::{Staker, CONFIG, STAKERS, TOTAL_WATTPEAK_STAKED},
 };
 
@@ -1047,15 +1047,6 @@ mod tests {
                 res.err().unwrap().to_string(),
                 "Generic error: No rewards to claim"
             );
-        }
-        #[test]
-        fn one_staker_then_try_to_claim() {
-            
-        }
-
-        #[test]
-        fn claim_when_reward_is_zero() {
-            
         }
     }
 }
