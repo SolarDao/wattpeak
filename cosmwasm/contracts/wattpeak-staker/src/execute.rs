@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use crate::{
     helpers::{
-        calculate_interest_after_epoch, calculate_percentage_of_year,
+        calculate_interest_after_epoch, set_yearly_percentage,
         calculate_staker_share_of_reward,
     },
     msg::ExecuteMsg,
@@ -62,7 +62,7 @@ fn update_config(
             config.epoch_length = epoch_length;
             Ok(config)
         })?;
-        calculate_percentage_of_year(deps, epoch_length)?;
+        set_yearly_percentage(deps, epoch_length)?;
     }
 
     Ok(Response::new().add_attribute("action", "update_config"))
@@ -212,6 +212,9 @@ fn claim_rewards(deps: DepsMut, _env: Env, info: MessageInfo) -> StdResult<Respo
 
     // Check if the staker exists
     let mut staker = STAKERS.load(deps.storage, staker_address.clone())?;
+    if staker.claimable_rewards.is_zero() {
+        return Err(StdError::generic_err("No rewards to claim"));
+    }
     let rewards = staker.claimable_rewards;
 
     // Convert the rewards from Decimal to Uint128
@@ -860,6 +863,143 @@ mod tests {
                 .load(deps.as_ref().storage, staker_info1.sender)
                 .unwrap();
             assert_eq!(staker.claimable_rewards, Decimal::zero());
+        }
+        #[test]
+        fn claim_when_staker_doesnt_exist() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("creator", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let claimer = mock_info("addr1", &[]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer.clone(),
+                ExecuteMsg::ClaimReward {},
+            );
+
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "wattpeak_staker::state::Staker not found"
+            );
+        }
+        #[test]
+        fn try_to_claim_twice_in_a_row() {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("creator", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let deposit_amount = Uint128::from(574u128);
+
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info1.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info2.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info3.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+
+            env = mock_env();
+            let funds = Coin {
+                denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                amount: deposit_amount,
+            };
+
+            let info = mock_info("admin", &[funds.clone()]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                info.clone(),
+                ExecuteMsg::DepositRewards {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 0);
+
+            let claimer = mock_info("addr1", &[]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer.clone(),
+                ExecuteMsg::ClaimReward {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 1);
+            assert_eq!(
+                res.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: staker_info1.sender.to_string(),
+                    amount: vec![Coin {
+                        denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                        amount: Uint128::from(95u128),
+                    }],
+                })
+            );
+
+            let staker = STAKERS
+                .load(deps.as_ref().storage, staker_info1.sender)
+                .unwrap();
+            assert_eq!(staker.claimable_rewards, Decimal::zero());
+
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer.clone(),
+                ExecuteMsg::ClaimReward {},
+            );
+            assert_eq!(
+                res.err().unwrap().to_string(),
+                "Generic error: No rewards to claim"
+            );
+        }
+        #[test]
+        fn one_staker_then_try_to_claim() {
+            
+        }
+
+        #[test]
+        fn claim_when_reward_is_zero() {
+            
         }
     }
 }

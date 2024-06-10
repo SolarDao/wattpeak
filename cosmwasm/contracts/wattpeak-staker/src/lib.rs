@@ -8,7 +8,7 @@ pub mod helpers;
 
 use crate::msg::InstantiateMsg;
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdResult};
-use helpers::calculate_percentage_of_year;
+use helpers::set_yearly_percentage;
 use state:: {CONFIG, EPOCH_COUNT, TOTAL_WATTPEAK_STAKED};
 
 #[entry_point]
@@ -19,13 +19,14 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response<>>{
 
+    msg.config.validate(deps.as_ref())?;
     CONFIG.save(deps.storage, &msg.config)?;
     TOTAL_WATTPEAK_STAKED.save(deps.storage, &0u64.into())?;
     EPOCH_COUNT.save(deps.storage, &0u64)?;
 
     let epoch_length = msg.config.epoch_length;
 
-    calculate_percentage_of_year(deps, epoch_length)?;
+    set_yearly_percentage(deps, epoch_length)?;
 
     Ok(Response::new().add_attribute("method", "instantiate"))
 }
@@ -47,10 +48,12 @@ mod tests {
         let msg = InstantiateMsg {
             config: Config {
                 admin: Addr::unchecked("admin"),
-                rewards_percentage: Decimal::from_ratio(10u128, 1u128),
+                rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
             },
         };
+
+        println!("msg: {:?}", msg);
 
         let info = mock_info("creator", &[]);
         let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -58,7 +61,7 @@ mod tests {
 
         let saved_config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(saved_config.admin, Addr::unchecked("admin"));
-        assert_eq!(saved_config.rewards_percentage, Decimal::from_ratio(10u128, 1u128));
+        assert_eq!(saved_config.rewards_percentage, Decimal::percent(10));
 
         let total_wattpeak: u128 = TOTAL_WATTPEAK_STAKED.load(deps.as_ref().storage).unwrap().into();
         assert_eq!(total_wattpeak, Uint128::zero().into());

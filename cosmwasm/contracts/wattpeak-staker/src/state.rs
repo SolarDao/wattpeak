@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, StdError, StdResult, Uint128};
 use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
@@ -8,6 +8,20 @@ pub struct Config {
     pub rewards_percentage: Decimal,
     // Epoch length in seconds
     pub epoch_length: u64,
+}
+
+impl Config {
+    pub fn validate(&self, deps: Deps) -> StdResult<()> {
+        deps.api.addr_validate(&self.admin.to_string())?;
+
+        if self.epoch_length == 0 {
+            return Err(StdError::generic_err("epoch_length cannot be zero"));
+        }
+        if self.rewards_percentage > Decimal::percent(100) {
+            return Err(StdError::generic_err("rewards_percentage cannot be greater than 100%"));
+        }
+        Ok(())
+    }
 }
 #[cw_serde]
 pub struct Staker {

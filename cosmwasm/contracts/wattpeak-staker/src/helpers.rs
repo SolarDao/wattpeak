@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::state::{CONFIG, EPOCH_COUNT, PERCENTAGE_OF_YEAR, STAKERS, TOTAL_INTEREST_WATTPEAK};
 use cosmwasm_std::{Decimal, DepsMut, Env, Order, Response, StdResult, Uint128};
 
-pub fn calculate_percentage_of_year(deps: DepsMut, epoch_length: u64) -> StdResult<()> {
+pub fn set_yearly_percentage(deps: DepsMut, epoch_length: u64) -> StdResult<()> {
     let time_staked = Decimal::from_ratio(epoch_length, 1u64);
     let one_year = Decimal::from_ratio(31556926u64, 1u64);
     let percentage_of_year = time_staked.checked_div(one_year).unwrap();
