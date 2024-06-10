@@ -53,8 +53,6 @@ mod tests {
             },
         };
 
-        println!("msg: {:?}", msg);
-
         let info = mock_info("creator", &[]);
         let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
         assert_eq!(0, res.messages.len());

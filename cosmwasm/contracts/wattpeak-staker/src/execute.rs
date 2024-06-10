@@ -5,10 +5,9 @@ use cosmwasm_std::{
 
 use crate::{
     helpers::{
-        calculate_interest_after_epoch, set_yearly_percentage,
-        calculate_staker_share_of_reward,
+        calculate_interest_after_epoch, calculate_staker_share_of_reward, set_yearly_percentage
     },
-    msg::ExecuteMsg,
+    msg::{self, ExecuteMsg},
     state::{Staker, CONFIG, STAKERS, TOTAL_WATTPEAK_STAKED},
 };
 
@@ -37,36 +36,40 @@ fn update_config(
     rewards_percentage: Option<Decimal>,
 ) -> StdResult<Response> {
     // Check if the sender is the admin
-    if info.sender != CONFIG.load(deps.storage)?.admin {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
         return Err(StdError::generic_err("Unauthorized"));
     }
 
     // Update the admin address if it was provided
     if let Some(admin) = admin {
-        CONFIG.update(deps.storage, |mut config| -> StdResult<_> {
-            config.admin = Addr::unchecked(admin);
-            Ok(config)
-        })?;
+        config.admin = Addr::unchecked(admin);
     }
 
     // Update the rewards percentage if it was provided
     if let Some(rewards_percentage) = rewards_percentage {
-        CONFIG.update(deps.storage, |mut config| -> StdResult<_> {
-            config.rewards_percentage = rewards_percentage;
-            Ok(config)
-        })?;
+        config.rewards_percentage = rewards_percentage;
     }
 
+    // Update the epoch length if it was provided
     if let Some(epoch_length) = epoch_length {
-        CONFIG.update(deps.storage, |mut config| -> StdResult<_> {
-            config.epoch_length = epoch_length;
-            Ok(config)
-        })?;
+        config.epoch_length = epoch_length;
+    }
+
+    // Validate the updated configuration
+    config.validate(deps.as_ref())?;
+
+    // Save the updated configuration
+    CONFIG.save(deps.storage, &config)?;
+
+    // If the epoch length was updated, update the yearly percentage
+    if let Some(epoch_length) = epoch_length {
         set_yearly_percentage(deps, epoch_length)?;
     }
 
     Ok(Response::new().add_attribute("action", "update_config"))
 }
+
 
 fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let staker_address = &info.sender;
@@ -327,6 +330,59 @@ mod tests {
             };
             let res = execute(deps.as_mut(), env.clone(), mock_info("random", &[]), msg);
             assert_eq!(res.unwrap_err().to_string(), "Generic error: Unauthorized");
+        }
+        #[test]
+        fn validate_config_epoch() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("admin", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+            let msg = ExecuteMsg::UpdateConfig {
+                admin: Some("new_admin".to_string()),
+                rewards_percentage: Some(Decimal::percent(5)),
+                epoch_length: Some(0),
+            };
+            let res = execute(deps.as_mut(), env.clone(), info, msg);
+            assert_eq!(
+                res.unwrap_err().to_string(),
+                "Generic error: epoch_length cannot be zero"
+            );
+        }
+        #[test]
+        fn validate_config_rewards_percentage() {
+            let mut deps = mock_dependencies();
+            let env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("admin", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+            let msg = ExecuteMsg::UpdateConfig {
+                admin: Some("new_admin".to_string()),
+                rewards_percentage: Some(Decimal::percent(101)),
+                epoch_length: Some(86400),
+            };
+            let res = execute(deps.as_mut(), env.clone(), info, msg);
+            assert_eq!(
+                res.unwrap_err().to_string(),
+                "Generic error: rewards_percentage cannot be greater than 100%"
+            );
+        
         }
     }
     mod staking_tests {
