@@ -25,7 +25,7 @@ It is owned and governed by the SolarDAO.
 Before any WattPeak can be minted, the contract needs Projects with available capacity to be uploaded.
 
 Projects are real-world solar projects in which the WattPeak minter has been given purchasing rights.
-Minting 1 WattPeak tokens means 1 watt-peak of solar energy production capacity is purchases from one of the 
+Minting 1 WattPeak tokens means 1 watt-peak of solar energy production capacity is purchased from one of the 
 available Projects.
 
 The minting cost (minus fees) are sent to the legal entity in charge of buying the production capacity.
@@ -34,3 +34,10 @@ Fees for minting WattPeak are sent to the SolarDAO.
 ![SolarDAO and Minter](solardao_and_minter.png)
 
 ![Asset SubDAO and Minter](asset_subdao_and_minter.png)
+
+
+## Compile Contracts
+
+In order to compile the contracts in the cosmwasm folder you need docker installed and running, the following code then optimizes and compiles the contract and creates .wasm files in the artifacts folder:
+
+docker run --rm -v "$(pwd)":/code   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry   cosmwasm/optimizer:0.15.0 --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target
