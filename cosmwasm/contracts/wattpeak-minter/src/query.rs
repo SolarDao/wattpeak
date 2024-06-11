@@ -1,4 +1,4 @@
-use cosmwasm_std::{entry_point, Deps, Env, StdResult, Binary, to_binary, Order};
+use cosmwasm_std::{entry_point, to_json_binary, Binary, Deps, Env, Order, StdResult};
 use cw_storage_plus::Bound;
 
 use crate::msg::{ProjectsResponse, QueryMsg};
@@ -9,9 +9,9 @@ pub const DEFAULT_LIMIT: u64 = 30;
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Projects { limit, start_after} => to_binary(&projects(deps, start_after, limit)?),
-        QueryMsg::Project { id } => to_binary(&project(deps, id)?),
-        QueryMsg::Config { .. } => to_binary(&config(deps)?),
+        QueryMsg::Projects { limit, start_after} => to_json_binary(&projects(deps, start_after, limit)?),
+        QueryMsg::Project { id } => to_json_binary(&project(deps, id)?),
+        QueryMsg::Config { .. } => to_json_binary(&config(deps)?),
     }
 }
 
@@ -62,7 +62,7 @@ mod tests {
     }
 
     mod test_query_projects {
-        use cosmwasm_std::{coins, from_binary};
+        use cosmwasm_std::{coins, from_json};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::execute::execute;
         use crate::instantiate;
@@ -80,7 +80,7 @@ mod tests {
                 limit: None,
                 start_after: None,
             }).unwrap();
-            let res: ProjectsResponse = from_binary(&res).unwrap();
+            let res: ProjectsResponse = from_json(&res).unwrap();
             assert_eq!(res.projects.len(), 0);
 
             let upload_first = ExecuteMsg::UploadProject {
@@ -102,7 +102,7 @@ mod tests {
                 limit: None,
                 start_after: None,
             }).unwrap();
-            let res: ProjectsResponse = from_binary(&res).unwrap();
+            let res: ProjectsResponse = from_json(&res).unwrap();
             assert_eq!(res.projects.len(), 2);
             assert_eq!(res.projects[0].name, "test name");
             assert_eq!(res.projects[0].description, "test description");
@@ -135,7 +135,7 @@ mod tests {
                 limit: Some(2),
                 start_after: None,
             }).unwrap();
-            let res: ProjectsResponse = from_binary(&res).unwrap();
+            let res: ProjectsResponse = from_json(&res).unwrap();
             assert_eq!(res.projects.len(), 2);
             assert_eq!(res.projects[0].name, "test name 0");
             assert_eq!(res.projects[1].name, "test name 1");
@@ -145,7 +145,7 @@ mod tests {
                 limit: Some(2),
                 start_after: Some(2),
             }).unwrap();
-            let res: ProjectsResponse = from_binary(&res).unwrap();
+            let res: ProjectsResponse = from_json(&res).unwrap();
             assert_eq!(res.projects.len(), 2);
             assert_eq!(res.projects[0].name, "test name 2");
             assert_eq!(res.projects[1].name, "test name 3");
@@ -154,13 +154,13 @@ mod tests {
                 limit: Some(11),
                 start_after: None,
             }).unwrap();
-            let res: ProjectsResponse = from_binary(&res).unwrap();
+            let res: ProjectsResponse = from_json(&res).unwrap();
             assert_eq!(res.projects.len(), 10);
         }
     }
 
     mod test_query_project {
-        use cosmwasm_std::{coins, from_binary, StdError};
+        use cosmwasm_std::{coins, from_json, StdError};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::execute::execute;
         use crate::instantiate;
@@ -185,7 +185,7 @@ mod tests {
             let res = query(deps.as_ref(), mock_env(), crate::msg::QueryMsg::Project {
                 id: 1,
             }).unwrap();
-            let project: crate::state::Project = from_binary(&res).unwrap();
+            let project: crate::state::Project = from_json(&res).unwrap();
             assert_eq!(project.name, "test name");
             assert_eq!(project.description, "test description");
             assert_eq!(project.document_deal_link, "ipfs://test-link");

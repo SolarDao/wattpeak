@@ -1,10 +1,12 @@
 use crate::error::ContractError;
 use crate::msg::InstantiateMsg;
 use crate::state::{
-    AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT, DECIMALS, DESCRIPTION, FULL_DENOM, NAME, SUBDENOM, SYMBOL,
+    AVAILABLE_WATTPEAK_COUNT, CONFIG, DECIMALS, DESCRIPTION, NAME, PROJECT_DEALS_COUNT,
+    SYMBOL, TOTAL_WATTPEAK_MINTED_COUNT,
 };
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response};
-use helpers::{NewDenom, create_denom_msg};
+use helpers::{create_denom_msg, NewDenom};
+use state::{FULL_DENOM, SUBDENOM};
 use token_bindings::TokenFactoryMsg;
 
 pub mod error;
@@ -17,7 +19,7 @@ pub mod state;
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
@@ -30,6 +32,9 @@ pub fn instantiate(
 
     TOTAL_WATTPEAK_MINTED_COUNT.save(deps.storage, &0).unwrap();
 
+    let full_denom = format!("factory/{}/{}", env.contract.address, SUBDENOM);
+    FULL_DENOM.save(deps.storage, &full_denom)?;
+    
     let denom = NewDenom {
         name: NAME.to_string(),
         description: Some(DESCRIPTION.to_string()),
@@ -38,9 +43,10 @@ pub fn instantiate(
         initial_balances: None,
     };
 
-    let create_denom_msg = create_denom_msg(SUBDENOM.to_string(), FULL_DENOM.to_string(), denom);
+    let create_denom_msg = create_denom_msg(SUBDENOM.to_string(), full_denom, denom);
 
     Ok(Response::new().add_message(create_denom_msg))
+
 }
 
 #[cfg(test)]
@@ -73,7 +79,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(1, res.messages.len());
-        
+
         let loaded_config = CONFIG.load(deps.as_ref().storage).unwrap();
         assert_eq!(loaded_config, config);
 

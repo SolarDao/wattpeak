@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
 use crate::state::{
-    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, PROJECT_DEALS_COUNT, SUBDENOM,
-    TOTAL_WATTPEAK_MINTED_COUNT,
+    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, FULL_DENOM, PROJECTS, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT
 };
 use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
@@ -243,9 +242,12 @@ pub fn mint_tokens_msg(
         }],
     });
 
+    let full_denom = FULL_DENOM.load(deps.storage).unwrap();
+    println!("full_denom: {:?}", full_denom);
+    
     // Prepare the minting message
     let mint_msg = TokenFactoryMsg::MintTokens {
-        denom: SUBDENOM.to_string(),
+        denom: full_denom,
         amount,
         mint_to_address: address,
     };
@@ -888,7 +890,7 @@ mod tests {
             assert_eq!(
                 res.messages[2].msg,
                 CosmosMsg::Custom(TokenFactoryMsg::MintTokens {
-                    denom: "WattPeak".to_string(),
+                    denom: "factory/cosmos2contract/uwattpeak".to_string(),
                     amount: amount_to_mint,
                     mint_to_address: "mint_to_addr".to_string(),
                 })

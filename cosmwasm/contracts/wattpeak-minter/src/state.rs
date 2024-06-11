@@ -87,9 +87,11 @@ pub const AVAILABLE_WATTPEAK_COUNT: Item<u64> = Item::new("available_wattpeak_co
 /// TOTAL_WATTPEAK_MINTED_COUNT is the total number of wattpeak that have been minted
 pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_minted");
 
-pub const SUBDENOM: &str = "WattPeak";
-pub const FULL_DENOM: &str = "WattPeak";
-pub const DESCRIPTION: &str = "WattPeak is a token that represents the amount of wattpeak that a solarpanel represents";
-pub const SYMBOL: &str = "WattPeak";
-pub const DECIMALS: u32 = 0;
+pub const FULL_DENOM: Item<String> = Item::new("token_full_denom");
+
+
+pub const SUBDENOM: &str = "uwattpeak";
+pub const DESCRIPTION: &str = "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
+pub const SYMBOL: &str = "WTP";
+pub const DECIMALS: u32 = 6;
 pub const NAME: &str = "WattPeak";

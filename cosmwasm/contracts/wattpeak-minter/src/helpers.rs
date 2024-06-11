@@ -49,7 +49,7 @@ mod tests {
 #[test]
     fn test_create_denom() {
         fn serialize_message(msg: &TokenFactoryMsg) -> Result<Vec<u8>, cosmwasm_std::StdError> {
-            let serialized_msg = cosmwasm_std::to_vec(&msg)?;
+            let serialized_msg = cosmwasm_std::to_json_vec(&msg)?;
             Ok(serialized_msg)
         }
         // Create an instance of MsgCreateDenom with example data
@@ -89,7 +89,7 @@ mod tests {
     fn test_serialization_cycle() {
 
         fn serialize_message(msg: &TokenFactoryMsg) -> Result<Vec<u8>, cosmwasm_std::StdError> {
-            let serialized_msg = cosmwasm_std::to_vec(&msg)?;
+            let serialized_msg = cosmwasm_std::to_json_vec(&msg)?;
             Ok(serialized_msg)
         }
         let msg = create_denom_msg(
@@ -104,7 +104,7 @@ mod tests {
         );
 
         let serialized = serialize_message(&msg).unwrap();
-        let deserialized: TokenFactoryMsg = cosmwasm_std::from_slice(&serialized).unwrap();
+        let deserialized: TokenFactoryMsg = cosmwasm_std::from_json(&serialized).unwrap();
 
         // Assertions to check the deserialized content matches the original message
         match deserialized {
