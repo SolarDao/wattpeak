@@ -20,7 +20,6 @@ const stargazejs = dependencies[0];
 const navItems = [
   { name: "Minting", id: "minting" },
   { name: "Staking", id: "staking" },
-  { name: "Swapping", id: "swapping" },
   { name: "Projects", id: "projects" },
   { name: "FAQ", id: "faq" },
 ];
@@ -43,6 +42,8 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection }) => {
         alignItems="center"
         mb="$8"
         px="$4"
+        maxHeight="$20"
+        marginBottom="$0"
       >
         <Text fontSize='$4xl'>
           Solar DAO

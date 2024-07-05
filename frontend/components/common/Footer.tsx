@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ chainName, handleChainChange }) 
   };
 
   return (
-    <Box as="footer" py="$8" display="flex" justifyContent="space-between">
+    <Box as="footer" display="flex" justifyContent="space-between" maxHeight="$20" marginTop="$10">
       <Button
         intent="secondary"
         size="sm"

@@ -11,7 +11,6 @@ export default function Home() {
 
   return (
     <Layout>
-      <Wallet chainName={chainName} onChainChange={onChainChange} />
     </Layout>
   );
 }

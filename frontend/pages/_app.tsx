@@ -9,12 +9,10 @@ import {
   Box,
   ThemeProvider,
   useColorModeValue,
-  useTheme,
 } from '@interchain-ui/react';
+import { customTheme } from '../config/theme'; // Import the custom theme
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
-  const { themeClass } = useTheme();
-
   const signerOptions: SignerOptions = {
     // signingStargate: () => {
     //   return getSigningCosmosClientOptions();
@@ -22,7 +20,10 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
   };
 
   return (
-    <ThemeProvider>
+    <ThemeProvider
+      themeDefs={[customTheme]}
+      customTheme="custom"
+    >
       <ChainProvider
         chains={chains}
         assetLists={assets}
@@ -42,17 +43,30 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         // @ts-ignore
         signerOptions={signerOptions}
       >
-        <Box
-          className={themeClass}
-          minHeight="100dvh"
-          backgroundColor={useColorModeValue('$white', '$background')}
-        >
+        <CustomBackground>
           {/* @ts-ignore */}
           <Component {...pageProps} />
-        </Box>
+        </CustomBackground>
       </ChainProvider>
     </ThemeProvider>
   );
 }
+
+const CustomBackground = ({ children }) => {
+  const backgroundLight = 'linear-gradient(116.82deg, #FCB023 0%, #141406 99.99%, #070D1C 100%)';
+  const backgroundDark = '#070D1C'; // This can be customized as needed
+  const background = useColorModeValue(backgroundLight, backgroundDark);
+
+  return (
+    <Box
+      minHeight="100vh"
+      sx={{
+        background,
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
 
 export default CreateCosmosApp;
