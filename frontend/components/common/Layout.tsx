@@ -12,13 +12,16 @@ import { CHAIN_NAME, CHAIN_NAME_STORAGE_KEY } from "@/config";
 import { SideNavbar } from './SideNavbar';
 import { Settings } from './Settings';
 import { Analytics } from './Analytics';
+import { Home } from './Home';
 
 export const Layout: React.FC = ({ children }) => {
-  const [currentSection, setCurrentSection] = useState('minting');
+  const [currentSection, setCurrentSection] = useState('home');
   const [chainName, setChainName] = useState(CHAIN_NAME);
 
   const renderSection = () => {
     switch (currentSection) {
+      case 'home':
+        return <Home />;
       case 'minting':
         return <Minting />;
       case 'staking':

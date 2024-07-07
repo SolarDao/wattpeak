@@ -70,7 +70,8 @@ export function Swap() {
 
   return (
     <div id='swap-token-story'>
-      <Box width='50%' margin="auto">
+      <h3>Just Swap</h3>
+      <Box width='50%' margin="auto" paddingBottom="5%">
         <SwapToken
           from={from}
           to={to}
