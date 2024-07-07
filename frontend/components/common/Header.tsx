@@ -9,6 +9,8 @@ import { useState } from "react";
 import { Wallet } from "@/components";
 import { CHAIN_NAME } from "@/config";
 import { Dispatch, SetStateAction } from 'react';
+import SolarDaoImage from "../../public/Group 121.png"
+import Image from 'next/image';
 
 type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
@@ -42,12 +44,13 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection }) => {
         alignItems="center"
         mb="$8"
         px="$4"
-        maxHeight="$20"
+        maxHeight="$18"
         marginBottom="$0"
+        marginLeft="$6"
       >
-        <Text fontSize='$4xl'>
-          Solar DAO
-        </Text>
+        
+        <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
+
         <Box display="flex" alignItems="center">
         {navItems.map((item) => (
           <Box

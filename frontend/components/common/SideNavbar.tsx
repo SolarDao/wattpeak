@@ -20,11 +20,12 @@ export const SideNavbar = ({ setCurrentSection }) => {
       flexDirection="column"
       justifyContent="flex-start"
       alignItems="center"
+      gap="$10"
       py="$4"
       px="$2"
-      height="100vh"
       marginLeft="$6"
       marginRight="$6"
+      marginTop="$14"
     >
       {sideNavItems.map((item) => (
         <Box
@@ -38,7 +39,7 @@ export const SideNavbar = ({ setCurrentSection }) => {
           cursor="pointer"
           textDecoration="none"
         >
-          <Image src={item.icon} alt={item.id} width={32} height={32} />
+          <Image src={item.icon} alt={item.id} width={25} height={22} />
         </Box>
       ))}
     </Box>

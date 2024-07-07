@@ -29,28 +29,39 @@ export const Footer: React.FC<FooterProps> = ({ chainName, handleChainChange }) 
   };
 
   return (
-    <Box as="footer" display="flex" justifyContent="space-between" maxHeight="$20" marginTop="$10">
-      <Button
-        intent="secondary"
-        size="sm"
-        attributes={{
-          paddingX: 0,
-        }}
-        onClick={toggleColorMode}
-      >
-        <Icon name={useColorModeValue("moonLine", "sunLine")} />
-      </Button>
-      <Box>
-        &copy; 2024 Solar DAO. All rights reserved.
-      </Box>
-      <Box mx="auto" maxWidth="28rem" attributes={{ mb: "$12" }}>
-        <ChainSelect
-          chains={chains}
-          chainName={chainName}
-          onChange={onChainChange}
-        />
-      </Box>
+    <Box
+    as="footer"
+    display="flex"
+    justifyContent="space-between"
+    alignItems="center"
+    maxHeight="$15"
+    marginTop="$10"
+    marginLeft="$10"
+    marginRight="$10"
+    paddingBottom="$10"
+    px="$4"
+  >
+    <Button
+      intent="secondary"
+      size="sm"
+      attributes={{
+        paddingX: 0,
+      }}
+      onClick={toggleColorMode}
+    >
+      <Icon name={useColorModeValue("moonLine", "sunLine")} />
+    </Button>
+    <Box flex="1" textAlign="center">
+      &copy; 2024 Solar DAO. All rights reserved.
     </Box>
+    <Box maxWidth="28rem">
+      <ChainSelect
+        chains={chains}
+        chainName={chainName}
+        onChange={onChainChange}
+      />
+    </Box>
+  </Box>
   );
 };
 
