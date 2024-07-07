@@ -1,4 +1,3 @@
-import Head from 'next/head';
 import { Box, Container } from '@interchain-ui/react';
 import { Header } from './Header';
 import { Footer } from './Footer';
@@ -7,16 +6,29 @@ import { Staking } from './Staking';
 import { Swap } from './Swap';
 import { Projects } from './Projects';
 import { Faq } from './Faq';
-import { useState } from 'react';
-import { CHAIN_NAME, CHAIN_NAME_STORAGE_KEY } from "@/config";
+import { SetStateAction, useState } from 'react';
 import { SideNavbar } from './SideNavbar';
 import { Settings } from './Settings';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
+import { CHAIN_NAME_STORAGE_KEY } from "@/config";
 
-export const Layout: React.FC = ({ children }) => {
+const JUNO_CHAIN_NAME = 'juno';
+const STARGAZE_CHAIN_NAME = 'stargaze';
+
+export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSection, setCurrentSection] = useState('home');
-  const [chainName, setChainName] = useState(CHAIN_NAME);
+  const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
+
+  const handleSectionChange = (section: SetStateAction<string>) => {
+    setCurrentSection(section);
+    if (section === 'swapping') {
+      setChainName(STARGAZE_CHAIN_NAME);
+    } else {
+      setChainName(JUNO_CHAIN_NAME);
+    }
+    localStorage.setItem(CHAIN_NAME_STORAGE_KEY, chainName);
+  };
 
   const renderSection = () => {
     switch (currentSection) {
@@ -37,29 +49,22 @@ export const Layout: React.FC = ({ children }) => {
       case 'analytics':
         return <Analytics />;
       default:
-        return <Minting />;
+        return <Home />;
     }
   };
-
-  function handleChainChange(chainName?: string) {
-    if (chainName) {
-      setChainName(chainName);
-      localStorage.setItem(CHAIN_NAME_STORAGE_KEY, chainName!);
-    }
-  }
 
   return (
     <Container maxWidth="80rem" attributes={{ py: '$14' }}>
       <div className="box">
-      <Header setCurrentSection={setCurrentSection} />
-      <Box display="flex">
-        <SideNavbar setCurrentSection={setCurrentSection} />
-        <Box flex="1" p="$4" minHeight= "$fit" backgroundColor="White" borderRadius="$4xl" color="Black" marginRight="$10">
-          {renderSection()}
-          {children}
+        <Header setCurrentSection={handleSectionChange} />
+        <Box display="flex">
+          <SideNavbar setCurrentSection={handleSectionChange} />
+          <Box flex="1" p="$4" minHeight="$fit" backgroundColor="White" borderRadius="$4xl" color="Black" marginRight="$10">
+            {renderSection()}
+            {children}
+          </Box>
         </Box>
-      </Box>
-      <Footer chainName={chainName} handleChainChange={handleChainChange} />
+        <Footer />
       </div>
     </Container>
   );

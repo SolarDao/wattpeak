@@ -37,7 +37,7 @@ export const Minting = () => {
       <h1>NFT Contract Config</h1>
       {error && <p>Error: {error.message}</p>}
       {config ? (
-        <pre>{JSON.stringify(config, null, 2)}</pre>
+        <pre>{JSON.stringify(config.price_per_nft, null, 2)}</pre>
       ) : (
         <p>Loading config...</p>
       )}

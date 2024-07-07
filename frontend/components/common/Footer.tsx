@@ -5,27 +5,12 @@ import {
   useColorModeValue,
   useTheme,
 } from "@interchain-ui/react";
-import { ChainSelect } from "../wallet/Chain";
-import { useChain } from "@cosmos-kit/react";
-import { chains } from "chain-registry";
-import { CHAIN_NAME_STORAGE_KEY } from "@/config";
 
-type FooterProps = {
-  chainName: string;
-  handleChainChange: (chainName?: string) => void;
-};
-
-export const Footer: React.FC<FooterProps> = ({ chainName, handleChainChange }) => {
+export const Footer = () =>{
   const { theme, setTheme } = useTheme();
-  const chain = useChain(chainName);
 
   const toggleColorMode = () => {
     setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  const onChainChange = (newChainName?: string) => {
-    handleChainChange(newChainName);
-    localStorage.setItem(CHAIN_NAME_STORAGE_KEY, chainName!);
   };
 
   return (
@@ -53,13 +38,6 @@ export const Footer: React.FC<FooterProps> = ({ chainName, handleChainChange }) 
     </Button>
     <Box flex="1" textAlign="center">
       &copy; 2024 Solar DAO. All rights reserved.
-    </Box>
-    <Box maxWidth="28rem">
-      <ChainSelect
-        chains={chains}
-        chainName={chainName}
-        onChange={onChainChange}
-      />
     </Box>
   </Box>
   );

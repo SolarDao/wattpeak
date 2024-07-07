@@ -1,18 +1,18 @@
 import '../styles/globals.css';
 import '@interchain-ui/react/styles';
-
 import type { AppProps } from 'next/app';
 import { SignerOptions, wallets } from 'cosmos-kit';
 import { ChainProvider } from '@cosmos-kit/react';
 import { assets, chains } from 'chain-registry';
-import {
-  Box,
-  ThemeProvider,
-  useColorModeValue,
-} from '@interchain-ui/react';
-import { customTheme } from '../config/theme'; // Import the custom theme
+import { Box, ThemeProvider, useColorModeValue, useTheme } from '@interchain-ui/react';
+import { WalletAddressProvider } from '../context/WalletAddressContext';  // Import the WalletAddressProvider
+
+// Include only the required chains
+const includedChains = chains.filter(chain => ['stargaze', 'juno'].includes(chain.chain_name));
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
+  const { themeClass } = useTheme();
+
   const signerOptions: SignerOptions = {
     // signingStargate: () => {
     //   return getSigningCosmosClientOptions();
@@ -20,12 +20,9 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
   };
 
   return (
-    <ThemeProvider
-      themeDefs={[customTheme]}
-      customTheme="custom"
-    >
+    <ThemeProvider>
       <ChainProvider
-        chains={chains}
+        chains={includedChains}
         assetLists={assets}
         wallets={wallets}
         walletConnectOptions={{
@@ -43,30 +40,18 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         // @ts-ignore
         signerOptions={signerOptions}
       >
-        <CustomBackground>
-          {/* @ts-ignore */}
-          <Component {...pageProps} />
-        </CustomBackground>
+        <WalletAddressProvider>
+          <Box
+            className={themeClass}
+            minHeight="100dvh"
+            backgroundColor={useColorModeValue('$white', '$background')}
+          >
+            <Component {...pageProps} />
+          </Box>
+        </WalletAddressProvider>
       </ChainProvider>
     </ThemeProvider>
   );
 }
-
-const CustomBackground = ({ children }) => {
-  const backgroundLight = 'linear-gradient(116.82deg, #FCB023 0%, #141406 99.99%, #070D1C 100%)';
-  const backgroundDark = '#070D1C'; // This can be customized as needed
-  const background = useColorModeValue(backgroundLight, backgroundDark);
-
-  return (
-    <Box
-      minHeight="100vh"
-      sx={{
-        background,
-      }}
-    >
-      {children}
-    </Box>
-  );
-};
 
 export default CreateCosmosApp;

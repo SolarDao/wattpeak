@@ -63,8 +63,10 @@ export function ChainSelect({
         setInput(chain.pretty_name);
       }
     }
+    console.log('chains', chains);
   }, [chains, chainName]);
 
+  
   const avatar = cache[value!]?.logo_URIs?.png || cache[value!]?.logo_URIs?.svg;
 
   return (

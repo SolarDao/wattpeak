@@ -1,97 +1,95 @@
-import { useEffect } from "react";
-import {
-  Box,
-  ClipboardCopyText,
-  Stack,
-  useColorModeValue,
-} from "@interchain-ui/react";
+import { useEffect, useState } from 'react';
+import { Box, Stack, Icon, Text } from "@interchain-ui/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { useChain } from "@cosmos-kit/react";
-import { chains } from "chain-registry";
-import { Warning } from "./Warning";
-import { ChainSelect } from "./Chain";
-import { CHAIN_NAME, CHAIN_NAME_STORAGE_KEY } from "@/config";
-import {
-  ButtonConnect,
-  ButtonConnected,
-  ButtonConnecting,
-  ButtonDisconnected,
-  ButtonError,
-  ButtonNotExist,
-  ButtonRejected,
-} from "./Connect";
+import { ButtonConnect, ButtonConnected, ButtonConnecting, ButtonDisconnected, ButtonError, ButtonNotExist, ButtonRejected } from "./Connect";
+import { Warning } from "./Warning"; // Import the Warning component
+import { useWalletAddress } from '../../context/WalletAddressContext'; // Import the context
 
 export type WalletProps = {
-  chainName?: string;
-  onChainChange?: (chainName?: string) => void;
+  chainName: string;
 };
 
-export function Wallet({
-  chainName = CHAIN_NAME,
-  onChainChange = () => {},
-}: WalletProps) {
-  const {
-    chain,
-    status,
-    wallet,
-    message,
-    connect,
-    openView,
-  } = useChain(chainName);
+export function Wallet({ chainName }: WalletProps) {
+  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName);
+  const { setWalletAddress } = useWalletAddress(); // Use the context
+
+  const [isAlertVisible, setIsAlertVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (address) {
+      setWalletAddress(address);
+    }
+  }, [address, setWalletAddress]);
 
   const ConnectButton = {
     [WalletStatus.Connected]: <ButtonConnected onClick={openView} />,
     [WalletStatus.Connecting]: <ButtonConnecting />,
     [WalletStatus.Disconnected]: <ButtonDisconnected onClick={connect} />,
-    [WalletStatus.Error]: <ButtonError onClick={openView} />,
-    [WalletStatus.Rejected]: <ButtonRejected onClick={connect} />,
+    [WalletStatus.Error]: <ButtonError onClick={() => {
+      setErrorMessage(message || "Unknown error");
+      setIsAlertVisible(true);
+    }} />,
+    [WalletStatus.Rejected]: <ButtonRejected onClick={() => {
+      setErrorMessage(message || "Unknown error");
+      setIsAlertVisible(true);
+    }} />,
     [WalletStatus.NotExist]: <ButtonNotExist onClick={openView} />,
   }[status] || <ButtonConnect onClick={connect} />;
 
-  function handleChainChange(chainName?: string) {
-    if (chainName) {
-      onChainChange(chainName);
-      localStorage.setItem(CHAIN_NAME_STORAGE_KEY, chainName!);
-    }
-  }
+  useEffect(() => {
+    console.log("Current Chain:", chainName);
+  }, [chainName]);
 
   useEffect(() => {
-    const selected = localStorage.getItem(CHAIN_NAME_STORAGE_KEY);
-    if (selected && selected !== chainName) {
-      onChainChange(selected);
+    if (status === WalletStatus.Disconnected || status === WalletStatus.Error || status === WalletStatus.Rejected) {
+      connect();
     }
-  }, []);
+  }, [chainName, status]);
 
   return (
-    <Box py="$16">
-      <Stack
-        direction="vertical"
-        attributes={{
-          mx: "auto",
-          px: "$8",
-          py: "$15",
-          maxWidth: "21rem",
-          justifyContent: "center",
-        }}
-      >
+    <Box>
+      {isAlertVisible && (
         <Box
-          my="$8"
-          flex="1"
-          width="full"
-          display="flex"
-          height="$16"
-          overflow="hidden"
-          justifyContent="center"
-          px={{ mobile: "$8", tablet: "$10" }}
+          position="absolute"
+          top="0"
+          left="50%"
+          transform="translateX(-50%)"
+          zIndex="9999"
         >
-          {ConnectButton}
+          <Warning
+            text={errorMessage}
+            icon={<Icon name="errorWarningLine" size="$lg" />}
+          />
         </Box>
+      )}
 
-        {message &&
-            [WalletStatus.Error, WalletStatus.Rejected].includes(status)
-          ? <Warning text={`${wallet?.prettyName}: ${message}`} />
-          : null}
-      </Stack>
+      <Box py="$16">
+        <Stack
+          direction="vertical"
+          attributes={{
+            mx: "auto",
+            px: "$8",
+            py: "$15",
+            maxWidth: "21rem",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            my="$8"
+            flex="1"
+            width="full"
+            display="flex"
+            height="$16"
+            overflow="hidden"
+            justifyContent="center"
+            px={{ mobile: "$8", tablet: "$10" }}
+          >
+            {ConnectButton}
+          </Box>
+        </Stack>
+      </Box>
     </Box>
   );
 }

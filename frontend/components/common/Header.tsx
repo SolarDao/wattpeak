@@ -15,9 +15,6 @@ type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
 };
 
-const stacks = ["Cosmos Kit", "Next.js"];
-const stargazejs = dependencies[0];
-
 const navItems = [
   { name: "Minting", id: "minting" },
   { name: "Staking", id: "staking" },
