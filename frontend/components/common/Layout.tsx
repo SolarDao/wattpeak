@@ -6,7 +6,7 @@ import { Staking } from './Staking';
 import { Swap } from './Swap';
 import { Projects } from './Projects';
 import { Faq } from './Faq';
-import { SetStateAction, useState } from 'react';
+import { SetStateAction, useState, useEffect } from 'react';
 import { SideNavbar } from './SideNavbar';
 import { Settings } from './Settings';
 import { Analytics } from './Analytics';
@@ -22,13 +22,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const handleSectionChange = (section: SetStateAction<string>) => {
     setCurrentSection(section);
-    if (section === 'swapping') {
-      setChainName(STARGAZE_CHAIN_NAME);
-    } else {
-      setChainName(JUNO_CHAIN_NAME);
-    }
-    localStorage.setItem(CHAIN_NAME_STORAGE_KEY, chainName);
+    const newChainName = section === 'swapping' ? STARGAZE_CHAIN_NAME : JUNO_CHAIN_NAME;
+    setChainName(newChainName);
+    localStorage.setItem(CHAIN_NAME_STORAGE_KEY, newChainName);
   };
+
+  useEffect(() => {
+    const storedChainName = localStorage.getItem(CHAIN_NAME_STORAGE_KEY);
+    if (storedChainName) {
+      setChainName(storedChainName);
+    }
+  }, []);
 
   const renderSection = () => {
     switch (currentSection) {
@@ -56,7 +60,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <Container maxWidth="80rem" attributes={{ py: '$14' }}>
       <div className="box">
-        <Header setCurrentSection={handleSectionChange} />
+        <Header setCurrentSection={handleSectionChange} chainName={chainName} />
         <Box display="flex">
           <SideNavbar setCurrentSection={handleSectionChange} />
           <Box flex="1" p="$4" minHeight="$fit" backgroundColor="White" borderRadius="$4xl" color="Black" marginRight="$10">

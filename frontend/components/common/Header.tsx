@@ -3,16 +3,14 @@ import {
   useColorModeValue,
   useTheme,
 } from "@interchain-ui/react";
-import { dependencies } from "@/config";
-import { useState } from "react";
-import { Wallet } from "@/components";
-import { CHAIN_NAME } from "@/config";
+import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction } from 'react';
 import SolarDaoImage from "../../public/Group 121.png"
 import Image from 'next/image';
 
 type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
+  chainName: string;
 };
 
 const navItems = [
@@ -22,14 +20,13 @@ const navItems = [
   { name: "FAQ", id: "faq" },
 ];
 
-export const Header: React.FC<HeaderProps> = ({ setCurrentSection }) => {
+export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) => {
   const { theme, setTheme } = useTheme();
 
-  const [chainName, setChainName] = useState(CHAIN_NAME);
-
-  function onChainChange(chainName?: string) {
-    setChainName(chainName!);
-  }
+  const handleChainChange = (newChainName: string) => {
+    // Perform any additional logic if needed
+    setCurrentSection(currentSection => currentSection); // Just to trigger re-render if needed
+  };
 
   return (
     <>
@@ -55,31 +52,29 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection }) => {
             textDecoration: "none",
           }}
         >
-        <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
+          <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
         </Box>
 
-
         <Box display="flex" alignItems="center">
-        {navItems.map((item) => (
-          <Box
-            key={item.id}
-            as="a"
-            onClick={() => setCurrentSection(item.id)}
-            attributes={{
-              // eslint-disable-next-line react-hooks/rules-of-hooks
-              color: useColorModeValue("$gray900", "$gray100"),
-              fontWeight: "$medium",
-              fontSize: { mobile: "$xl", tablet: "$2xl" },
-              marginRight: "$4",
-              cursor: "pointer",
-              textDecoration: "none",
-            }}
-          >
-            {item.name}
-          </Box>
-        ))}
-      </Box>
-        <Wallet chainName={chainName} onChainChange={onChainChange} />
+          {navItems.map((item) => (
+            <Box
+              key={item.id}
+              as="a"
+              onClick={() => setCurrentSection(item.id)}
+              attributes={{
+                color: useColorModeValue("$gray900", "$gray100"),
+                fontWeight: "$medium",
+                fontSize: { mobile: "$xl", tablet: "$2xl" },
+                marginRight: "$4",
+                cursor: "pointer",
+                textDecoration: "none",
+              }}
+            >
+              {item.name}
+            </Box>
+          ))}
+        </Box>
+        <Wallet chainName={chainName} onChainChange={handleChainChange} />
       </Box>
     </>
   );

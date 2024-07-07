@@ -21,7 +21,7 @@ export const Footer = () =>{
     alignItems="center"
     maxHeight="$15"
     marginTop="$10"
-    marginLeft="$10"
+    marginLeft="$1"
     marginRight="$10"
     paddingBottom="$10"
     px="$4"

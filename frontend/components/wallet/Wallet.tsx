@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Box, Stack, Icon, Text } from "@interchain-ui/react";
+import { Box, Stack, Icon } from "@interchain-ui/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { useChain } from "@cosmos-kit/react";
 import { ButtonConnect, ButtonConnected, ButtonConnecting, ButtonDisconnected, ButtonError, ButtonNotExist, ButtonRejected } from "./Connect";
 import { Warning } from "./Warning"; // Import the Warning component
-import { useWalletAddress } from '../../context/WalletAddressContext'; // Import the context
+import { useWalletAddress } from '@/context/WalletAddressContext';
 
 export type WalletProps = {
   chainName: string;
+  onChainChange?: (chainName: string) => void;
 };
 
-export function Wallet({ chainName }: WalletProps) {
+export function Wallet({ chainName, onChainChange }: WalletProps) {
   const { chain, status, wallet, message, connect, openView, address } = useChain(chainName);
   const { setWalletAddress } = useWalletAddress(); // Use the context
 
@@ -22,6 +23,18 @@ export function Wallet({ chainName }: WalletProps) {
       setWalletAddress(address);
     }
   }, [address, setWalletAddress]);
+
+  useEffect(() => {
+    if (onChainChange && chain.chain_name !== chainName) {
+      onChainChange(chain.chain_name);
+    }
+  }, [chain, chainName, onChainChange]);
+
+  useEffect(() => {
+    if (status === WalletStatus.Connected && address) {
+      // Do something with the address if needed
+    }
+  }, [status, address]);
 
   const ConnectButton = {
     [WalletStatus.Connected]: <ButtonConnected onClick={openView} />,
@@ -39,14 +52,10 @@ export function Wallet({ chainName }: WalletProps) {
   }[status] || <ButtonConnect onClick={connect} />;
 
   useEffect(() => {
-    console.log("Current Chain:", chainName);
-  }, [chainName]);
-
-  useEffect(() => {
     if (status === WalletStatus.Disconnected || status === WalletStatus.Error || status === WalletStatus.Rejected) {
       connect();
     }
-  }, [chainName, status]);
+  }, [chainName, status, connect]);
 
   return (
     <Box>
@@ -64,7 +73,6 @@ export function Wallet({ chainName }: WalletProps) {
           />
         </Box>
       )}
-
       <Box py="$16">
         <Stack
           direction="vertical"

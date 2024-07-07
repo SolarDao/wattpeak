@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { assets } from 'chain-registry';
 import { AvailableItem, Box, SwapToken, SwapTokenProps } from '@interchain-ui/react';
+import { useWalletAddress } from '../../context/WalletAddressContext';
 
 const symbols = ['ATOM', 'OSMO', 'JUNO', 'STARS', 'BLD', 'STRD', 'CRO', 'AKT', 'MARS'];
 
@@ -20,6 +21,7 @@ const dropdownList = symbols.map((symbol) => {
 });
 
 export function Swap() {
+  const { walletAddress } = useWalletAddress(); // Use the context
   const [from, setFrom] = useState<SwapTokenProps['to']>({
     label: 'From',
     options: dropdownList ?? [],
@@ -94,6 +96,7 @@ export function Swap() {
           }}
         />
       </Box>
+      <div>{walletAddress}</div>
     </div>
   );
 }
