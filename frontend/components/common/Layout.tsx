@@ -12,13 +12,16 @@ import { Settings } from './Settings';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
+import { useWallet } from '@cosmos-kit/react';
 
-const JUNO_CHAIN_NAME = 'juno';
-const STARGAZE_CHAIN_NAME = 'stargaze';
+const JUNO_CHAIN_NAME = 'junotestnet';
+const STARGAZE_CHAIN_NAME = 'stargazetestnet';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSection, setCurrentSection] = useState('home');
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
+  const walletName = "keplr-extension";
+
 
   const handleSectionChange = (section: SetStateAction<string>) => {
     setCurrentSection(section);
@@ -39,7 +42,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       case 'home':
         return <Home />;
       case 'minting':
-        return <Minting />;
+        return <Minting chainName={chainName} />
       case 'staking':
         return <Staking />;
       case 'swapping':

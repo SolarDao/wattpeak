@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Stack, Icon } from "@interchain-ui/react";
 import { WalletStatus } from "@cosmos-kit/core";
-import { useChain } from "@cosmos-kit/react";
+import { useChain, useWallet } from "@cosmos-kit/react";
 import { ButtonConnect, ButtonConnected, ButtonConnecting, ButtonDisconnected, ButtonError, ButtonNotExist, ButtonRejected } from "./Connect";
 import { Warning } from "./Warning"; // Import the Warning component
 import { useWalletAddress } from '@/context/WalletAddressContext';
@@ -12,7 +12,11 @@ export type WalletProps = {
 };
 
 export function Wallet({ chainName, onChainChange }: WalletProps) {
-  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName);
+  const walletName = useWallet();
+  console.log('walletName', walletName);
+  
+  
+  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName, walletName);
   const { setWalletAddress } = useWalletAddress(); // Use the context
 
   const [isAlertVisible, setIsAlertVisible] = useState(false);
@@ -58,7 +62,7 @@ export function Wallet({ chainName, onChainChange }: WalletProps) {
   }, [chainName, status, connect]);
 
   return (
-    <Box>
+    <Box position="relative">
       {isAlertVisible && (
         <Box
           position="absolute"

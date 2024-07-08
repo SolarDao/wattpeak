@@ -7,8 +7,13 @@ import { assets, chains } from 'chain-registry';
 import { Box, ThemeProvider, useColorModeValue, useTheme } from '@interchain-ui/react';
 import { WalletAddressProvider } from '../context/WalletAddressContext';  // Import the WalletAddressProvider
 
+console.log('chains', chains);
+
 // Include only the required chains
-const includedChains = chains.filter(chain => ['stargaze', 'juno'].includes(chain.chain_name));
+const includedChains = chains.filter(chain => ['stargazetestnet', 'junotestnet'].includes(chain.chain_name));
+
+console.log('wallets', wallets);
+
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
   const { themeClass } = useTheme();
