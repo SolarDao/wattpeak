@@ -13,8 +13,6 @@ export type WalletProps = {
 
 export function Wallet({ chainName, onChainChange }: WalletProps) {
   const walletName = useWallet();
-  console.log('walletName', walletName);
-  
   
   const { chain, status, wallet, message, connect, openView, address } = useChain(chainName, walletName);
   const { setWalletAddress } = useWalletAddress(); // Use the context

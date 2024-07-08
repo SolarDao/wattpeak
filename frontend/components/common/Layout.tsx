@@ -12,7 +12,6 @@ import { Settings } from './Settings';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
-import { useWallet } from '@cosmos-kit/react';
 
 const JUNO_CHAIN_NAME = 'junotestnet';
 const STARGAZE_CHAIN_NAME = 'stargazetestnet';

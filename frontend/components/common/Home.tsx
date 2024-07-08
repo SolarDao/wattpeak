@@ -1,25 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { queryStakers } from '../../utils/queryStaker'; // Adjust the import path if necessary
+import { useWalletAddress } from '../../context/WalletAddressContext';
+import { queryStakers } from '../../utils/queryStaker';
 
 export const Home = () => {
-  const [stakers, setStakers] = useState([]);
+  const [staker, setStaker] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { walletAddress } = useWalletAddress();
+
+  console.log('Wallet Address:', walletAddress);
 
   useEffect(() => {
     const fetchStakers = async () => {
-      try {
-        const result = await queryStakers();
-        setStakers(result.stakers);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-        setLoading(false);
+      if (walletAddress) {
+        try {
+          const result = await queryStakers(walletAddress);
+          setStaker(result);
+          console.log('Stakers:', result);
+          setLoading(false);
+        } catch (err) {
+          setError(err);
+          console.error('Error fetching stakers:', err);
+          setLoading(false);
+        }
+      } else {
+        console.log('No wallet address available yet');
       }
     };
 
     fetchStakers();
-  }, []);
+  }, [walletAddress]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -28,15 +38,12 @@ export const Home = () => {
     <div>
       <h1>Home Page</h1>
       <h2>Stakers Info</h2>
-      <ul>
-        {stakers.map((staker, index) => (
-          <li key={index}>
-            <p>Address: {staker}</p>
-            <p>Staked Amount: {staker}</p>
-            <p>Interest Earned: {staker}</p>
-          </li>
-        ))}
-      </ul>
+        <p>{staker.claimable_rewards}</p>
+        <p>{staker.interest_wattpeak}</p>
+        <p>{staker.stake_start_time}</p>
+        <p>{staker.wattpeak_staked}</p>
     </div>
   );
 };
+
+export default Home;
