@@ -96,6 +96,12 @@ export const Swap = ({ chainName }) => {
       );
       console.log('Swap result:', result);
       setWalletNfts(walletNfts.filter((nft) => nft !== selectedNft));
+      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      setWalletNfts(walletNftsResult.tokens || []); // Adjust based on your query response structure
+
+      const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
+      setContractNfts(contractNftsResult.tokens || []); // Adjust based on your query response structure
+
       setSelectedNft(null);
     } catch (err) {
       setError(err);
@@ -134,7 +140,7 @@ export const Swap = ({ chainName }) => {
           approve: {
             spender: SWAP_CONTRACT_ADDRESS,
             token_id: selectedNft,
-            expires: { at_time: Math.floor(Date.now() / 1000) + 3600 }, // Expires in 1 hour
+            expires: { at_time: Math.floor(Date.now() / 1000) + 60 }, // Expires in 1 hour
           },
         };
         console.log('Approve Message:', approveMsg);
@@ -171,6 +177,12 @@ export const Swap = ({ chainName }) => {
       );
       console.log('Swap result:', swapResult);
       setWalletNfts(walletNfts.filter((nft) => nft !== selectedNft));
+      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      setWalletNfts(walletNftsResult.tokens || []); // Adjust based on your query response structure
+
+      const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
+      setContractNfts(contractNftsResult.tokens || []); // Adjust based on your query response structure
+      
       setSelectedNft(null);
     } catch (err) {
       setError(err);
