@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useWalletAddress } from '../../context/WalletAddressContext';
 import { queryStakers } from '../../utils/queryStaker';
-import Balances from './Balances'; // Import the Balances component
 
 export const Home = () => {
   const [staker, setStakers] = useState([]);
@@ -37,8 +36,7 @@ export const Home = () => {
         <p>claimable_rewards: {staker.claimable_rewards}</p>
         <p>interest earned: {staker.interest_wattpeak}</p>
         <p>staking start time: {staker.stake_start_time}</p>
-        <p>wattpeak staked: {staker.wattpeak_staked}</p>
-      <Balances /> {/* Include the Balances component */}
+        <p>wattpeak staked: {staker.wattpeak_staked / 1000000}</p>
     </div>
   );
 };

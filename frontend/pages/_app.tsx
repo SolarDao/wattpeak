@@ -6,6 +6,7 @@ import { ChainProvider } from '@cosmos-kit/react';
 import { assets, chains } from 'chain-registry';
 import { Box, ThemeProvider, useColorModeValue, useTheme } from '@interchain-ui/react';
 import { WalletAddressProvider } from '../context/WalletAddressContext';  // Import the WalletAddressProvider
+import { BalancesProvider } from '@/context/junoBalancesContext';
 
 console.log('chains', chains);
 
@@ -23,7 +24,7 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
     //   return getSigningCosmosClientOptions();
     // }
   };
-
+  
   return (
     <ThemeProvider>
       <ChainProvider
@@ -42,21 +43,20 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
             },
           },
         }}
-        // @ts-ignore
-        signerOptions={signerOptions}
       >
         <WalletAddressProvider>
-          <Box
-            className={themeClass}
-            minHeight="100dvh"
-            backgroundColor={useColorModeValue('$white', '$background')}
-          >
-            <Component {...pageProps} />
-          </Box>
+          <BalancesProvider>
+            <Box
+              className={themeClass}
+              minHeight="100dvh"
+              backgroundColor={useColorModeValue('$white', '$background')}
+            >
+              <Component {...pageProps} />
+            </Box>
+          </BalancesProvider>
         </WalletAddressProvider>
       </ChainProvider>
     </ThemeProvider>
   );
 }
-
 export default CreateCosmosApp;

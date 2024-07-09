@@ -19,8 +19,6 @@ const STARGAZE_CHAIN_NAME = 'stargazetestnet';
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSection, setCurrentSection] = useState('home');
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
-  const walletName = "keplr-extension";
-
 
   const handleSectionChange = (section: SetStateAction<string>) => {
     setCurrentSection(section);
@@ -43,9 +41,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       case 'minting':
         return <Minting chainName={chainName} />
       case 'staking':
-        return <Staking />;
+        return <Staking chainName={chainName} />;
       case 'swapping':
-        return <Swap />;
+        return <Swap chainName={chainName} />;
       case 'projects':
         return <Projects />;
       case 'faq':
