@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useWalletAddress } from '../../context/WalletAddressContext';
-import { queryNftsByAddress } from '../../utils/queryNfts';
+import { queryNftsByAddress, queryNftConfig } from '../../utils/queryNfts';
 import { useChainWallet, useWallet } from '@cosmos-kit/react';
 import { Spinner, Alert, AlertIcon, Tabs, TabList, TabPanels, Tab, TabPanel, Button, Input } from '@chakra-ui/react';
+import { toBase64 } from '@cosmjs/encoding';
 
-const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
-const SWAP_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS; // Adjust if different
+const HERO_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
+const SWAP_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_SWAPPER_CONTRACT_ADDRESS; // Adjust if different
 
 export const Swap = ({ chainName }) => {
   let wallet = useWallet();
@@ -20,8 +21,8 @@ export const Swap = ({ chainName }) => {
   const [signingClient, setSigningClient] = useState(null);
   const [selectedNft, setSelectedNft] = useState(null);
   const [swapping, setSwapping] = useState(false);
-  const [tokenAmount, setTokenAmount] = useState('');
   const [swappingToNft, setSwappingToNft] = useState(false);
+  const [config, setConfig] = useState({ price_per_nft: '0', token_denom: 'ustars' });
 
   useEffect(() => {
     const fetchNfts = async () => {
@@ -33,6 +34,9 @@ export const Swap = ({ chainName }) => {
           const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
           setContractNfts(contractNftsResult.tokens || []); // Adjust based on your query response structure
 
+          const configResult = await queryNftConfig();
+          setConfig(configResult);
+          
           setLoading(false);
         } catch (err) {
           setError(err);
@@ -62,7 +66,7 @@ export const Swap = ({ chainName }) => {
     fetchClient();
   }, [status, getSigningCosmWasmClient, connect]);
 
-  const handleApproveAndSwap = async () => {
+  const swapNftToTokens = async () => {
     if (!signingClient || !selectedNft) {
       console.error('Signing client or selected NFT not initialized');
       return;
@@ -70,33 +74,90 @@ export const Swap = ({ chainName }) => {
 
     try {
       setSwapping(true);
+      
+      const msgDetails = JSON.stringify({ amount: config.price_per_nft, denom: config.token_denom });
+      const msgBase64 = btoa(msgDetails);
+      const swapMsg = {
+        send_nft: {
+          contract: SWAP_CONTRACT_ADDRESS,
+          token_id: selectedNft,
+          msg: msgBase64,
+        },
+      };
 
-      // Approve the contract to transfer the NFT
-      const approveMsg = {
-        approve: {
+      const result = await signingClient.execute(
+        walletAddress, // Sender address
+        HERO_CONTRACT_ADDRESS, // Swap Contract address
+        swapMsg, // Swap message
+        {
+          amount: [{ denom: 'ustars', amount: '7500' }], // fee
+          gas: '300000', // gas limit
+        },
+      );
+      console.log('Swap result:', result);
+      setWalletNfts(walletNfts.filter((nft) => nft !== selectedNft));
+      setSelectedNft(null);
+    } catch (err) {
+      setError(err);
+      console.error('Error executing swap:', err);
+    } finally {
+      setSwapping(false);
+    }
+  };
+  const handleApproveAndSwap = async () => {
+    if (!signingClient || !selectedNft) {
+      console.error('Signing client or selected NFT not initialized');
+      return;
+    }
+  
+    try {
+      setSwapping(true);
+  
+      // Query existing approval
+      const approvalQueryMsg = {
+        approval: {
           spender: SWAP_CONTRACT_ADDRESS,
           token_id: selectedNft,
         },
       };
-
-      const approveResult = await signingClient.execute(
-        walletAddress, // Sender address
-        NFT_CONTRACT_ADDRESS, // NFT Contract address
-        approveMsg, // Approve message
-        {
-          amount: [{ denom: 'ustars', amount: '7500' }], // fee
-          gas: '200000', // gas limit
-        }
+      
+      const approvalQueryResult = await signingClient.queryContractSmart(
+        HERO_CONTRACT_ADDRESS,
+        approvalQueryMsg
       );
-      console.log('Approve result:', approveResult);
-
+      
+      console.log('Approval Query Result:', approvalQueryResult);
+  
+      // If approval is not granted or expired, grant approval
+      if (!approvalQueryResult || !approvalQueryResult.approval) {
+        const approveMsg = {
+          approve: {
+            spender: SWAP_CONTRACT_ADDRESS,
+            token_id: selectedNft,
+            expires: { at_time: Math.floor(Date.now() / 1000) + 3600 }, // Expires in 1 hour
+          },
+        };
+        console.log('Approve Message:', approveMsg);
+  
+        const approveResult = await signingClient.execute(
+          walletAddress, // Sender address
+          HERO_CONTRACT_ADDRESS, // NFT Contract address
+          approveMsg, // Approve message
+          {
+            amount: [{ denom: 'ustars', amount: '7500' }], // fee
+            gas: '200000', // gas limit
+          }
+        );
+        console.log('Approve result:', approveResult);
+      }
+  
       // Swap the NFT for tokens
       const swapMsg = {
         swap_token: {
           nft_id: selectedNft,
         },
       };
-
+  
       const swapResult = await signingClient.execute(
         walletAddress, // Sender address
         SWAP_CONTRACT_ADDRESS, // Swap Contract address
@@ -106,7 +167,7 @@ export const Swap = ({ chainName }) => {
           gas: '300000', // gas limit
         },
         "",
-        [{ denom: "ustars", amount: "1000000" }] 
+        [{ denom: config.token_denom, amount: config.price_per_nft }]
       );
       console.log('Swap result:', swapResult);
       setWalletNfts(walletNfts.filter((nft) => nft !== selectedNft));
@@ -118,43 +179,7 @@ export const Swap = ({ chainName }) => {
       setSwapping(false);
     }
   };
-
-  const handleSwapToNft = async () => {
-    if (!signingClient || !selectedNft || !tokenAmount) {
-      console.error('Signing client, selected NFT, or token amount not initialized');
-      return;
-    }
-
-    const swapToNftMsg = {
-      swap_to_nft: {
-        nft_id: selectedNft,
-        amount: tokenAmount,
-      },
-    };
-
-    try {
-      setSwappingToNft(true);
-      const result = await signingClient.execute(
-        walletAddress, // Sender address
-        SWAP_CONTRACT_ADDRESS, // Swap Contract address
-        swapToNftMsg, // Swap message
-        {
-          amount: [{ denom: 'ustars', amount: '7500' }], // fee
-          gas: '300000', // gas limit
-        },
-        "",
-        [{ denom: "ustars", amount: tokenAmount }] 
-      );
-      console.log('Swap to NFT result:', result);
-      setContractNfts(contractNfts.filter((nft) => nft !== selectedNft));
-      setTokenAmount('');
-    } catch (err) {
-      setError(err);
-      console.error('Error executing swap to NFT:', err);
-    } finally {
-      setSwappingToNft(false);
-    }
-  };
+  
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -182,7 +207,7 @@ export const Swap = ({ chainName }) => {
             {selectedNft && (
               <div>
                 <h2>Selected NFT: {selectedNft}</h2>
-                <button onClick={handleApproveAndSwap} disabled={swapping}>
+                <button onClick={swapNftToTokens} disabled={swapping}>
                   {swapping ? <Spinner /> : 'Approve and Swap NFT for Tokens'}
                 </button>
               </div>
@@ -201,13 +226,7 @@ export const Swap = ({ chainName }) => {
             {selectedNft && (
               <div>
                 <h2>Selected NFT: {selectedNft}</h2>
-                <Input
-                  type="number"
-                  value={tokenAmount}
-                  onChange={(e) => setTokenAmount(e.target.value)}
-                  placeholder="Amount of tokens"
-                />
-                <Button onClick={handleSwapToNft} disabled={swappingToNft}>
+                <Button onClick={handleApproveAndSwap} disabled={swappingToNft}>
                   {swappingToNft ? <Spinner /> : 'Swap Tokens for NFT'}
                 </Button>
               </div>
