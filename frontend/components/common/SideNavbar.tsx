@@ -4,12 +4,11 @@ import Image from 'next/image';
 // Import the PNG images
 import settings from '../../public/settings.png';
 import swap from '../../public/swap.png';
-import analytics from '../../public/analytics.png';
+import faq from '../../images/faq.png';
 
 const sideNavItems = [
   { icon: swap, id: "swapping" },
-  { icon: settings, id: "settings" },
-  { icon: analytics, id: "analytics" },
+  { icon: faq, id: "faq" },
 ];
 
 export const SideNavbar = ({ setCurrentSection }) => {

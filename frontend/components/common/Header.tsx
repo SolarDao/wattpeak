@@ -16,8 +16,6 @@ type HeaderProps = {
 const navItems = [
   { name: "Minting", id: "minting" },
   { name: "Staking", id: "staking" },
-  { name: "Projects", id: "projects" },
-  { name: "FAQ", id: "faq" },
 ];
 
 export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) => {
@@ -55,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
           <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
         </Box>
 
-        <Box display="flex" alignItems="center">
+        <Box display="flex" alignItems="center" gap="$15">
           {navItems.map((item) => (
             <Box
               key={item.id}

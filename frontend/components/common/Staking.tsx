@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import {
-  Spinner,
   Tabs,
   TabList,
   TabPanels,
@@ -13,6 +12,9 @@ import {
   Alert,
   AlertIcon,
 } from "@chakra-ui/react";
+import {
+  Spinner
+} from "@interchain-ui/react";
 import { getBalances } from "../../utils/junoBalances";
 import { queryStakers } from "@/utils/queryStaker";
 
@@ -20,7 +22,6 @@ const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
 const wattpeadDenom =
   "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka";
-  
 
 export const Staking = ({ chainName }) => {
   const wallet = useWallet();
@@ -36,26 +37,30 @@ export const Staking = ({ chainName }) => {
   const [signingClient, setSigningClient] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [claimableRewards, setClaimableRewards] = useState(0);
   const wattpeakBalance = balances.find((balance) => balance.denom === wattpeadDenom)?.amount / 1000000 || 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
 
   useEffect(() => {
     const fetchClient = async () => {
-      if (status === "Connected") {
-        try {
+      setLoading(true);
+      try {
+        if (status === "Connected") {
           const client = await getSigningCosmWasmClient();
           setSigningClient(client);
-          await getBalances(address).then((result) => {
-            setBalances(result);
-          });
-          let result = await queryStakers(address);
-          setStakers(result);
-        } catch (err) {
-          setError(err);
-          console.error("Error getting signing client:", err);
+          const balancesResult = await getBalances(address);
+          setBalances(balancesResult);
+          const stakersResult = await queryStakers(address);
+          setStakers(stakersResult);
+          setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Assuming claimable_rewards is in micro units
+        } else {
+          await connect();
         }
-      } else {
-        await connect();
+      } catch (err) {
+        setError(err);
+        console.error("Error getting signing client:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -85,11 +90,11 @@ export const Staking = ({ chainName }) => {
         "", // Optional memo
         [{ denom: wattpeadDenom, amount: (amount * 1000000).toString() }] // Funds sent with transaction
       );
-      getBalances(address).then((result) => {
-        setBalances(result);
-      });
-      let result1 = await queryStakers(address);
-      setStakers(result1);
+      const balancesResult = await getBalances(address);
+      setBalances(balancesResult);
+      const stakersResult = await queryStakers(address);
+      setStakers(stakersResult);
+      setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
     } catch (err) {
       setError(err);
@@ -120,11 +125,11 @@ export const Staking = ({ chainName }) => {
           gas: "3000000", // gas limit
         }
       );
-      getBalances(address).then((result) => {
-        setBalances(result);
-      });
-      let result2 = await queryStakers(address);
-      setStakers(result2);
+      const balancesResult = await getBalances(address);
+      setBalances(balancesResult);
+      const stakersResult = await queryStakers(address);
+      setStakers(stakersResult);
+      setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
     } catch (err) {
       setError(err);
@@ -134,6 +139,58 @@ export const Staking = ({ chainName }) => {
     }
   };
 
+  const handleClaimRewards = async () => {
+    if (!signingClient) {
+      console.error("Signing client not initialized");
+      return;
+    }
+
+    const claimMsg = {
+      claim_rewards: {},
+    };
+
+    try {
+      setLoading(true);
+      const result = await signingClient.execute(
+        address, // Sender address
+        STAKER_CONTRACT_ADDRESS, // Contract address
+        claimMsg, // Execute message
+        {
+          amount: [{ denom: "ujunox", amount: "7500" }], // fee
+          gas: "3000000", // gas limit
+        }
+      );
+      const balancesResult = await getBalances(address);
+      setBalances(balancesResult);
+      const stakersResult = await queryStakers(address);
+      setStakers(stakersResult);
+      setClaimableRewards(0); // Reset claimable rewards after claiming
+    } catch (err) {
+      setError(err);
+      console.error("Error executing claim rewards:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box
+        position="fixed"
+        top="0"
+        left="0"
+        width="100%"
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="rgba(0, 0, 0, 0.5)"
+        zIndex="9999"
+      >
+        <Spinner size="$10xl" color="white" />
+      </Box>
+    );
+  }
 
   return (
     <Box width="100%" maxW="500px" mx="auto" mt="50px" p="20px" borderRadius="10px" borderWidth="1px">
@@ -161,6 +218,11 @@ export const Staking = ({ chainName }) => {
             <Button onClick={handleStake} disabled={loading}>
               {loading ? <Spinner /> : "Stake"}
             </Button>
+            {claimableRewards > 0 && (
+              <Button onClick={handleClaimRewards} disabled={loading} mt="10px">
+                {loading ? <Spinner /> : `Claim Rewards (${claimableRewards} Wattpeak)`}
+              </Button>
+            )}
           </TabPanel>
           <TabPanel>
             <h1>Unstake Wattpeak</h1>
@@ -194,3 +256,4 @@ export const Staking = ({ chainName }) => {
 };
 
 export default Staking;
+

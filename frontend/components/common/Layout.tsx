@@ -48,8 +48,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         return <Projects />;
       case 'faq':
         return <Faq />;
-      case 'settings':
-        return <Settings />;
       case 'analytics':
         return <Analytics />;
       default:
@@ -61,7 +59,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <Container maxWidth="80rem" attributes={{ py: '$14' }}>
       <div className="box">
         <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-        <Box display="flex">
+        <Box display="flex" className='whiteBox'>
           <SideNavbar setCurrentSection={handleSectionChange} />
           <Box flex="1" p="$4" minHeight="$fit" backgroundColor="White" borderRadius="$4xl" color="Black" marginRight="$10">
             {renderSection()}

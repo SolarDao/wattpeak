@@ -46,17 +46,19 @@ export const Minting = ({ chainName }) => {
 
   const handleAmountChange = (e) => {
     const newAmount = parseFloat(e.target.value);
-    setAmount(newAmount);
+    setAmount(newAmount.toString());
     setCryptoAmount(
-      (newAmount * (config?.minting_price.amount || 0)).toFixed(6)
+      (newAmount * config.minting_price.amount).toFixed(6).replace(/\.?0+$/, "")
     );
   };
 
   const handleCryptoAmountChange = (e) => {
     const newCryptoAmount = parseFloat(e.target.value);
-    setCryptoAmount(newCryptoAmount);
+    setCryptoAmount(newCryptoAmount.toString());
     setAmount(
-      (newCryptoAmount / (config?.minting_price.amount || 1)).toFixed(6)
+      (newCryptoAmount / config.minting_price.amount)
+        .toFixed(6)
+        .replace(/\.?0+$/, "")
     );
   };
 
@@ -218,9 +220,9 @@ export const Minting = ({ chainName }) => {
     <div>
       <h1> Wattpeak Minter </h1>
       {error && <p>Error: {error.message}</p>}
-      <div>
+      <div >
         <h3>Available Projects to mint</h3>
-        <Slider {...settings}>
+        <Slider {...settings} >
           {projects.map((project) => (
             <div key={project.projectId} className="project-card">
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
@@ -266,7 +268,6 @@ export const Minting = ({ chainName }) => {
             value={amount}
             className="mintWattpeakInput"
             onChange={handleAmountChange}
-            onBlur={() => setAmount(parseFloat(amount).toString())}
             min="1"
             placeholder="Wattpeak"
           />

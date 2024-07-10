@@ -3,7 +3,6 @@ import { useWalletAddress } from "../../context/WalletAddressContext";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import {
-  Spinner,
   Alert,
   AlertIcon,
   Tabs,
@@ -12,7 +11,11 @@ import {
   Tab,
   TabPanel,
   Button,
+  Box
 } from "@chakra-ui/react";
+import {
+  Spinner
+} from "@interchain-ui/react";
 import Image from "next/image";
 
 const HERO_CONTRACT_ADDRESS =
@@ -214,7 +217,25 @@ export const Swap = ({ chainName }) => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <Box
+        position="fixed"
+        top="0"
+        left="0"
+        width="100%"
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="rgba(0, 0, 0, 0.5)"
+        zIndex="9999"
+      >
+        <Spinner size="$10xl" color="white" />
+      </Box>
+    );
+  }
+
   if (error) return <div>Error: {error.message}</div>;
 
   return (
