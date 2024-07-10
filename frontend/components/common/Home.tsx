@@ -7,7 +7,6 @@ export const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { walletAddress } = useWalletAddress();
-  console.log('Address:', walletAddress);
 
   useEffect(() => {
     const fetchStakers = async () => {
@@ -15,7 +14,6 @@ export const Home = () => {
         try {
           const result = await queryStakers(walletAddress);
           setStakers(result);
-          console.log('Staker:', result);
           setLoading(false);
         } catch (err) {
           setError(err);

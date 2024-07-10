@@ -20,7 +20,6 @@ export async function queryNftConfig() {
     nftContractAddress,
     queryMsg
   );
-  console.log("Query Result:", queryResult);
   setConfig(queryResult);
   return queryResult;
 }
@@ -48,13 +47,17 @@ export const Minting = ({ chainName }) => {
   const handleAmountChange = (e) => {
     const newAmount = parseFloat(e.target.value);
     setAmount(newAmount);
-    setCryptoAmount((newAmount * config.minting_price.amount).toFixed(6));
+    setCryptoAmount(
+      (newAmount * (config?.minting_price.amount || 0)).toFixed(6)
+    );
   };
 
   const handleCryptoAmountChange = (e) => {
     const newCryptoAmount = parseFloat(e.target.value);
     setCryptoAmount(newCryptoAmount);
-    setAmount((newCryptoAmount / config.minting_price.amount).toFixed(6));
+    setAmount(
+      (newCryptoAmount / (config?.minting_price.amount || 1)).toFixed(6)
+    );
   };
 
   useEffect(() => {
@@ -66,12 +69,9 @@ export const Minting = ({ chainName }) => {
           projectId: index + 1,
         }));
         setProjects(projectsWithId);
-        console.log(projectsWithId);
-
-        console.log("Projects:", projectsWithId); // Log the projects to verify data
-        setLoading(false);
       } catch (err) {
         setError(err);
+      } finally {
         setLoading(false);
       }
     };
@@ -114,28 +114,17 @@ export const Minting = ({ chainName }) => {
     ],
   };
 
-  console.log(
-    status,
-    address,
-    walletName,
-    chainName,
-    wallet,
-    getSigningCosmWasmClient,
-    connect
-  );
-
   useEffect(() => {
     const fetchConfig = async () => {
       if (status === "Connected") {
         try {
           const client = await getSigningCosmWasmClient();
-          console.log("Client:", client);
 
           setSigningClient(client);
 
           queryNftConfig().then((result) => {
             setConfig(result);
-            console.log(result);
+            setCryptoAmount(result.minting_price.amount);
           });
         } catch (err) {
           setError(err);
@@ -155,7 +144,6 @@ export const Minting = ({ chainName }) => {
   useEffect(() => {
     let payable_amount = ((amount + amount * 0.05) * 5 * 1000000).toString();
     setPrice(payable_amount);
-    console.log("Payable amount:", payable_amount);
   }, [amount]);
 
   const handleMint = async () => {
@@ -191,7 +179,6 @@ export const Minting = ({ chainName }) => {
       );
       getBalances(address).then((result) => {
         setBalances(result);
-        console.log("Balances:", result);
       });
       const projects = await queryProjects();
       const projectsWithId = projects.map((project, index) => ({
@@ -199,7 +186,6 @@ export const Minting = ({ chainName }) => {
         projectId: index + 1,
       }));
       setProjects(projectsWithId);
-      console.log("Minting result:", result);
       alert("Minting successful");
     } catch (err) {
       setError(err);
@@ -208,6 +194,26 @@ export const Minting = ({ chainName }) => {
       setMinting(false);
     }
   };
+
+  if (loading || !config) {
+    return (
+      <Box
+        position="fixed"
+        top="0"
+        left="0"
+        width="100%"
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="rgba(0, 0, 0, 0.5)"
+        zIndex="9999"
+      >
+        <Spinner size="$10xl" color="white" />
+      </Box>
+    );
+  }
+
   return (
     <div>
       <h1> Wattpeak Minter </h1>
@@ -253,54 +259,57 @@ export const Minting = ({ chainName }) => {
       )}
       <div className="mintBox">
         <div className="inputWrapper">
-          <span>Wattpeak</span>
-          <span>Balance: {}</span>
+          <span>Wattpeak</span> <br />
+          <span>Balance: {balances?.mpwr || 0}</span>
           <input
             type="number"
             value={amount}
             className="mintWattpeakInput"
             onChange={handleAmountChange}
+            onBlur={() => setAmount(parseFloat(amount).toString())}
             min="1"
-            placeholder="Amount to mint"
+            placeholder="Wattpeak"
           />
         </div>
         <div className="inputWrapper">
-          <span>Wattpeak</span>
-          <span>Balance: {}</span>
+          <div className="balanceWrapper">
+            <span>Juno</span> <br />
+            <span>Balance: {balances?.juno || 0}</span>
+          </div>
           <input
             type="number"
             value={cryptoAmount}
             className="mintJunoInput"
             onChange={handleCryptoAmountChange}
-            placeholder="Crypto amount"
+            onBlur={() => setCryptoAmount(parseFloat(cryptoAmount).toString())}
+            placeholder="Juno"
           />
         </div>
-        <div className="priceDetailsS">
-          <p>You Pay: {price} ujunox</p>
+        <div className="priceDetails">
+          <p>
+            Minting fee:{" "}
+            {parseFloat(
+              (cryptoAmount * config.minting_fee_percentage).toFixed(6)
+            ).toString()}{" "}
+            uJunox
+          </p>
+          <p>
+            You Pay:{" "}
+            {parseFloat(
+              (
+                parseFloat(cryptoAmount) +
+                cryptoAmount * config.minting_fee_percentage
+              ).toFixed(6)
+            ).toString()}{" "}
+            uJunox
+          </p>
+
           <p>You receive: {amount} WattPeak </p>
-          <p>Minting fee: {price * 0.05}</p>
         </div>
         <button onClick={handleMint} disabled={minting} className="mintBtn">
           {minting ? <Spinner size="sm" color="black" /> : "Mint"}
         </button>
       </div>
-
-      {(loading || minting) && (
-        <Box
-          position="fixed"
-          top="0"
-          left="0"
-          width="100%"
-          height="100%"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          backgroundColor="rgba(0, 0, 0, 0.5)"
-          zIndex="9999"
-        >
-          <Spinner size="lg" color="black" />
-        </Box>
-      )}
     </div>
   );
 };

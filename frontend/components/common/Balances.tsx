@@ -8,7 +8,6 @@ const Balances = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { walletAddress } = useWalletAddress();
-  console.log('Wallet Address:', walletAddress);
 
   useEffect(() => {
     const fetchBalances = async () => {

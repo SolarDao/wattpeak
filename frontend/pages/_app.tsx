@@ -8,13 +8,8 @@ import { Box, ThemeProvider, useColorModeValue, useTheme } from '@interchain-ui/
 import { WalletAddressProvider } from '../context/WalletAddressContext';  // Import the WalletAddressProvider
 import { BalancesProvider } from '@/context/junoBalancesContext';
 
-console.log('chains', chains);
-
 // Include only the required chains
 const includedChains = chains.filter(chain => ['stargazetestnet', 'junotestnet'].includes(chain.chain_name));
-
-console.log('wallets', wallets);
-
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
   const { themeClass } = useTheme();

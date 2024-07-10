@@ -8,7 +8,6 @@ export async function queryNftConfig() {
   const queryMsg = { config: {} };
   
   const queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
-  console.log("Query Result:", queryResult);
   
   return queryResult;
 }
@@ -23,7 +22,6 @@ export async function mintNft(amount, walletAddress) {
   };
 
   const result = await client.execute(walletAddress, nftContractAddress, executeMsg, "auto");
-  console.log("Mint Result:", result);
 
   return result;
 }

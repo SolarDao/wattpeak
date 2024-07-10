@@ -48,13 +48,11 @@ export const Swap = ({ chainName }) => {
         try {
           const walletNftsResult = await queryNftsByAddress(walletAddress);
           setWalletNfts(walletNftsResult); // Adjust based on your query response structure
-          console.log("Wallet NFTs:", walletNftsResult);
 
           const contractNftsResult = await queryNftsByAddress(
             SWAP_CONTRACT_ADDRESS
           );
           setContractNfts(contractNftsResult); // Adjust based on your query response structure
-          console.log("contract NFTs: ", contractNftsResult);
 
           const configResult = await queryNftConfig();
           setConfig(configResult);
@@ -119,7 +117,6 @@ export const Swap = ({ chainName }) => {
           gas: "300000", // gas limit
         }
       );
-      console.log("Swap result:", result);
       setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
       const walletNftsResult = await queryNftsByAddress(walletAddress);
       setWalletNfts(walletNftsResult); // Adjust based on your query response structure
@@ -160,8 +157,6 @@ export const Swap = ({ chainName }) => {
         approvalQueryMsg
       );
 
-      console.log("Approval Query Result:", approvalQueryResult);
-
       // If approval is not granted or expired, grant approval
       if (!approvalQueryResult || !approvalQueryResult.approval) {
         const approveMsg = {
@@ -171,7 +166,6 @@ export const Swap = ({ chainName }) => {
             expires: { at_time: Math.floor(Date.now() / 1000) + 60 }, // Expires in 1 hour
           },
         };
-        console.log("Approve Message:", approveMsg);
 
         const approveResult = await signingClient.execute(
           walletAddress, // Sender address
@@ -182,7 +176,6 @@ export const Swap = ({ chainName }) => {
             gas: "200000", // gas limit
           }
         );
-        console.log("Approve result:", approveResult);
       }
 
       // Swap the NFT for tokens
@@ -203,7 +196,6 @@ export const Swap = ({ chainName }) => {
         "",
         [{ denom: config.token_denom, amount: config.price_per_nft }]
       );
-      console.log("Swap result:", swapResult);
       setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
       const walletNftsResult = await queryNftsByAddress(walletAddress);
       setWalletNfts(walletNftsResult); // Adjust based on your query response structure

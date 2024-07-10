@@ -13,7 +13,6 @@ export const Projects = () => {
       try {
         const result = await queryProjects();
         setProjects(result);
-        console.log('Projects:', result); // Log the projects to verify data
         setLoading(false);
       } catch (err) {
         setError(err);

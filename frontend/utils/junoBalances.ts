@@ -13,6 +13,5 @@ export async function getBalances(address) {
 
   const client = await StargateClient.connect(rpcEndpoint);
   const balances = await client.getAllBalances(address);
-  console.log("Balances:", balances);
   return balances;
 }

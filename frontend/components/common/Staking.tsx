@@ -47,7 +47,6 @@ export const Staking = ({ chainName }) => {
           setSigningClient(client);
           await getBalances(address).then((result) => {
             setBalances(result);
-            console.log("Balances:", result);
           });
           let result = await queryStakers(address);
           setStakers(result);
@@ -88,12 +87,10 @@ export const Staking = ({ chainName }) => {
       );
       getBalances(address).then((result) => {
         setBalances(result);
-        console.log("Balances:", result);
       });
       let result1 = await queryStakers(address);
       setStakers(result1);
       setAmount(0);
-      console.log("Staking result:", result);
     } catch (err) {
       setError(err);
       console.error("Error executing stake:", err);
@@ -125,12 +122,10 @@ export const Staking = ({ chainName }) => {
       );
       getBalances(address).then((result) => {
         setBalances(result);
-        console.log("Balances:", result);
       });
       let result2 = await queryStakers(address);
       setStakers(result2);
       setAmount(0);
-      console.log("Unstaking result:", result);
     } catch (err) {
       setError(err);
       console.error("Error executing unstake:", err);

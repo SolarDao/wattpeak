@@ -20,7 +20,6 @@ export const queryNftsByAddress = async (address) => {
     
     const response = await fetch(ipfsUrl);
     const metadata = await response.json();
-    console.log(metadata);
     
     return {
       tokenId,
@@ -38,6 +37,5 @@ export async function queryNftConfig() {
   const queryMsg = { config: {} }; // Modify the query message as per the contract schema
 
   const queryResult = await client.queryContractSmart(swapContractAddress, queryMsg);
-  console.log("Query Result:", queryResult);
   return queryResult;
 }

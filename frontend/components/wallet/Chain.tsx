@@ -63,7 +63,6 @@ export function ChainSelect({
         setInput(chain.pretty_name);
       }
     }
-    console.log('chains', chains);
   }, [chains, chainName]);
 
   
