@@ -2,24 +2,26 @@ import React, { useEffect, useState } from "react";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import { getCosmWasmClient } from "../../utils/junoSetup";
 import { Box, Spinner } from "@interchain-ui/react";
-import { setConfig } from "next/config";
 import { getBalances } from "@/utils/junoBalances";
+import Slider from "react-slick";
+import { queryProjects } from "../../utils/queryProjects";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Image from "next/image";
+import { setConfig } from "next/config";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
 
 export async function queryNftConfig() {
   const client = await getCosmWasmClient();
-
   const queryMsg = { config: {} };
-
   const queryResult = await client.queryContractSmart(
     nftContractAddress,
     queryMsg
   );
   console.log("Query Result:", queryResult);
   setConfig(queryResult);
-
   return queryResult;
 }
 
@@ -32,13 +34,85 @@ export const Minting = ({ chainName }) => {
     walletName
   );
   const [config, setConfig] = useState(null);
-  const [error, setError] = useState(null);
   const [amount, setAmount] = useState(1);
+  const [balances, setBalances] = useState(null);
   const [price, setPrice] = useState("0");
   const [signingClient, setSigningClient] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [minting, setMinting] = useState(false);
-  const [Balances, setBalances] = useState([{}]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [cryptoAmount, setCryptoAmount] = useState("");
+
+  const handleAmountChange = (e) => {
+    const newAmount = parseFloat(e.target.value);
+    setAmount(newAmount);
+    setCryptoAmount((newAmount * config.minting_price.amount).toFixed(6));
+  };
+
+  const handleCryptoAmountChange = (e) => {
+    const newCryptoAmount = parseFloat(e.target.value);
+    setCryptoAmount(newCryptoAmount);
+    setAmount((newCryptoAmount / config.minting_price.amount).toFixed(6));
+  };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const result = await queryProjects();
+        const projectsWithId = result.map((project, index) => ({
+          ...project,
+          projectId: index + 1,
+        }));
+        setProjects(projectsWithId);
+        console.log(projectsWithId);
+
+        console.log("Projects:", projectsWithId); // Log the projects to verify data
+        setLoading(false);
+      } catch (err) {
+        setError(err);
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  let settings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 4,
+    initialSlide: 0,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 3,
+          infinite: false,
+          dots: true,
+        },
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 2,
+          initialSlide: 2,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
+  };
 
   console.log(
     status,
@@ -61,6 +135,7 @@ export const Minting = ({ chainName }) => {
 
           queryNftConfig().then((result) => {
             setConfig(result);
+            console.log(result);
           });
         } catch (err) {
           setError(err);
@@ -88,13 +163,17 @@ export const Minting = ({ chainName }) => {
       console.error("Signing client not initialized");
       return;
     }
+    if (!selectedProjectId) {
+      alert("Please select a project to mint.");
+      return;
+    }
     setMinting(true);
 
     const mintMsg = {
       mint_tokens: {
         address: address, // User's address from Keplr
         amount: (amount * 1000000).toString(), // Adjust the amount as per the requirement
-        project_id: 3, // Assuming project_id is fixed, update if dynamic
+        project_id: selectedProjectId, // Use the selected project ID
       },
     };
 
@@ -114,6 +193,12 @@ export const Minting = ({ chainName }) => {
         setBalances(result);
         console.log("Balances:", result);
       });
+      const projects = await queryProjects();
+      const projectsWithId = projects.map((project, index) => ({
+        ...project,
+        projectId: index + 1,
+      }));
+      setProjects(projectsWithId);
       console.log("Minting result:", result);
       alert("Minting successful");
     } catch (err) {
@@ -123,26 +208,80 @@ export const Minting = ({ chainName }) => {
       setMinting(false);
     }
   };
-
   return (
     <div>
-      <h1>NFT Contract Config</h1>
+      <h1> Wattpeak Minter </h1>
       {error && <p>Error: {error.message}</p>}
+      <div>
+        <h3>Available Projects to mint</h3>
+        <Slider {...settings}>
+          {projects.map((project) => (
+            <div key={project.projectId} className="project-card">
+              <Image src={require("../../images/panel.png")} alt={"Hallo"} />
+              <div className="project-details">
+                <p>{project.name}</p>
+                <p>
+                  Available WattPeak:{" "}
+                  {(project.max_wattpeak - project.minted_wattpeak_count) /
+                    1000000}
+                </p>
+                <button
+                  onClick={() => setSelectedProjectId(project.projectId)}
+                  style={{
+                    backgroundColor:
+                      selectedProjectId === project.projectId
+                        ? "lightgreen"
+                        : "",
+                  }}
+                >
+                  {selectedProjectId === project.projectId
+                    ? "Selected"
+                    : "Select"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </Slider>
+      </div>
       {config ? (
-        <pre>{JSON.stringify(config.minting_price.amount, null, 2)}</pre>
+        <pre>
+          Price per Wattpeak: {config.minting_price.amount}
+          {config.minting_price.denom}
+        </pre>
       ) : (
         <p>Loading config...</p>
       )}
-      <div>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(parseInt(e.target.value))}
-          min="1"
-          placeholder="Amount to mint"
-        />
-        <button onClick={handleMint} disabled={minting}>
-          {minting ? <Spinner size="sm" /> : "Mint"}
+      <div className="mintBox">
+        <div className="inputWrapper">
+          <span>Wattpeak</span>
+          <span>Balance: {}</span>
+          <input
+            type="number"
+            value={amount}
+            className="mintWattpeakInput"
+            onChange={handleAmountChange}
+            min="1"
+            placeholder="Amount to mint"
+          />
+        </div>
+        <div className="inputWrapper">
+          <span>Wattpeak</span>
+          <span>Balance: {}</span>
+          <input
+            type="number"
+            value={cryptoAmount}
+            className="mintJunoInput"
+            onChange={handleCryptoAmountChange}
+            placeholder="Crypto amount"
+          />
+        </div>
+        <div className="priceDetailsS">
+          <p>You Pay: {price} ujunox</p>
+          <p>You receive: {amount} WattPeak </p>
+          <p>Minting fee: {price * 0.05}</p>
+        </div>
+        <button onClick={handleMint} disabled={minting} className="mintBtn">
+          {minting ? <Spinner size="sm" color="black" /> : "Mint"}
         </button>
       </div>
 
