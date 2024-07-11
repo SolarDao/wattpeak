@@ -4,11 +4,9 @@ import { Footer } from './Footer';
 import { Minting } from './Minting';
 import { Staking } from './Staking';
 import { Swap } from './Swap';
-import { Projects } from './Projects';
 import { Faq } from './Faq';
 import { SetStateAction, useState, useEffect } from 'react';
 import { SideNavbar } from './SideNavbar';
-import { Settings } from './Settings';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
@@ -44,8 +42,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         return <Staking chainName={chainName} />;
       case 'swapping':
         return <Swap chainName={chainName} />;
-      case 'projects':
-        return <Projects />;
       case 'faq':
         return <Faq />;
       case 'analytics':

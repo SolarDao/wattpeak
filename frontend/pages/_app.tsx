@@ -1,24 +1,18 @@
 import '../styles/globals.css';
 import '@interchain-ui/react/styles';
 import type { AppProps } from 'next/app';
-import { SignerOptions, wallets } from 'cosmos-kit';
+import { wallets } from 'cosmos-kit';
 import { ChainProvider } from '@cosmos-kit/react';
 import { assets, chains } from 'chain-registry';
 import { Box, ThemeProvider, useColorModeValue, useTheme } from '@interchain-ui/react';
-import { WalletAddressProvider } from '../context/WalletAddressContext';  // Import the WalletAddressProvider
+import { WalletAddressProvider } from '../context/WalletAddressContext';
 import { BalancesProvider } from '@/context/junoBalancesContext';
 
 // Include only the required chains
 const includedChains = chains.filter(chain => ['stargazetestnet', 'junotestnet'].includes(chain.chain_name));
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
-  const { themeClass } = useTheme();
-
-  const signerOptions: SignerOptions = {
-    // signingStargate: () => {
-    //   return getSigningCosmosClientOptions();
-    // }
-  };
+  //const { themeClass } = useTheme();
   
   return (
     <ThemeProvider>
@@ -42,7 +36,7 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         <WalletAddressProvider>
           <BalancesProvider>
             <Box
-              className={themeClass}
+              //className={themeClass}
               minHeight="100dvh"
               backgroundColor={useColorModeValue('$white', '$background')}
             >

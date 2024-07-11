@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import { getCosmWasmClient } from "../../utils/junoSetup";
-import { Box, Spinner } from "@interchain-ui/react";
+import { Box, Button, Spinner } from "@interchain-ui/react";
 import { getBalances } from "@/utils/junoBalances";
 import Slider from "react-slick";
 import { queryProjects } from "../../utils/queryProjects";
@@ -45,20 +45,75 @@ export const Minting = ({ chainName }) => {
   const [cryptoAmount, setCryptoAmount] = useState("");
 
   const handleAmountChange = (e) => {
-    const newAmount = parseFloat(e.target.value);
-    setAmount(newAmount.toString());
-    setCryptoAmount(
-      (newAmount * config.minting_price.amount).toFixed(6).replace(/\.?0+$/, "")
-    );
+    let newAmount = e.target.value;
+
+    // Restrict to 6 decimal places
+    if (newAmount.includes(".")) {
+      const parts = newAmount.split(".");
+      if (parts[1].length > 6) {
+        newAmount = `${parts[0]}.${parts[1].slice(0, 6)}`;
+      }
+    }
+
+    setAmount(newAmount);
+    if (!isNaN(newAmount) && newAmount !== "") {
+      setCryptoAmount(
+        (parseFloat(newAmount) * config.minting_price.amount)
+          .toFixed(6)
+          .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+      );
+    } else {
+      setCryptoAmount("");
+    }
   };
 
   const handleCryptoAmountChange = (e) => {
-    const newCryptoAmount = parseFloat(e.target.value);
-    setCryptoAmount(newCryptoAmount.toString());
+    let newCryptoAmount = e.target.value;
+
+    // Restrict to 6 decimal places
+    if (newCryptoAmount.includes(".")) {
+      const parts = newCryptoAmount.split(".");
+      if (parts[1].length > 6) {
+        newCryptoAmount = `${parts[0]}.${parts[1].slice(0, 6)}`;
+      }
+    }
+
+    setCryptoAmount(newCryptoAmount);
+    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "") {
+      setAmount(
+        (parseFloat(newCryptoAmount) / config.minting_price.amount)
+          .toFixed(6)
+          .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+      );
+    } else {
+      setAmount("");
+    }
+  };
+
+  const handleMaxClick = () => {
+    setCryptoAmount(
+      junoBalance.toFixed(6).replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+    );
     setAmount(
-      (newCryptoAmount / config.minting_price.amount)
+      (junoBalance / config.minting_price.amount)
         .toFixed(6)
-        .replace(/\.?0+$/, "")
+        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+    );
+  };
+
+  const handleBlurAmount = () => {
+    setAmount(
+      parseFloat(amount)
+        .toString()
+        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+    );
+  };
+
+  const handleBlurCryptoAmount = () => {
+    setCryptoAmount(
+      parseFloat(cryptoAmount)
+        .toString()
+        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
     );
   };
 
@@ -82,7 +137,7 @@ export const Minting = ({ chainName }) => {
   }, []);
 
   let settings = {
-    dots: true,
+    dots: false,
     infinite: false,
     speed: 500,
     slidesToShow: 4,
@@ -127,6 +182,9 @@ export const Minting = ({ chainName }) => {
           queryNftConfig().then((result) => {
             setConfig(result);
             setCryptoAmount(result.minting_price.amount);
+          });
+          getBalances(address).then((result) => {
+            setBalances(result);
           });
         } catch (err) {
           setError(err);
@@ -179,9 +237,6 @@ export const Minting = ({ chainName }) => {
         "", // Optional memo
         [{ denom: "ujunox", amount: price }] // Funds sent with transaction
       );
-      getBalances(address).then((result) => {
-        setBalances(result);
-      });
       const projects = await queryProjects();
       const projectsWithId = projects.map((project, index) => ({
         ...project,
@@ -192,10 +247,21 @@ export const Minting = ({ chainName }) => {
     } catch (err) {
       setError(err);
       console.error("Error executing mint:", err);
+      alert("Minting failed", err.message);
     } finally {
       setMinting(false);
     }
   };
+
+  const junoBalance =
+    balances?.find((balance) => balance.denom === "ujunox")?.amount / 1000000 ||
+    0;
+  const wattpeakBalance =
+    balances?.find(
+      (balance) =>
+        balance.denom ===
+        "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+    )?.amount / 1000000 || 0;
 
   if (loading || !config) {
     return (
@@ -218,11 +284,15 @@ export const Minting = ({ chainName }) => {
 
   return (
     <div>
-      <h1> Wattpeak Minter </h1>
-      {error && <p>Error: {error.message}</p>}
-      <div >
-        <h3>Available Projects to mint</h3>
-        <Slider {...settings} >
+      <div>
+        <div className="headerBox">
+          <h3>Available Projects to mint</h3>
+          <p>
+            Price per wattpeak: {config.minting_price.amount}{" "}
+            {config.minting_price.denom}
+          </p>
+        </div>
+        <Slider {...settings}>
           {projects.map((project) => (
             <div key={project.projectId} className="project-card">
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
@@ -235,12 +305,6 @@ export const Minting = ({ chainName }) => {
                 </p>
                 <button
                   onClick={() => setSelectedProjectId(project.projectId)}
-                  style={{
-                    backgroundColor:
-                      selectedProjectId === project.projectId
-                        ? "lightgreen"
-                        : "",
-                  }}
                 >
                   {selectedProjectId === project.projectId
                     ? "Selected"
@@ -251,41 +315,41 @@ export const Minting = ({ chainName }) => {
           ))}
         </Slider>
       </div>
-      {config ? (
-        <pre>
-          Price per Wattpeak: {config.minting_price.amount}
-          {config.minting_price.denom}
-        </pre>
-      ) : (
-        <p>Loading config...</p>
-      )}
       <div className="mintBox">
-        <div className="inputWrapper">
-          <span>Wattpeak</span> <br />
-          <span>Balance: {balances?.mpwr || 0}</span>
-          <input
-            type="number"
-            value={amount}
-            className="mintWattpeakInput"
-            onChange={handleAmountChange}
-            min="1"
-            placeholder="Wattpeak"
-          />
-        </div>
         <div className="inputWrapper">
           <div className="balanceWrapper">
             <span>Juno</span> <br />
-            <span>Balance: {balances?.juno || 0}</span>
+            <span>Balance: {junoBalance}</span>
+            <button onClick={handleMaxClick} className="maxButtonMinting">
+              Max
+            </button>
           </div>
           <input
             type="number"
             value={cryptoAmount}
             className="mintJunoInput"
             onChange={handleCryptoAmountChange}
-            onBlur={() => setCryptoAmount(parseFloat(cryptoAmount).toString())}
+            onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
           />
         </div>
+        <div className="inputWrapper">
+          <div className="balanceWrapper">
+            <span>Wattpeak</span> <br />
+            <span>Balance: {wattpeakBalance}</span>
+          </div>
+          <input
+            type="number"
+            value={amount}
+            className="mintWattpeakInput"
+            onChange={handleAmountChange}
+            onBlur={handleBlurAmount}
+            min="1"
+            placeholder="Wattpeak"
+          />
+        </div>
+      </div>
+      <div className="mintButtonDetailsBox">
         <div className="priceDetails">
           <p>
             Minting fee:{" "}

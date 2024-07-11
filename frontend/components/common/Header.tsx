@@ -19,7 +19,6 @@ const navItems = [
 ];
 
 export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) => {
-  const { theme, setTheme } = useTheme();
 
   const handleChainChange = (newChainName: string) => {
     // Perform any additional logic if needed
