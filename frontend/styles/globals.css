@@ -26,7 +26,7 @@ a {
   }
 
   .box {
-    background: linear-gradient(116.82deg, #926614 0%, #3f3f13 99.99%, #070D1C 100%);
+    background: linear-gradient(116.82deg, #855d15 0%, #141406 99.99%, #070D1C 100%);
     border-radius: 25px;
     margin-bottom: 10rem;
   }
@@ -49,13 +49,12 @@ a {
   }
   
   .project-card {
-    width: 30%;
+    width: 95%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background-color: rgba(0, 0, 0, 0.04);
     margin-bottom: 20%;
     margin-right: 10px;
     margin-left: 10px;

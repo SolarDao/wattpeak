@@ -1,4 +1,4 @@
-import { Box, Container } from '@interchain-ui/react';
+import { Box, Container, useColorModeValue } from '@interchain-ui/react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { Minting } from './Minting';
@@ -10,6 +10,7 @@ import { SideNavbar } from './SideNavbar';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
+import { color } from 'framer-motion';
 
 const JUNO_CHAIN_NAME = 'junotestnet';
 const STARGAZE_CHAIN_NAME = 'stargazetestnet';
@@ -53,17 +54,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <Container maxWidth="80rem" attributes={{ py: '$14' }}>
-      <div className="box">
+      <Box className='box' 
+      backgroundColor={useColorModeValue('$yellow', 'rgba(52, 52, 52, 1)')}
+      >
         <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-        <Box display="flex" className='whiteBox'>
+        <Box display="flex" className='whiteBox'
+        >
           <SideNavbar setCurrentSection={handleSectionChange} />
-          <Box flex="1" p="$4" minHeight="$fit" backgroundColor="White" borderRadius="$4xl" color="Black" marginRight="$10">
+          <Box flex="1" p="$4" minHeight="$fit" borderRadius="$4xl" color="Black" marginRight="$10"
+                  attributes={
+                    {
+                      backgroundColor: useColorModeValue("$white", "rgba(35, 35, 35, 1)"),
+                      color: useColorModeValue("$black", "$white"),
+                    }
+                  } >
             {renderSection()}
             {children}
           </Box>
         </Box>
         <Footer />
-      </div>
+      </Box>
     </Container>
   );
 };

@@ -42,11 +42,11 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
           as="a"
           onClick={() => setCurrentSection("home")}
           attributes={{
-            color: useColorModeValue("$gray900", "$gray100"),
             fontWeight: "$medium",
             fontSize: { mobile: "$xl", tablet: "$2xl" },
             cursor: "pointer",
             textDecoration: "none",
+            
           }}
         >
           <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
@@ -59,7 +59,6 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
               as="a"
               onClick={() => setCurrentSection(item.id)}
               attributes={{
-                color: useColorModeValue("$gray900", "$gray100"),
                 fontWeight: "$medium",
                 fontSize: { mobile: "$xl", tablet: "$2xl" },
                 marginRight: "$4",

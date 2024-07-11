@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import { getCosmWasmClient } from "../../utils/junoSetup";
-import { Box, Button, Spinner } from "@interchain-ui/react";
+import { Box, Button, Container, Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/junoBalances";
 import Slider from "react-slick";
 import { queryProjects } from "../../utils/queryProjects";
@@ -9,6 +9,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Image from "next/image";
 import { setConfig } from "next/config";
+import { Input } from "@chakra-ui/react";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -27,6 +28,8 @@ export async function queryNftConfig() {
 export const Minting = ({ chainName }) => {
   let wallet = useWallet();
   let walletName = wallet?.wallet?.name ?? "";
+  const inputColor = useColorModeValue("black", "white");
+  const backgroundColor = useColorModeValue("rgba(0, 0, 0, 0.04)", "rgba(52, 52, 52, 1)");
 
   const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
     chainName,
@@ -283,8 +286,8 @@ export const Minting = ({ chainName }) => {
   }
 
   return (
-    <div>
-      <div>
+    <Container>
+      <Box>
         <div className="headerBox">
           <h3>Available Projects to mint</h3>
           <p>
@@ -294,7 +297,11 @@ export const Minting = ({ chainName }) => {
         </div>
         <Slider {...settings}>
           {projects.map((project) => (
-            <div key={project.projectId} className="project-card">
+            <Box
+              key={project.projectId}
+              className="project-card"
+              backgroundColor={backgroundColor}
+            >
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
               <div className="project-details">
                 <p>{project.name}</p>
@@ -303,20 +310,20 @@ export const Minting = ({ chainName }) => {
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
                 </p>
-                <button
-                  onClick={() => setSelectedProjectId(project.projectId)}
-                >
+                <button onClick={() => setSelectedProjectId(project.projectId)}>
                   {selectedProjectId === project.projectId
                     ? "Selected"
                     : "Select"}
                 </button>
               </div>
-            </div>
+            </Box>
           ))}
         </Slider>
-      </div>
-      <div className="mintBox">
-        <div className="inputWrapper">
+      </Box>
+      <Box className="mintBox">
+        <Box className="inputWrapper"
+        backgroundColor={backgroundColor}
+        >
           <div className="balanceWrapper">
             <span>Juno</span> <br />
             <span>Balance: {junoBalance}</span>
@@ -324,21 +331,24 @@ export const Minting = ({ chainName }) => {
               Max
             </button>
           </div>
-          <input
+          <Input
             type="number"
             value={cryptoAmount}
             className="mintJunoInput"
             onChange={handleCryptoAmountChange}
             onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
+            color={inputColor}
           />
-        </div>
-        <div className="inputWrapper">
+        </Box>
+        <Box className="inputWrapper"
+        backgroundColor={backgroundColor}
+        >
           <div className="balanceWrapper">
             <span>Wattpeak</span> <br />
             <span>Balance: {wattpeakBalance}</span>
           </div>
-          <input
+          <Input
             type="number"
             value={amount}
             className="mintWattpeakInput"
@@ -346,11 +356,15 @@ export const Minting = ({ chainName }) => {
             onBlur={handleBlurAmount}
             min="1"
             placeholder="Wattpeak"
+            color={inputColor}
+            
           />
-        </div>
-      </div>
-      <div className="mintButtonDetailsBox">
-        <div className="priceDetails">
+        </Box>
+      </Box>
+      <Box className="mintButtonDetailsBox">
+        <Box className="priceDetails"
+        backgroundColor={backgroundColor}
+        >
           <p>
             Minting fee:{" "}
             {parseFloat(
@@ -370,12 +384,12 @@ export const Minting = ({ chainName }) => {
           </p>
 
           <p>You receive: {amount} WattPeak </p>
-        </div>
-        <button onClick={handleMint} disabled={minting} className="mintBtn">
+        </Box>
+        <Button onClick={handleMint} disabled={minting} className="mintBtn">
           {minting ? <Spinner size="sm" color="black" /> : "Mint"}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Container>
   );
 };
 
