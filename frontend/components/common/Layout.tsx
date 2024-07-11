@@ -61,7 +61,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <Box display="flex" className='whiteBox'
         >
           <SideNavbar setCurrentSection={handleSectionChange} />
-          <Box flex="1" p="$4" minHeight="$fit" borderRadius="$4xl" color="Black" marginRight="$10"
+          <Box flex="1" p="$4" minHeight="$fit" borderRadius="$4xl" color="Black" marginRight="$10" maxWidth="93%"
                   attributes={
                     {
                       backgroundColor: useColorModeValue("$white", "rgba(35, 35, 35, 1)"),

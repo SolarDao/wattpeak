@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import { getCosmWasmClient } from "../../utils/junoSetup";
-import { Box, Button, Container, Spinner, useColorModeValue } from "@interchain-ui/react";
+import {
+  Box,
+  Container,
+  Spinner,
+  useColorModeValue,
+} from "@interchain-ui/react";
 import { getBalances } from "@/utils/junoBalances";
-import Slider from "react-slick";
 import { queryProjects } from "../../utils/queryProjects";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
 import { setConfig } from "next/config";
 import { Input } from "@chakra-ui/react";
+import { ArrowForwardIcon } from "@chakra-ui/icons";
+import Carousel from "react-multi-carousel";
+import { get } from "http";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -29,7 +35,10 @@ export const Minting = ({ chainName }) => {
   let wallet = useWallet();
   let walletName = wallet?.wallet?.name ?? "";
   const inputColor = useColorModeValue("black", "white");
-  const backgroundColor = useColorModeValue("rgba(0, 0, 0, 0.04)", "rgba(52, 52, 52, 1)");
+  const backgroundColor = useColorModeValue(
+    "rgba(0, 0, 0, 0.04)",
+    "rgba(52, 52, 52, 1)"
+  );
 
   const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
     chainName,
@@ -44,8 +53,10 @@ export const Minting = ({ chainName }) => {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [cryptoAmount, setCryptoAmount] = useState("");
+  const [junoBalance, setJunoBalance] = useState(0);
+  const [wattpeakBalance, setWattpeakBalance] = useState(0);
+  const [error, setError] = useState(null);
 
   const handleAmountChange = (e) => {
     let newAmount = e.target.value;
@@ -139,39 +150,22 @@ export const Minting = ({ chainName }) => {
     fetchProjects();
   }, []);
 
-  let settings = {
-    dots: false,
-    infinite: false,
-    speed: 500,
-    slidesToShow: 4,
-    slidesToScroll: 4,
-    initialSlide: 0,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-          slidesToScroll: 3,
-          infinite: false,
-          dots: true,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-          initialSlide: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
+  const responsive = {
+    desktop: {
+      breakpoint: { max: 3000, min: 1024 },
+      items: 4,
+      slidesToSlide: 4,
+    },
+    tablet: {
+      breakpoint: { max: 1024, min: 600 },
+      items: 2,
+      slidesToSlide: 2,
+    },
+    mobile: {
+      breakpoint: { max: 600, min: 0 },
+      items: 1,
+      slidesToSlide: 1,
+    },
   };
 
   useEffect(() => {
@@ -182,13 +176,24 @@ export const Minting = ({ chainName }) => {
 
           setSigningClient(client);
 
-          queryNftConfig().then((result) => {
+          await queryNftConfig().then((result) => {
             setConfig(result);
             setCryptoAmount(result.minting_price.amount);
           });
-          getBalances(address).then((result) => {
+          await getBalances(address).then((result) => {
             setBalances(result);
           });
+          setJunoBalance(
+            balances?.find((balance) => balance.denom === "ujunox")?.amount /
+              1000000 || 0
+          );
+          setWattpeakBalance(
+            balances?.find(
+              (balance) =>
+                balance.denom ===
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+            )?.amount / 1000000 || 0
+          );
         } catch (err) {
           setError(err);
           console.error("Error querying the NFT contract:", err);
@@ -202,7 +207,7 @@ export const Minting = ({ chainName }) => {
     };
 
     fetchConfig();
-  }, [status, getSigningCosmWasmClient, connect]);
+  }, [status, getSigningCosmWasmClient, connect, balances, address]);
 
   useEffect(() => {
     let payable_amount = ((amount + amount * 0.05) * 5 * 1000000).toString();
@@ -246,6 +251,21 @@ export const Minting = ({ chainName }) => {
         projectId: index + 1,
       }));
       setProjects(projectsWithId);
+      getBalances(address).then((result) => {
+        setBalances(result);
+      }
+      );
+      setJunoBalance(
+        balances?.find((balance) => balance.denom === "ujunox")?.amount /
+          1000000 || 0
+      );
+      setWattpeakBalance(
+        balances?.find(
+          (balance) =>
+            balance.denom ===
+            "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+        )?.amount / 1000000 || 0
+      );
       alert("Minting successful");
     } catch (err) {
       setError(err);
@@ -256,17 +276,7 @@ export const Minting = ({ chainName }) => {
     }
   };
 
-  const junoBalance =
-    balances?.find((balance) => balance.denom === "ujunox")?.amount / 1000000 ||
-    0;
-  const wattpeakBalance =
-    balances?.find(
-      (balance) =>
-        balance.denom ===
-        "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
-    )?.amount / 1000000 || 0;
-
-  if (loading || !config) {
+  if (loading || !config || !junoBalance || !projects || !wattpeakBalance) {
     return (
       <Box
         position="fixed"
@@ -295,7 +305,7 @@ export const Minting = ({ chainName }) => {
             {config.minting_price.denom}
           </p>
         </div>
-        <Slider {...settings}>
+        <Carousel responsive={responsive} infinite={false} arrows={true}>
           {projects.map((project) => (
             <Box
               key={project.projectId}
@@ -310,7 +320,14 @@ export const Minting = ({ chainName }) => {
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
                 </p>
-                <button onClick={() => setSelectedProjectId(project.projectId)}>
+                <button
+                  className={
+                    selectedProjectId === project.projectId
+                      ? "projectButtonSelected"
+                      : "projectButton"
+                  }
+                  onClick={() => setSelectedProjectId(project.projectId)}
+                >
                   {selectedProjectId === project.projectId
                     ? "Selected"
                     : "Select"}
@@ -318,18 +335,17 @@ export const Minting = ({ chainName }) => {
               </div>
             </Box>
           ))}
-        </Slider>
+        </Carousel>
       </Box>
       <Box className="mintBox">
-        <Box className="inputWrapper"
-        backgroundColor={backgroundColor}
-        >
+        <Box className="inputWrapper" backgroundColor={backgroundColor}>
           <div className="balanceWrapper">
-            <span>Juno</span> <br />
-            <span>Balance: {junoBalance}</span>
+            <span>Juno</span>
             <button onClick={handleMaxClick} className="maxButtonMinting">
               Max
             </button>
+            <br />
+            <span className="balance">Balance: {junoBalance}</span>
           </div>
           <Input
             type="number"
@@ -341,12 +357,11 @@ export const Minting = ({ chainName }) => {
             color={inputColor}
           />
         </Box>
-        <Box className="inputWrapper"
-        backgroundColor={backgroundColor}
-        >
+        <ArrowForwardIcon className="arrowIcon" boxSize={30} />
+        <Box className="inputWrapper" backgroundColor={backgroundColor}>
           <div className="balanceWrapper">
             <span>Wattpeak</span> <br />
-            <span>Balance: {wattpeakBalance}</span>
+            <span className="balance">Balance: {wattpeakBalance}</span>
           </div>
           <Input
             type="number"
@@ -357,14 +372,11 @@ export const Minting = ({ chainName }) => {
             min="1"
             placeholder="Wattpeak"
             color={inputColor}
-            
           />
         </Box>
       </Box>
       <Box className="mintButtonDetailsBox">
-        <Box className="priceDetails"
-        backgroundColor={backgroundColor}
-        >
+        <Box className="priceDetails" backgroundColor={backgroundColor}>
           <p>
             Minting fee:{" "}
             {parseFloat(
@@ -385,9 +397,9 @@ export const Minting = ({ chainName }) => {
 
           <p>You receive: {amount} WattPeak </p>
         </Box>
-        <Button onClick={handleMint} disabled={minting} className="mintBtn">
-          {minting ? <Spinner size="sm" color="black" /> : "Mint"}
-        </Button>
+        <button onClick={handleMint} disabled={minting} className="mintBtn">
+          {minting ? <Spinner size="sm" color="black" /> : "MINT"}
+        </button>
       </Box>
     </Container>
   );
