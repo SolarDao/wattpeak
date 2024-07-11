@@ -42,16 +42,11 @@ a {
     margin-right: 1%;
   }
 
-  .carouselBox {}
   .project-group {
     display: flex;
     justify-content: space-around;
   }
 
-  .carouselBox {
-
-  }
-  
   .project-card {
     width: 95%;
     display: flex;
@@ -83,7 +78,7 @@ a {
   .projectButton{
     margin-top: 10px;
     padding: 10px 20px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.04);
     border-color: black;
     border-width: 1px;
     border-radius: 23px;
@@ -217,5 +212,63 @@ a {
     border-radius: 50px;
     padding: 2px;
   }
-  
+  .tabListStaking {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .stakeTab {
+    background: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    padding: 10px 20px;
+    font-size: 20px;
+    color: black;
+    border: black 1px solid;
+    margin-bottom: 2rem;
+  }
+  .inputStaking {
+    margin-top: 10px;
+    padding: 50px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.0);
+    border-radius: 45px;
+    border: none;
+    border-radius: 5px;
+    font-size: 40px;
+    text-align: center;
+    color: rgb(0, 0, 0);
+    cursor: pointer;
+  }
+
+  .inputWrapperStaker {
+    width: 100%;
+    height: 100%;
+    margin-bottom: 20px;
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 23px;
+    padding: 10px;
+  }
+
+  .stakeDetails {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 23px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .stakeBtn {
+    background: linear-gradient(180deg, #FFD602 0%, #FFA231 100%);
+    cursor: pointer;
+    border-radius: 45px;
+    width: 50%;
+    height: 50px;
+    font-size: 20px;
+    color: black;
+    margin-top: 20px;
+    margin-bottom: 15%;
+    font: Inter;
+  }
 }

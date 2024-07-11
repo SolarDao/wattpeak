@@ -1,9 +1,9 @@
-import { getSigningCosmWasmClient } from "./junoSetup";
+import { getCosmWasmClient } from "./junoSetup";
 
 const nftContractAddress = process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
 
 export async function queryNftConfig() {
-  const client = await getSigningCosmWasmClient();
+  const client = await getCosmWasmClient();
   
   const queryMsg = { config: {} };
   
@@ -13,7 +13,7 @@ export async function queryNftConfig() {
 }
 
 export async function mintNft(amount, walletAddress) {
-  const client = await getSigningCosmWasmClient();
+  const client = await getCosmWasmClient();
 
   const executeMsg = {
     mint: {

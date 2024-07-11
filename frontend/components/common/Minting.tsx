@@ -12,10 +12,9 @@ import { queryProjects } from "../../utils/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
 import { setConfig } from "next/config";
-import { Input } from "@chakra-ui/react";
+import { Button, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
-import { get } from "http";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -320,18 +319,19 @@ export const Minting = ({ chainName }) => {
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
                 </p>
-                <button
+                <Button
                   className={
                     selectedProjectId === project.projectId
                       ? "projectButtonSelected"
                       : "projectButton"
                   }
+                  color={inputColor}
                   onClick={() => setSelectedProjectId(project.projectId)}
                 >
                   {selectedProjectId === project.projectId
                     ? "Selected"
                     : "Select"}
-                </button>
+                </Button>
               </div>
             </Box>
           ))}

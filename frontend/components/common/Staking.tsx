@@ -9,14 +9,12 @@ import {
   Box,
   Button,
   Input,
-  Alert,
-  AlertIcon,
+  Center,
 } from "@chakra-ui/react";
-import {
-  Spinner
-} from "@interchain-ui/react";
+import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/junoBalances";
 import { queryStakers } from "@/utils/queryStaker";
+import { queryStakingConfig } from "@/utils/queryStakingConfig";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -38,8 +36,16 @@ export const Staking = ({ chainName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [claimableRewards, setClaimableRewards] = useState(0);
-  const wattpeakBalance = balances.find((balance) => balance.denom === wattpeadDenom)?.amount / 1000000 || 0;
+  const [config, setConfig] = useState({});
+  const wattpeakBalance =
+    balances.find((balance) => balance.denom === wattpeadDenom)?.amount /
+      1000000 || 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
+  const inputColor = useColorModeValue("black", "white");
+  const backgroundColor = useColorModeValue(
+    "rgba(0, 0, 0, 0.04)",
+    "rgba(52, 52, 52, 1)"
+  );
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -53,6 +59,9 @@ export const Staking = ({ chainName }) => {
           const stakersResult = await queryStakers(address);
           setStakers(stakersResult);
           setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Assuming claimable_rewards is in micro units
+          const configResult = await queryStakingConfig();
+          setConfig(configResult);
+          console.log("Staking config:", configResult);
         } else {
           await connect();
         }
@@ -173,7 +182,7 @@ export const Staking = ({ chainName }) => {
     }
   };
 
-  if (loading) {
+  if (loading || !signingClient || !config || !staker || !balances) {
     return (
       <Box
         position="fixed"
@@ -191,69 +200,148 @@ export const Staking = ({ chainName }) => {
       </Box>
     );
   }
-
   return (
-    <Box width="100%" maxW="500px" mx="auto" mt="50px" p="20px" borderRadius="10px" borderWidth="1px">
+    <Box
+      width="100%"
+      maxW="500px"
+      mx="auto"
+      mt="50px"
+      p="20px"
+      borderRadius="10px"
+      borderWidth="1px"
+    >
       <Tabs variant="enclosed">
-        <TabList>
-          <Tab>Stake</Tab>
-          <Tab>Unstake</Tab>
+        <TabList className="tabListStaking">
+          <Tab
+            className="stakeTab"
+            borderColor={inputColor}
+            color={inputColor}
+            background={backgroundColor}
+            _hover={{
+              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+            }}
+            _selected={{
+              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+              color: "black",
+            }}
+          >
+            Stake
+          </Tab>
+          <Tab
+            borderColor={inputColor}
+            color={inputColor}
+            background={backgroundColor}
+            className="stakeTab"
+            _hover={{
+              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+            }}
+            _selected={{
+              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+              color: "black",
+            }}
+          >
+            Unstake
+          </Tab>
         </TabList>
-        <TabPanels>
+        <TabPanels className="tabPanelsStaking">
           <TabPanel>
-            <h1>Stake Wattpeak</h1>
-            <p>Available balance to stake: {wattpeakBalance}</p>
-            <Input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Math.min(parseFloat(e.target.value), wattpeakBalance))}
-              min="0.000001"
-              max={wattpeakBalance}
-              step="0.0001"
-              placeholder="Amount"
-            />
-            <Button onClick={() => setAmount(wattpeakBalance)} mb="10px">
-              Max
-            </Button>
-            <Button onClick={handleStake} disabled={loading}>
-              {loading ? <Spinner /> : "Stake"}
-            </Button>
+            <Box
+              className="inputWrapperStaker"
+              backgroundColor={backgroundColor}
+            >
+              <div className="balanceWrapper">
+                <span>Wattpeak: {wattpeakBalance}</span>
+                <Button
+                  onClick={() => setAmount(wattpeakBalance)}
+                  mb="10px"
+                  className="maxButtonMinting"
+                >
+                  Max
+                </Button>
+              </div>
+              <Input
+                type="number"
+                value={amount}
+                className="inputStaking"
+                color={inputColor}
+                onChange={(e) =>
+                  setAmount(
+                    Math.min(parseFloat(e.target.value), wattpeakBalance)
+                  )
+                }
+                max={wattpeakBalance}
+                step="1"
+                placeholder="Amount"
+              />
+            </Box>
+            <Box className="stakeDetails" backgroundColor={backgroundColor}>
+              <p>Claimable Rewards: {claimableRewards} Wattpeak</p>
+              <p>Current ROI: {config.rewards_percentage * 100} % per year</p>
+            </Box>
+            <Center>
+              <Button
+                onClick={handleStake}
+                disabled={loading}
+                className="stakeBtn"
+              >
+                {loading ? <Spinner /> : "STAKE"}
+              </Button>
+            </Center>
             {claimableRewards > 0 && (
               <Button onClick={handleClaimRewards} disabled={loading} mt="10px">
-                {loading ? <Spinner /> : `Claim Rewards (${claimableRewards} Wattpeak)`}
+                {loading ? (
+                  <Spinner />
+                ) : (
+                  `Claim Rewards (${claimableRewards} Wattpeak)`
+                )}
               </Button>
             )}
           </TabPanel>
           <TabPanel>
-            <h1>Unstake Wattpeak</h1>
-            <p>Available balance to unstake: {stakedWattpeak}</p>
-            <Input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Math.min(parseFloat(e.target.value), stakedWattpeak))}
-              min="0.000001"
-              max={stakedWattpeak}
-              step="0.001"
-              placeholder="Amount"
-            />
-            <Button onClick={() => setAmount(stakedWattpeak)} mb="10px">
-              Max
-            </Button>
-            <Button onClick={handleUnstake} disabled={loading}>
-              {loading ? <Spinner /> : "Unstake"}
-            </Button>
+            <Box
+              className="inputWrapperStaker"
+              backgroundColor={backgroundColor}
+            >
+              <div className="balanceWrapper">
+                <span>Staked Wattpeak: {stakedWattpeak}</span>
+                <Button
+                  onClick={() => setAmount(stakedWattpeak)}
+                  mb="10px"
+                  className="maxButtonMinting"
+                >
+                  Max
+                </Button>
+              </div>
+              <Input
+                className="inputStaking"
+                type="number"
+                value={amount}
+                color={inputColor}
+                onChange={(e) =>
+                  setAmount(
+                    Math.min(parseFloat(e.target.value), stakedWattpeak)
+                  )
+                }
+                min="0.000001"
+                max={stakedWattpeak}
+                step="0.001"
+                placeholder="Amount"
+              />
+            </Box>
+            <Center>
+              <Button
+                onClick={handleUnstake}
+                disabled={loading}
+                className="stakeBtn"
+              >
+                {loading ? <Spinner /> : "UNSTAKE"}
+              </Button>
+            </Center>
           </TabPanel>
         </TabPanels>
       </Tabs>
-      {error && (
-        <Alert status="error">
-          <AlertIcon />
-          {error.message}
-        </Alert>
-      )}
     </Box>
   );
 };
 
 export default Staking;
-
