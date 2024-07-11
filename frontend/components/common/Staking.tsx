@@ -249,12 +249,12 @@ export const Staking = ({ chainName }) => {
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
             >
-              <div className="balanceWrapper">
-                <span>Wattpeak: {wattpeakBalance}</span>
+              <div className="stakingBalanceWrapper">
+                <p>Wattpeak balance: {wattpeakBalance}</p>
                 <Button
                   onClick={() => setAmount(wattpeakBalance)}
                   mb="10px"
-                  className="maxButtonMinting"
+                  className="maxButtonStaking"
                 >
                   Max
                 </Button>
@@ -270,13 +270,15 @@ export const Staking = ({ chainName }) => {
                   )
                 }
                 max={wattpeakBalance}
+                min="1"
                 step="1"
                 placeholder="Amount"
               />
             </Box>
             <Box className="stakeDetails" backgroundColor={backgroundColor}>
-              <p>Claimable Rewards: {claimableRewards} Wattpeak</p>
+              <h3>You will stake {amount} WattPeak</h3>
               <p>Current ROI: {config.rewards_percentage * 100} % per year</p>
+              <p>Reward: {parseFloat(amount * config.rewards_percentage).toFixed(1)} WattPeak per year</p>
             </Box>
             <Center>
               <Button
@@ -302,12 +304,12 @@ export const Staking = ({ chainName }) => {
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
             >
-              <div className="balanceWrapper">
-                <span>Staked Wattpeak: {stakedWattpeak}</span>
+              <div className="stakingBalanceWrapper">
+                <p>Staked Wattpeak: {stakedWattpeak}</p>
                 <Button
                   onClick={() => setAmount(stakedWattpeak)}
                   mb="10px"
-                  className="maxButtonMinting"
+                  className="maxButtonStaking"
                 >
                   Max
                 </Button>
@@ -322,9 +324,9 @@ export const Staking = ({ chainName }) => {
                     Math.min(parseFloat(e.target.value), stakedWattpeak)
                   )
                 }
-                min="0.000001"
+                min="1"
                 max={stakedWattpeak}
-                step="0.001"
+                step="1"
                 placeholder="Amount"
               />
             </Box>

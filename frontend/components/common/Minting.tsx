@@ -341,11 +341,11 @@ export const Minting = ({ chainName }) => {
         <Box className="inputWrapper" backgroundColor={backgroundColor}>
           <div className="balanceWrapper">
             <span>Juno</span>
+            <br />
+            <span className="balance">Balance: {junoBalance}</span>
             <button onClick={handleMaxClick} className="maxButtonMinting">
               Max
             </button>
-            <br />
-            <span className="balance">Balance: {junoBalance}</span>
           </div>
           <Input
             type="number"
@@ -377,6 +377,14 @@ export const Minting = ({ chainName }) => {
       </Box>
       <Box className="mintButtonDetailsBox">
         <Box className="priceDetails" backgroundColor={backgroundColor}>
+          <h3>You will pay {" "}
+            {parseFloat(
+              (
+                parseFloat(cryptoAmount) +
+                cryptoAmount * config.minting_fee_percentage
+              ).toFixed(6)
+            ).toString()}{" "}
+            uJunox for {amount} Wattpeak</h3>
           <p>
             Minting fee:{" "}
             {parseFloat(
@@ -384,18 +392,6 @@ export const Minting = ({ chainName }) => {
             ).toString()}{" "}
             uJunox
           </p>
-          <p>
-            You Pay:{" "}
-            {parseFloat(
-              (
-                parseFloat(cryptoAmount) +
-                cryptoAmount * config.minting_fee_percentage
-              ).toFixed(6)
-            ).toString()}{" "}
-            uJunox
-          </p>
-
-          <p>You receive: {amount} WattPeak </p>
         </Box>
         <button onClick={handleMint} disabled={minting} className="mintBtn">
           {minting ? <Spinner size="sm" color="black" /> : "MINT"}
