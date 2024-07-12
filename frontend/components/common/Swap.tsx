@@ -11,11 +11,10 @@ import {
   Tab,
   TabPanel,
   Button,
-  Box
+  Box,
+  border,
 } from "@chakra-ui/react";
-import {
-  Spinner
-} from "@interchain-ui/react";
+import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 
 const HERO_CONTRACT_ADDRESS =
@@ -44,6 +43,12 @@ export const Swap = ({ chainName }) => {
     price_per_nft: "0",
     token_denom: "ustars",
   });
+  const inputColor = useColorModeValue("black", "white");
+  const borderColor = useColorModeValue("black", "white");
+  const backgroundColor = useColorModeValue(
+    "rgba(0, 0, 0, 0.04)",
+    "rgba(52, 52, 52, 1)"
+  );
 
   useEffect(() => {
     const fetchNfts = async () => {
@@ -237,19 +242,48 @@ export const Swap = ({ chainName }) => {
   }
 
   if (error) return <div>Error: {error.message}</div>;
-
   return (
     <div>
-      <h1>NFT Swap</h1>
       <Tabs>
-        <TabList>
-          <Tab>Swap NFT to Tokens</Tab>
-          <Tab>Swap Tokens to NFT</Tab>
-        </TabList>
-
+        <Box className="swapTabsBox">
+          <h2>Cyber Solar Heroes</h2>
+          <TabList>
+            <Tab
+              className="swapTabs"
+              borderColor={borderColor}
+              color={inputColor}
+              background={backgroundColor}
+              _selected={{
+                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                color: "black",
+                transform: "translateX(0px)",
+                transition: "transform 0.3s ease",
+                zIndex: 2,
+              }}
+            >
+              Swap NFTs
+            </Tab>
+            <Tab
+              className="swapTabs"
+              borderColor={borderColor}
+              color={inputColor}
+              background={backgroundColor}
+              _selected={{
+                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                color: "black",
+                transform: "translateX(0px)",
+                transition: "transform 0.3s ease",
+                zIndex: 2,
+              }}
+            >
+              Swap Solar
+            </Tab>
+          </TabList>
+          <p>select multiple</p>
+        </Box>
+  
         <TabPanels>
           <TabPanel>
-            <h1>NFTs Owned by {walletAddress}</h1>
             <ul>
               {walletNfts.map((nft, index) => (
                 <li key={index}>
@@ -277,7 +311,6 @@ export const Swap = ({ chainName }) => {
             )}
           </TabPanel>
           <TabPanel>
-            <h1>NFTs Available for Swap</h1>
             <ul>
               {contractNfts.map((nft, index) => (
                 <li key={index}>
@@ -314,6 +347,6 @@ export const Swap = ({ chainName }) => {
       )}
     </div>
   );
-};
+}
 
 export default Swap;

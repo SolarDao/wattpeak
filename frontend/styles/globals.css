@@ -297,4 +297,32 @@ a {
     right: 20px;
     top: 10px;
   }
+  .swapTabsBox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-right: 30px;
+  }
+  
+  .swapTabs {
+    background: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    padding: 10px 40px;
+    font-size: 1.2rem;
+    color: black;
+    border: black 1px solid;
+    border-radius: 45px;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease, z-index 0s;
+  }
+  
+  .swapTabsBox .swapTabs + .swapTabs {
+    margin-left: -34px; /* overlap adjustment */
+  }
+  
+  .swapTabs._selected {
+    transform: translateX(0) !important;
+  }  
 }

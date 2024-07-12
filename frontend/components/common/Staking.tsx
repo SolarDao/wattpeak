@@ -278,7 +278,8 @@ export const Staking = ({ chainName }) => {
             <Box className="stakeDetails" backgroundColor={backgroundColor}>
               <h3>You will stake {amount} WattPeak</h3>
               <p>Current ROI: {config.rewards_percentage * 100} % per year</p>
-              <p>Reward: {parseFloat(amount * config.rewards_percentage).toFixed(1)} WattPeak per year</p>
+              <p>Reward: {parseFloat((amount * config.rewards_percentage).toFixed(6)).toString().replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")} WattPeak per year</p>
+
             </Box>
             <Center>
               <Button

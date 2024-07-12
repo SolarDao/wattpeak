@@ -34,6 +34,7 @@ export const Minting = ({ chainName }) => {
   let wallet = useWallet();
   let walletName = wallet?.wallet?.name ?? "";
   const inputColor = useColorModeValue("black", "white");
+  const borderColor = useColorModeValue("black", "white");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
@@ -326,6 +327,7 @@ export const Minting = ({ chainName }) => {
                       : "projectButton"
                   }
                   color={inputColor}
+                  borderColor={borderColor}
                   onClick={() => setSelectedProjectId(project.projectId)}
                 >
                   {selectedProjectId === project.projectId

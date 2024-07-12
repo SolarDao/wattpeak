@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useWalletAddress } from '../../context/WalletAddressContext';
 import { queryStakers } from '../../utils/queryStaker';
 import { Spinner, Box } from "@interchain-ui/react";
-import { Wallet } from '../wallet';
 
 export const Home = () => {
   const [staker, setStakers] = useState([]);
