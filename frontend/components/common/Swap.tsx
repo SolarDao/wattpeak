@@ -12,7 +12,6 @@ import {
   TabPanel,
   Button,
   Box,
-  border,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
@@ -45,6 +44,7 @@ export const Swap = ({ chainName }) => {
   });
   const inputColor = useColorModeValue("black", "white");
   const borderColor = useColorModeValue("black", "white");
+  const nftBorderColor = useColorModeValue("black", "yellow");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
@@ -281,50 +281,57 @@ export const Swap = ({ chainName }) => {
           </TabList>
           <p>select multiple</p>
         </Box>
-  
-        <TabPanels>
+
+        <TabPanels className="swapPanels" backgroundColor={backgroundColor}>
           <TabPanel>
-            <ul>
+            <ul className="nftList">
               {walletNfts.map((nft, index) => (
-                <li key={index}>
+                <li
+                  key={index}
+                  className={`nft-item ${
+                    selectedNft === nft.tokenId ? "selected-nft" : ""
+                  }`}
+                  borderColor={borderColor}
+                  onClick={() => setSelectedNft(nft.tokenId)}
+                >
                   <Image
                     src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
                     alt={nft.name}
-                    width={100}
-                    height={100}
+                    className="nftImage"
+                    width={220}
+                    height={220}
                   />
-                  <p>Token ID: {nft.tokenId}</p>
                   <p>Name: {nft.name}</p>
-                  <button onClick={() => setSelectedNft(nft.tokenId)}>
-                    Select for Swap
-                  </button>
                 </li>
               ))}
             </ul>
             {selectedNft && (
               <div>
                 <h2>Selected NFT: {selectedNft}</h2>
-                <button onClick={swapNftToTokens} disabled={swapping}>
+                <Button onClick={swapNftToTokens} disabled={swapping}>
                   {swapping ? <Spinner /> : "Approve and Swap NFT for Tokens"}
-                </button>
+                </Button>
               </div>
             )}
           </TabPanel>
           <TabPanel>
-            <ul>
+            <ul className="nftList">
               {contractNfts.map((nft, index) => (
-                <li key={index}>
+                <li
+                  key={index}
+                  className={`nft-item ${
+                    selectedNft === nft.tokenId ? "selected-nft" : ""
+                  }`}
+                  onClick={() => setSelectedNft(nft.tokenId)}
+                >
                   <Image
                     src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
                     alt={nft.name}
-                    width={100}
-                    height={100}
+                    className="nftImage"
+                    width={220}
+                    height={220}
                   />
-                  <p>Token ID: {nft.tokenId}</p>
                   <p>Name: {nft.name}</p>
-                  <button onClick={() => setSelectedNft(nft.tokenId)}>
-                    Select for Swap
-                  </button>
                 </li>
               ))}
             </ul>
@@ -347,6 +354,6 @@ export const Swap = ({ chainName }) => {
       )}
     </div>
   );
-}
+};
 
 export default Swap;

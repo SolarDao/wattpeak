@@ -217,32 +217,33 @@ export const Staking = ({ chainName }) => {
             borderColor={inputColor}
             color={inputColor}
             background={backgroundColor}
-            _hover={{
-              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-            }}
             _selected={{
               background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
               color: "black",
+              transform: "translateX(0px)",
+              transition: "transform 0.3s ease",
+              zIndex: 2,
             }}
           >
             Stake
           </Tab>
           <Tab
+            className="stakeTab"
             borderColor={inputColor}
             color={inputColor}
             background={backgroundColor}
-            className="stakeTab"
-            _hover={{
-              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-            }}
             _selected={{
               background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
               color: "black",
+              transform: "translateX(0px)",
+              transition: "transform 0.3s ease",
+              zIndex: 2,
             }}
           >
             Unstake
           </Tab>
         </TabList>
+
         <TabPanels className="tabPanelsStaking">
           <TabPanel>
             <Box
@@ -278,8 +279,13 @@ export const Staking = ({ chainName }) => {
             <Box className="stakeDetails" backgroundColor={backgroundColor}>
               <h3>You will stake {amount} WattPeak</h3>
               <p>Current ROI: {config.rewards_percentage * 100} % per year</p>
-              <p>Reward: {parseFloat((amount * config.rewards_percentage).toFixed(6)).toString().replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")} WattPeak per year</p>
-
+              <p>
+                Reward:{" "}
+                {parseFloat((amount * config.rewards_percentage).toFixed(6))
+                  .toString()
+                  .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")}{" "}
+                WattPeak per year
+              </p>
             </Box>
             <Center>
               <Button
