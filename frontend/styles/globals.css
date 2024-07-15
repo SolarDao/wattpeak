@@ -26,13 +26,12 @@ a {
   }
 
   .box {
-    background: linear-gradient(116.82deg, #855d15 0%, #141406 99.99%, #070D1C 100%);
     border-radius: 25px;
     margin-bottom: 10rem;
   }
 
   .whiteBox {
-    min-height: 70vh;
+    min-height: 80vh;
   }
 
   .headerBox{
@@ -82,7 +81,6 @@ a {
     border-width: 2px;
     border-radius: 23px;
     font-size: 15px;
-    color: black;
     cursor: pointer;
   }
 
@@ -93,12 +91,12 @@ a {
     border-width: 1px;
     border-radius: 23px;
     font-size: 15px;
-    color: black;
     cursor: pointer;
   }
   
   .project-details button:hover {
     background: linear-gradient(180deg, #FFD602 0%, #FFA231 100%);
+    color: black;
   }
 
   .mintBox {
@@ -328,41 +326,80 @@ a {
     transition: transform 0.3s ease, z-index 0s;
   }
   
-  .swapTabsBox
-   .swapTabs + .swapTabs {
+  .swapTabsBox .swapTabs + .swapTabs {
     margin-left: -34px;
   }
-
+  
   .nft-item {
     cursor: pointer;
-    transition: border-color 0.3s ease;
-    background-color: black;
+    position: relative;
     border-radius: 23px;
     text-align: center;
+    transition: all 0.3s ease;
+    width: 20%;
+    height: auto;
+    list-style: none;
+    font-size: 13px;
   }
-
+  
   .nftImage {
     width: 100%;
     height: auto;
     border-radius: 23px;
   }
   
-  .nft-item.selected-nft {
-    border: 2px solid #FFD602; /* Change to desired border color */
-    border-color: #FFD602; /* Change to desired border color */
+  .nft-item.selected-nft::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 214, 2, 0.5); /* Yellow tint with 50% opacity */
+    border-radius: 23px;
+    pointer-events: none;
   }
+  
   .nftList {
     display: flex;
-    flex: flex-wrap;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
-    padding-left: 10px;
+    margin: 0px;
+    padding: 0px;
+    margin-left: 0px;
     list-style: none;
   }
+  
   .swapPanels {
     background-color: rgba(0, 0, 0, 0.04);
     padding: 10px;
     border-radius: 23px;
     height: 100%;
+  }
+  .modalBox {
+    position: relative;
+    bottom: 0px;
+  }
+  .multipleSelectBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    gap: 8px; /* Space between the image and the text */
+    background: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    font-size: 1.2rem;
+    border-radius: 45px;
+  }
+  
+  .multipleSelectImg {
+    margin-right: 8px; /* Space between the image and the text */
+  }
+  .selectedNftBox {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.04);
   }
 }

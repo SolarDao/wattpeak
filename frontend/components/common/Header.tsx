@@ -7,6 +7,7 @@ import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessar
 import { Dispatch, SetStateAction } from 'react';
 import SolarDaoImage from "../../public/Group 121.png"
 import Image from 'next/image';
+import { color } from "framer-motion";
 
 type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
@@ -64,6 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
                 marginRight: "$4",
                 cursor: "pointer",
                 textDecoration: "none",
+                color: "white",
               }}
             >
               {item.name}

@@ -55,7 +55,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <Container maxWidth="80rem" attributes={{ py: '$14' }}>
       <Box className='box' 
-      backgroundColor={useColorModeValue('$yellow', 'rgba(52, 52, 52, 1)')}
+      backgroundImage={useColorModeValue('linear-gradient(116.82deg, #855d15 0%, #141406 99.99%, #070D1C 100%)', '')}
+      backgroundColor={useColorModeValue('', 'rgba(52, 52, 52, 1)')}
       >
         <Header setCurrentSection={handleSectionChange} chainName={chainName} />
         <Box display="flex" className='whiteBox'
