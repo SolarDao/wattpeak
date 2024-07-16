@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useWalletAddress } from "../../context/WalletAddressContext";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
@@ -60,6 +60,7 @@ export const Swap = ({ chainName }) => {
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
   );
+  const modalBackgroundColor = useColorModeValue("rgba(0, 0, 0, 0.07)", "rgba(35, 35, 35, 1)");
 
   useEffect(() => {
     const fetchNfts = async () => {
@@ -168,7 +169,6 @@ export const Swap = ({ chainName }) => {
       setSwapping(false);
     }
   };
-
   const handleApproveAndSwap = async () => {
     if (!signingClient || !selectedNft) {
       console.error("Signing client or selected NFT not initialized");
@@ -177,6 +177,9 @@ export const Swap = ({ chainName }) => {
 
     try {
       setSwapping(true);
+
+      // Prepare the messages array
+      const msgs = [];
 
       // Query existing approval
       const approvalQueryMsg = {
@@ -191,7 +194,7 @@ export const Swap = ({ chainName }) => {
         approvalQueryMsg
       );
 
-      // If approval is not granted or expired, grant approval
+      // If approval is not granted or expired, add approval message
       if (!approvalQueryResult || !approvalQueryResult.approval) {
         const approveMsg = {
           approve: {
@@ -201,43 +204,57 @@ export const Swap = ({ chainName }) => {
           },
         };
 
-        const approveResult = await signingClient.execute(
-          walletAddress, // Sender address
-          HERO_CONTRACT_ADDRESS, // NFT Contract address
-          approveMsg, // Approve message
-          {
-            amount: [{ denom: "ustars", amount: "7500" }], // fee
-            gas: "200000", // gas limit
-          }
-        );
+        msgs.push({
+          typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+          value: {
+            sender: walletAddress,
+            contract: HERO_CONTRACT_ADDRESS,
+            msg: toUtf8(JSON.stringify(approveMsg)),
+            funds: [],
+          },
+        });
       }
 
-      // Swap the NFT for tokens
+      // Add swap message
       const swapMsg = {
         swap_token: {
           nft_id: selectedNft,
         },
       };
 
-      const swapResult = await signingClient.execute(
-        walletAddress, // Sender address
-        SWAP_CONTRACT_ADDRESS, // Swap Contract address
-        swapMsg, // Swap message
-        {
-          amount: [{ denom: "ustars", amount: "7500" }], // fee
-          gas: "300000", // gas limit
+      msgs.push({
+        typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+        value: {
+          sender: walletAddress,
+          contract: SWAP_CONTRACT_ADDRESS,
+          msg: toUtf8(JSON.stringify(swapMsg)),
+          funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
         },
-        "",
-        [{ denom: config.token_denom, amount: config.price_per_nft }]
+      });
+
+      const fee = {
+        amount: [{ denom: "ustars", amount: "7500" }],
+        gas: (200000 + 300000).toString(),
+      };
+
+      // Sign and broadcast the transaction
+      const result = await signingClient.signAndBroadcast(
+        walletAddress,
+        msgs,
+        fee
       );
-      setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
+
+      if (result.code !== 0) {
+        throw new Error(`Error executing transaction: ${result.rawLog}`);
+      }
+
       const walletNftsResult = await queryNftsByAddress(walletAddress);
-      setWalletNfts(walletNftsResult); // Adjust based on your query response structure
+      setWalletNfts(walletNftsResult);
 
       const contractNftsResult = await queryNftsByAddress(
         SWAP_CONTRACT_ADDRESS
       );
-      setContractNfts(contractNftsResult); // Adjust based on your query response structure
+      setContractNfts(contractNftsResult);
 
       setSelectedNft(null);
       setModalIsOpen(false);
@@ -323,10 +340,10 @@ export const Swap = ({ chainName }) => {
       console.error("Signing client or selected NFTs not initialized");
       return;
     }
-  
+
     try {
       setSwapping(true);
-  
+
       // Prepare all messages
       const msgs = selectedMultipleNfts.map((tokenId) => {
         const swapMsg = {
@@ -334,36 +351,44 @@ export const Swap = ({ chainName }) => {
             nft_id: tokenId,
           },
         };
-  
+
         return {
           typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
           value: {
             sender: walletAddress,
             contract: SWAP_CONTRACT_ADDRESS,
             msg: toUtf8(JSON.stringify(swapMsg)),
-            funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
+            funds: [
+              { denom: config.token_denom, amount: config.price_per_nft },
+            ],
           },
         };
       });
-  
+
       const fee = {
         amount: [{ denom: "ustars", amount: "7500" }],
         gas: (300000 * selectedMultipleNfts.length).toString(),
       };
-  
+
       // Sign and broadcast the transaction
-      const result = await signingClient.signAndBroadcast(walletAddress, msgs, fee);
-  
+      const result = await signingClient.signAndBroadcast(
+        walletAddress,
+        msgs,
+        fee
+      );
+
       if (result.code !== 0) {
         throw new Error(`Error executing transaction: ${result.rawLog}`);
       }
-  
+
       const walletNftsResult = await queryNftsByAddress(walletAddress);
       setWalletNfts(walletNftsResult);
-  
-      const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
+
+      const contractNftsResult = await queryNftsByAddress(
+        SWAP_CONTRACT_ADDRESS
+      );
       setContractNfts(contractNftsResult);
-  
+
       setSelectedMultipleNfts([]);
     } catch (err) {
       setError(err);
@@ -372,8 +397,7 @@ export const Swap = ({ chainName }) => {
       setSwapping(false);
     }
   };
-  
-  
+
   const handleTabsChange = (index) => {
     setTabIndex(index);
     setSelectedNft(null);
@@ -383,7 +407,7 @@ export const Swap = ({ chainName }) => {
 
   const customStyles = {
     content: {
-      top: "50%",
+      top: "52%",
       left: "50%",
       right: "auto",
       bottom: "auto",
@@ -391,7 +415,7 @@ export const Swap = ({ chainName }) => {
       backgroundColor: useColorModeValue("white", "rgba(52, 52, 52, 1)"),
       color: useColorModeValue("black", "white"),
       borderRadius: "15px",
-      height: "68%",
+      height: "76%",
       width: "23%",
     },
     overlay: {
@@ -466,13 +490,23 @@ export const Swap = ({ chainName }) => {
                 : backgroundColor
             }
           >
-            <Image
-              className="multipleSelectImg"
-              src={require("../../images/frame_black.png")}
-              alt={"multiple select"}
-              width={20}
-              height={20}
-            />
+            {inputColor === "white" && !multipleSelect ? (
+              <Image
+                className="multipleSelectImg"
+                src={require("../../images/frame.png")}
+                alt={"multiple select"}
+                width={20}
+                height={20}
+              ></Image>
+            ) : (
+              <Image
+                className="multipleSelectImg"
+                src={require("../../images/frame_black.png")}
+                alt={"multiple select"}
+                width={20}
+                height={20}
+              />
+            )}
             Select Multiple
           </Button>
         </Box>
@@ -480,62 +514,76 @@ export const Swap = ({ chainName }) => {
         <TabPanels className="swapPanels" background={backgroundColor}>
           <TabPanel>
             {walletNfts.length === 0 ? (
-              <Center height={500} fontSize={30}> No NFTs found in your wallet</Center>
-            ) : (   
-            <UnorderedList className="nftList">
-              {walletNfts.map((nft, index) => (
-                <ListItem
-                  key={index}
-                  className={`nft-item ${
-                    multipleSelect && selectedMultipleNfts.includes(nft.tokenId)
-                      ? "selected-nft"
-                      : ""
-                  }`}
-                  background={nftBackgroundColor}
-                  color={inputColor}
-                  onClick={() => handleNftClick(nft)}
-                >
-                  <Image
-                    src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
-                    alt={nft.name}
-                    className="nftImage"
-                    width={150}
-                    height={150}
-                  />
-                  <p>Name: {nft.name}</p>
-                </ListItem>
-              ))}
-            </UnorderedList>
+              <Center height={500} fontSize={30}>
+                {" "}
+                No NFTs found in your wallet
+              </Center>
+            ) : (
+              <UnorderedList className="nftList">
+                {walletNfts.map((nft, index) => (
+                  <ListItem
+                    key={index}
+                    className={`nft-item ${
+                      multipleSelect &&
+                      selectedMultipleNfts.includes(nft.tokenId)
+                        ? "selected-nft"
+                        : ""
+                    }`}
+                    background={nftBackgroundColor}
+                    color={inputColor}
+                    onClick={() => handleNftClick(nft)}
+                  >
+                    <Image
+                      src={nft.image.replace(
+                        "ipfs://",
+                        "https://ipfs.io/ipfs/"
+                      )}
+                      alt={nft.name}
+                      className="nftImage"
+                      width={150}
+                      height={150}
+                    />
+                    <p>Name: {nft.name}</p>
+                  </ListItem>
+                ))}
+              </UnorderedList>
             )}
           </TabPanel>
           <TabPanel>
-          {contractNfts.length === 0 ? (
-             <Center height={500} fontSize={30}> No NFTs available in contract</Center>
-            ) : (   
-            <UnorderedList className="nftList">
-              {contractNfts.map((nft, index) => (
-                <ListItem
-                  key={index}
-                  className={`nft-item ${
-                    multipleSelect && selectedMultipleNfts.includes(nft.tokenId)
-                      ? "selected-nft"
-                      : ""
-                  }`}
-                  background={nftBackgroundColor}
-                  color={inputColor}
-                  onClick={() => handleNftClick(nft)}
-                >
-                  <Image
-                    src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
-                    alt={nft.name}
-                    className="nftImage"
-                    width={150}
-                    height={150}
-                  />
-                  <p>Name: {nft.name}</p>
-                </ListItem>
-              ))}
-            </UnorderedList>
+            {contractNfts.length === 0 ? (
+              <Center height={500} fontSize={30}>
+                {" "}
+                No NFTs available in contract
+              </Center>
+            ) : (
+              <UnorderedList className="nftList">
+                {contractNfts.map((nft, index) => (
+                  <ListItem
+                    key={index}
+                    className={`nft-item ${
+                      multipleSelect &&
+                      selectedMultipleNfts.includes(nft.tokenId)
+                        ? "selected-nft"
+                        : ""
+                    }`}
+                    background={nftBackgroundColor}
+                    color={inputColor}
+                    onClick={() => handleNftClick(nft)}
+                  >
+                    <Image
+                      src={nft.image.replace(
+                        "ipfs://",
+                        "https://ipfs.io/ipfs/"
+                      )}
+                      alt={nft.name}
+                      className="nftImage"
+                      width={150}
+                      height={150}
+                    />
+                    <p>Name: {nft.name}</p>
+                  </ListItem>
+                ))}
+              </UnorderedList>
             )}
           </TabPanel>
         </TabPanels>
@@ -577,6 +625,7 @@ export const Swap = ({ chainName }) => {
           onRequestClose={() => setModalIsOpen(false)}
           style={customStyles}
           contentLabel="Selected NFT Details"
+          color={inputColor}
         >
           <button
             onClick={() => setModalIsOpen(false)}
@@ -598,45 +647,184 @@ export const Swap = ({ chainName }) => {
               alt={selectedNftDetails.name}
               width={200}
               height={200}
-              style={{ borderRadius: "15px", marginBottom: "20px" }}
+              style={{ borderRadius: "15px", marginBottom: "5px" }}
             />
           </Center>
           <h3>Cyber Solar Hero #{selectedNftDetails.tokenId}</h3>
           <p style={{ fontSize: "13px" }}>{selectedNftDetails.description}</p>
-          <Box>
-            <Image
-              src={require("../../images/solarheroes.png")}
-              alt={"Solar"}
-              width={40}
-              height={40}
-            />
-            Cyber Solar Hero
-          </Box>
-          <Box className="modalSwapBox">
-            <Image
-              src={require("../../images/solartoken.png")}
-              alt={"Solar"}
-              width={40}
-              height={40}
-            />
-            Solar Token
-          </Box>
           {tabIndex === 0 ? (
-            <Button
-              onClick={swapNftToTokens}
-              disabled={swapping}
-              colorScheme="yellow"
-              mt={4}
+            <Box
+              display="flex"
+              justifyContent="Center"
+              gap={20}
+              marginBottom={10}
             >
-            </Button>
+              <Box
+                background={modalBackgroundColor}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                padding={20}
+                borderRadius={15}
+              >
+                <Image
+                  src={require("../../images/solarheroes.png")}
+                  alt={"Solar"}
+                  width={40}
+                  height={40}
+                />
+                <Box marginTop={10} fontSize={12}>
+                  {" "}
+                  Cyber Solar Hero{" "}
+                </Box>
+              </Box>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Image
+                  src={require("../../images/yellowarrow.png")}
+                  alt={"arrow"}
+                  width={20}
+                  height={20}
+                ></Image>
+              </Box>
+              <Box
+                className="modalSwapBox"
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                background={modalBackgroundColor}
+                padding={20}
+                borderRadius={15}
+              >
+                <Image
+                  src={require("../../images/solartoken.png")}
+                  alt={"Solar"}
+                  width={40}
+                  height={40}
+                />
+                <Box marginTop={10} fontSize={12}>
+                  {" "}
+                  Solar Tokens{" "}
+                </Box>
+              </Box>
+            </Box>
           ) : (
-            <Button
-              onClick={handleApproveAndSwap}
-              disabled={swapping}
-              colorScheme="yellow"
-              mt={4}
+            <Box
+              display="flex"
+              justifyContent="Center"
+              gap={20}
+              marginBottom={10}
             >
-            </Button>
+              <Box
+                background={modalBackgroundColor}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                padding={20}
+                borderRadius={15}
+              >
+                <Image
+                  src={require("../../images/solartoken.png")}
+                  alt={"Solar"}
+                  width={40}
+                  height={40}
+                />
+
+                <Box marginTop={10} fontSize={12}>
+                  {" "}
+                  Solar Tokens{" "}
+                </Box>
+              </Box>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Image
+                  src={require("../../images/yellowarrow.png")}
+                  alt={"arrow"}
+                  width={20}
+                  height={20}
+                ></Image>
+              </Box>
+              <Box
+                className="modalSwapBox"
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                background={modalBackgroundColor}
+                padding={20}
+                borderRadius={15}
+              >
+                <Image
+                  src={require("../../images/solarheroes.png")}
+                  alt={"Solar"}
+                  width={40}
+                  height={40}
+                />
+                <Box marginTop={10} fontSize={12}>
+                  {" "}
+                  Cyber Solar Heroes{" "}
+                </Box>
+              </Box>
+            </Box>
+          )}
+          {tabIndex === 0 ? (
+            <Box>
+              <Box
+                background={modalBackgroundColor}
+                borderRadius={20}
+                padding={10}
+                fontSize={14}
+              >
+                <Center>
+                  Price for NFT: {config.price_per_nft} {config.token_denom}
+                </Center>
+              </Box>
+              <Center>
+                <Button
+                  borderRadius={50}
+                  width={150}
+                  height={30}
+                  onClick={handleApproveAndSwap}
+                  disabled={swapping}
+                  background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+                  color="black"
+                  cursor="pointer"
+                  marginTop={15}
+                >
+                  Swap
+                </Button>
+              </Center>
+            </Box>
+          ) : (
+            <Box>
+              <Box
+                background={modalBackgroundColor}
+                borderRadius={20}
+                padding={10}
+                fontSize={14}
+              >
+                <Center>
+                  Amount to receive: {config.price_per_nft} {config.token_denom}
+                </Center>
+              </Box>
+              <Center>
+                <Button
+                  borderRadius={50}
+                  width={150}
+                  height={30}
+                  onClick={handleApproveAndSwap}
+                  disabled={swapping}
+                  background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+                  color="black"
+                  cursor="pointer"
+                  marginTop={15}
+                >
+                  {" "}
+                  Swap
+                </Button>
+              </Center>
+            </Box>
           )}
         </Modal>
       )}
