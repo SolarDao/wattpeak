@@ -336,7 +336,7 @@ a {
     border-radius: 23px;
     text-align: center;
     transition: all 0.3s ease;
-    width: 20%;
+    width: 18%;
     height: auto;
     list-style: none;
     font-size: 13px;
@@ -397,9 +397,12 @@ a {
   }
   .selectedNftBox {
     margin-top: 20px;
-    padding: 20px;
+    padding-top: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
     border: 1px solid #ccc;
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.04);
+    height: auto;
   }
 }
