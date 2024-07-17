@@ -921,6 +921,141 @@ mod tests {
             assert_eq!(staker.claimable_rewards, Decimal::zero());
         }
         #[test]
+        fn claim_rewards_multiple_epochs () {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 86400,
+                },
+            };
+
+            let info = mock_info("creator", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let deposit_amount = Uint128::from(574u128);
+
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info1.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info2.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info3.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+
+            env = mock_env();
+            let funds = Coin {
+                denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                amount: deposit_amount,
+            };
+
+            let info = mock_info("admin", &[funds.clone()]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                info.clone(),
+                ExecuteMsg::DepositRewards {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 0);
+
+            let claimer = mock_info("addr1", &[]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer.clone(),
+                ExecuteMsg::ClaimReward {},
+            )
+            .unwrap();
+
+            let claimer2 = mock_info("addr2", &[]);
+            let res2 = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer2.clone(),
+                ExecuteMsg::ClaimReward {},
+            )
+            .unwrap();
+
+            let claimer3 = mock_info("addr3", &[]);
+            let res3 = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer3.clone(),
+                ExecuteMsg::ClaimReward {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 1);
+            assert_eq!(
+                res.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: staker_info1.sender.to_string(),
+                    amount: vec![Coin {
+                        denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                        amount: Uint128::from(95u128),
+                    }],
+                })
+            );
+
+            assert_eq!(res2.messages.len(), 1);
+            assert_eq!(
+                res2.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: staker_info2.sender.to_string(),
+                    amount: vec![Coin {
+                        denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                        amount: Uint128::from(191u128),
+                    }],
+                })
+            );
+
+            assert_eq!(res3.messages.len(), 1);
+            assert_eq!(
+                res3.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: staker_info3.sender.to_string(),
+                    amount: vec![Coin {
+                        denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                        amount: Uint128::from(287u128),
+                    }],
+                })
+            );
+
+            let staker = STAKERS
+                .load(deps.as_ref().storage, staker_info1.sender)
+                .unwrap();
+            assert_eq!(staker.claimable_rewards, Decimal::zero());
+        }
+
+        #[test]
         fn claim_when_staker_doesnt_exist() {
             let mut deps = mock_dependencies();
             let env = mock_env();
@@ -1046,6 +1181,78 @@ mod tests {
             assert_eq!(
                 res.err().unwrap().to_string(),
                 "Generic error: No rewards to claim"
+            );
+        }
+        #[test]
+        fn one_staker_three_epochs_deposit_and_claim() {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+
+            let msg = InstantiateMsg {
+                config: Config {
+                    admin: Addr::unchecked("admin"),
+                    rewards_percentage: Decimal::percent(5),
+                    epoch_length: 1,
+                },
+            };
+
+            let info = mock_info("creator", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+            let deposit_amount = Uint128::from(5000000u128);
+
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                staker_info1.clone(),
+                ExecuteMsg::Stake {},
+            )
+            .unwrap();
+
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+
+            env = mock_env();
+            let funds = Coin {
+                denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string(),
+                amount: deposit_amount,
+            };
+
+            let info = mock_info("admin", &[funds.clone()]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                info.clone(),
+                ExecuteMsg::DepositRewards {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 0);
+
+            let claimer = mock_info("addr1", &[]);
+            let res = execute(
+                deps.as_mut(),
+                env.clone(),
+                claimer.clone(),
+                ExecuteMsg::ClaimReward {},
+            )
+            .unwrap();
+
+            assert_eq!(res.messages.len(), 1);
+            assert_eq!(
+                res.messages[0].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: staker_info1.sender.to_string(),
+                    amount: vec![Coin {
+                        denom: "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak".to_string
+                        (),
+                        amount: Uint128::from(5000000u128),
+                    }],
+                })
             );
         }
     }

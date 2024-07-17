@@ -50,8 +50,8 @@ export const Home = () => {
     <div>
       <h1>Home Page</h1>
       <h2>Stakers Info</h2>
-      <p>claimable_rewards: {staker.claimable_rewards}</p>
-      <p>interest earned: {staker.interest_wattpeak}</p>
+      <p>claimable_rewards: {staker.claimable_rewards / 1000000} WP</p>
+      <p>interest earned: {staker.interest_wattpeak / 1000000} WP</p>
       <p>staking start time: {staker.stake_start_time}</p>
       <p>wattpeak staked: {staker.wattpeak_staked / 1000000}</p>
     </div>

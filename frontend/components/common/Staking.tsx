@@ -15,6 +15,7 @@ import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/junoBalances";
 import { queryStakers } from "@/utils/queryStaker";
 import { queryStakingConfig } from "@/utils/queryStakingConfig";
+import Confetti from 'react-confetti'
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -35,6 +36,7 @@ export const Staking = ({ chainName }) => {
   const [signingClient, setSigningClient] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [confetti, setConfetti] = useState(false);
   const [claimableRewards, setClaimableRewards] = useState(0);
   const [config, setConfig] = useState({});
   const wattpeakBalance =
@@ -155,7 +157,7 @@ export const Staking = ({ chainName }) => {
     }
 
     const claimMsg = {
-      claim_rewards: {},
+      claim_reward: {},
     };
 
     try {
@@ -179,6 +181,7 @@ export const Staking = ({ chainName }) => {
       console.error("Error executing claim rewards:", err);
     } finally {
       setLoading(false);
+      setConfetti(true);
     }
   };
 
@@ -210,6 +213,10 @@ export const Staking = ({ chainName }) => {
       borderRadius="10px"
       borderWidth="1px"
     >
+      {confetti && (
+        <Confetti />
+      )  
+      }
       <Tabs variant="enclosed">
         <TabList className="tabListStaking">
           <Tab
