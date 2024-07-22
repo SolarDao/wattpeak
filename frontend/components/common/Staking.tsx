@@ -15,14 +15,17 @@ import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/junoBalances";
 import { queryStakers } from "@/utils/queryStaker";
 import { queryStakingConfig } from "@/utils/queryStakingConfig";
-import Confetti from 'react-confetti'
+import Confetti from "react-confetti";
+import { toast } from "react-toastify";
+import Modal from "react-modal";
+import { CloseIcon } from "@chakra-ui/icons";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
 const wattpeadDenom =
   "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka";
 
-export const Staking = ({ chainName }) => {
+export const Staking = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
   const walletName = wallet?.wallet?.name ?? "";
   const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
@@ -39,6 +42,7 @@ export const Staking = ({ chainName }) => {
   const [confetti, setConfetti] = useState(false);
   const [claimableRewards, setClaimableRewards] = useState(0);
   const [config, setConfig] = useState({});
+  const [modalIsOpen, setModalIsOpen] = useState(false);
   const wattpeakBalance =
     balances.find((balance) => balance.denom === wattpeadDenom)?.amount /
       1000000 || 0;
@@ -60,7 +64,11 @@ export const Staking = ({ chainName }) => {
           setBalances(balancesResult);
           const stakersResult = await queryStakers(address);
           setStakers(stakersResult);
-          setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Assuming claimable_rewards is in micro units
+          const claimable = stakersResult.claimable_rewards / 1000000; // Assuming claimable_rewards is in micro units
+          setClaimableRewards(claimable);
+          if (claimable > 0) {
+            setModalIsOpen(true); // Open the modal if there are claimable rewards
+          }
           const configResult = await queryStakingConfig();
           setConfig(configResult);
           console.log("Staking config:", configResult);
@@ -69,6 +77,7 @@ export const Staking = ({ chainName }) => {
         }
       } catch (err) {
         setError(err);
+        toast.error("Error connecting to wallet");
         console.error("Error getting signing client:", err);
       } finally {
         setLoading(false);
@@ -107,8 +116,10 @@ export const Staking = ({ chainName }) => {
       setStakers(stakersResult);
       setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
+      toast.success("Tokens staked successfully!");
     } catch (err) {
       setError(err);
+      toast.error("Error staking tokens");
       console.error("Error executing stake:", err);
     } finally {
       setLoading(false);
@@ -142,8 +153,10 @@ export const Staking = ({ chainName }) => {
       setStakers(stakersResult);
       setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
+      toast.success("Tokens unstaked successfully!");
     } catch (err) {
       setError(err);
+      toast.error("Error unstaking tokens");
       console.error("Error executing unstake:", err);
     } finally {
       setLoading(false);
@@ -176,13 +189,34 @@ export const Staking = ({ chainName }) => {
       const stakersResult = await queryStakers(address);
       setStakers(stakersResult);
       setClaimableRewards(0); // Reset claimable rewards after claiming
+      setConfetti(true);
+      toast.success("Rewards claimed successfully!");
     } catch (err) {
       setError(err);
+      toast.error("Error claiming rewards");
       console.error("Error executing claim rewards:", err);
     } finally {
       setLoading(false);
-      setConfetti(true);
     }
+  };
+
+  const customStyles = {
+    content: {
+      top: "52%",
+      left: "50%",
+      right: "auto",
+      bottom: "auto",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: useColorModeValue("white", "rgba(52, 52, 52, 1)"),
+      color: useColorModeValue("black", "white"),
+      borderRadius: "15px",
+      height: "20%",
+      width: "300px",
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      zIndex: 1000,
+    },
   };
 
   if (loading || !signingClient || !config || !staker || !balances) {
@@ -213,10 +247,53 @@ export const Staking = ({ chainName }) => {
       borderRadius="10px"
       borderWidth="1px"
     >
-      {confetti && (
-        <Confetti />
-      )  
-      }
+      {claimableRewards > 0 && (
+        <Modal
+          isOpen={modalIsOpen}
+          onRequestClose={() => setModalIsOpen(false)}
+          style={customStyles}
+        >
+          <button
+            onClick={() => setModalIsOpen(false)}
+            style={{
+              position: "absolute",
+              right: "20px",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            <CloseIcon color={inputColor} />
+          </button>
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            marginTop="30px"
+          >
+            <Box textAlign="center" fontSize={20}>
+              You have {claimableRewards} WattPeak ready to be claimed!
+            </Box>
+            <br />
+            <Button
+              onClick={handleClaimRewards}
+              background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+              color="black"
+              borderRadius={50}
+              padding={10}
+              width={230}
+              height={50}
+              fontSize={18}
+              cursor="pointer"
+            >
+              Claim Rewards
+            </Button>
+          </Box>
+        </Modal>
+      )}
+
+      {confetti && <Confetti numberOfPieces={3000} recycle={false} />}
       <Tabs variant="enclosed">
         <TabList className="tabListStaking">
           <Tab
@@ -303,15 +380,6 @@ export const Staking = ({ chainName }) => {
                 {loading ? <Spinner /> : "STAKE"}
               </Button>
             </Center>
-            {claimableRewards > 0 && (
-              <Button onClick={handleClaimRewards} disabled={loading} mt="10px">
-                {loading ? (
-                  <Spinner />
-                ) : (
-                  `Claim Rewards (${claimableRewards} Wattpeak)`
-                )}
-              </Button>
-            )}
           </TabPanel>
           <TabPanel>
             <Box

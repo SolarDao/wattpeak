@@ -15,6 +15,7 @@ import { setConfig } from "next/config";
 import { Button, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
+import { toast } from 'react-toastify';
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -142,6 +143,7 @@ export const Minting = ({ chainName }) => {
         setProjects(projectsWithId);
       } catch (err) {
         setError(err);
+        toast.error("Error fetching projects");
       } finally {
         setLoading(false);
       }
@@ -196,6 +198,7 @@ export const Minting = ({ chainName }) => {
           );
         } catch (err) {
           setError(err);
+          toast.error("Error querying the NFT contract");
           console.error("Error querying the NFT contract:", err);
         } finally {
           setLoading(false);
@@ -220,7 +223,7 @@ export const Minting = ({ chainName }) => {
       return;
     }
     if (!selectedProjectId) {
-      alert("Please select a project to mint.");
+      toast.warn("Please select a project to mint.");
       return;
     }
     setMinting(true);
@@ -253,8 +256,7 @@ export const Minting = ({ chainName }) => {
       setProjects(projectsWithId);
       getBalances(address).then((result) => {
         setBalances(result);
-      }
-      );
+      });
       setJunoBalance(
         balances?.find((balance) => balance.denom === "ujunox")?.amount /
           1000000 || 0
@@ -266,11 +268,11 @@ export const Minting = ({ chainName }) => {
             "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
         )?.amount / 1000000 || 0
       );
-      alert("Minting successful");
+      toast.success("Minting successful");
     } catch (err) {
       setError(err);
+      toast.error("Minting failed: " + err.message);
       console.error("Error executing mint:", err);
-      alert("Minting failed", err.message);
     } finally {
       setMinting(false);
     }
@@ -379,14 +381,16 @@ export const Minting = ({ chainName }) => {
       </Box>
       <Box className="mintButtonDetailsBox">
         <Box className="priceDetails" backgroundColor={backgroundColor}>
-          <h3>You will pay {" "}
+          <h3>
+            You will pay{" "}
             {parseFloat(
               (
                 parseFloat(cryptoAmount) +
                 cryptoAmount * config.minting_fee_percentage
               ).toFixed(6)
             ).toString()}{" "}
-            uJunox for {amount} Wattpeak</h3>
+            uJunox for {amount} Wattpeak
+          </h3>
           <p>
             Minting fee:{" "}
             {parseFloat(

@@ -10,7 +10,6 @@ import { SideNavbar } from './SideNavbar';
 import { Analytics } from './Analytics';
 import { Home } from './Home';
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
-import { color } from 'framer-motion';
 
 const JUNO_CHAIN_NAME = 'junotestnet';
 const STARGAZE_CHAIN_NAME = 'stargazetestnet';
@@ -36,9 +35,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const renderSection = () => {
     switch (currentSection) {
       case 'home':
-        return <Home />;
+        return <Home junoChain={JUNO_CHAIN_NAME} stargazeChain={STARGAZE_CHAIN_NAME} />;
       case 'minting':
-        return <Minting chainName={chainName} />
+        return <Minting chainName={chainName} />;
       case 'staking':
         return <Staking chainName={chainName} />;
       case 'swapping':
@@ -48,7 +47,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       case 'analytics':
         return <Analytics />;
       default:
-        return <Home />;
+        return <Home junoChain={JUNO_CHAIN_NAME} stargazeChain={STARGAZE_CHAIN_NAME} />;
     }
   };
 

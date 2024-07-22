@@ -1,23 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { useWalletAddress } from '../../context/WalletAddressContext';
-import { queryStakers } from '../../utils/queryStaker';
+import React, { useEffect, useState } from "react";
+import { useWalletAddress } from "../../context/WalletAddressContext";
+import { queryStakers } from "../../utils/queryStaker";
 import { Spinner, Box } from "@interchain-ui/react";
+import StackedBarChart from "./stackedBarChart";
+import { getBalances } from "@/utils/junoBalances";
 
 export const Home = () => {
   const [staker, setStakers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { walletAddress } = useWalletAddress();
+  const [balances, setBalances] = useState([]);
+  
 
   useEffect(() => {
     const fetchStakers = async () => {
       if (walletAddress) {
+        setLoading(true);
         try {
-          const result = await queryStakers(walletAddress);
-          setStakers(result);
-          setLoading(false);
+          const stakersResult = await queryStakers(walletAddress);
+          setStakers(stakersResult);
+          
+          const balancesResult = await getBalances(walletAddress);
+          setBalances(balancesResult);
         } catch (err) {
           setError(err);
+        } finally {
           setLoading(false);
         }
       }
@@ -25,7 +33,7 @@ export const Home = () => {
     fetchStakers();
   }, [walletAddress]);
 
-  if (loading && walletAddress) {
+  if (loading) {
     return (
       <Box
         position="fixed"
@@ -44,16 +52,24 @@ export const Home = () => {
     );
   }
 
-  if (error) return <div>Error: {error.message}</div>;
+  if (!walletAddress) {
+    return (
+      <Box>
+        Connect Wallet
+      </Box>
+    );
+  }
+
+  const filteredBalances = balances.filter(balance => 
+    balance.denom === 'factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka' || 
+    balance.denom === 'ujunox'
+  );
 
   return (
     <div>
-      <h1>Home Page</h1>
-      <h2>Stakers Info</h2>
-      <p>claimable_rewards: {staker.claimable_rewards / 1000000} WP</p>
-      <p>interest earned: {staker.interest_wattpeak / 1000000} WP</p>
-      <p>staking start time: {staker.stake_start_time}</p>
-      <p>wattpeak staked: {staker.wattpeak_staked / 1000000}</p>
+      <div style={{ width: "50%", margin: "auto" }}>
+        <StackedBarChart balances={filteredBalances} />
+      </div>
     </div>
   );
 };

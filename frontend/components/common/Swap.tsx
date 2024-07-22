@@ -19,6 +19,7 @@ import Image from "next/image";
 import Modal from "react-modal";
 import { CloseIcon } from "@chakra-ui/icons";
 import { toUtf8, toBase64 } from "@cosmjs/encoding";
+import { toast } from 'react-toastify';
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -165,8 +166,10 @@ export const Swap = ({ chainName }) => {
 
       setSelectedNft(null);
       setModalIsOpen(false);
+      toast.success("NFT swapped succesfully!")
     } catch (err) {
       setError(err);
+      toast.error("Error swapping NFT")
       console.error("Error executing swap:", err);
     } finally {
       setSwapping(false);
@@ -261,9 +264,11 @@ export const Swap = ({ chainName }) => {
 
       setSelectedNft(null);
       setModalIsOpen(false);
+      toast.success("Tokens successfully swapped!")
     } catch (err) {
       setError(err);
       console.error("Error executing approve and swap:", err);
+      toast.error("Error swapping tokens")
     } finally {
       setSwapping(false);
     }
@@ -330,8 +335,10 @@ export const Swap = ({ chainName }) => {
       setContractNfts(contractNftsResult);
 
       setSelectedMultipleNfts([]);
+      toast.success("NFTs successfully swapped!")
     } catch (err) {
       setError(err);
+      toast.error("Error swapping NFTs")
       console.error("Error executing multiple swap:", err);
     } finally {
       setSwapping(false);
@@ -393,8 +400,10 @@ export const Swap = ({ chainName }) => {
       setContractNfts(contractNftsResult);
 
       setSelectedMultipleNfts([]);
+      toast.success("Tokens swapped successfully!")
     } catch (err) {
       setError(err);
+      toast.error("Error swapping tokens")
       console.error("Error executing multiple swap:", err);
     } finally {
       setSwapping(false);
@@ -482,6 +491,7 @@ export const Swap = ({ chainName }) => {
               Swap Solar
             </Tab>
           </TabList>
+          
           <Button
             className="multipleSelectBtn"
             color={multipleSelect ? "black" : inputColor}
@@ -819,7 +829,8 @@ export const Swap = ({ chainName }) => {
           <button
             onClick={() => setModalIsOpen(false)}
             style={{
-              float: "right",
+              position: "absolute",
+              right: "20px",
               backgroundColor: "transparent",
               border: "none",
               cursor: "pointer",
@@ -836,7 +847,7 @@ export const Swap = ({ chainName }) => {
               alt={selectedNftDetails.name}
               width={200}
               height={200}
-              style={{ borderRadius: "15px", marginBottom: "5px" }}
+              style={{ borderRadius: "15px", marginBottom: "5px",  marginTop: "20px"}}
             />
           </Center>
           <h3>Cyber Solar Hero #{selectedNftDetails.tokenId}</h3>

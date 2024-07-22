@@ -14,7 +14,7 @@ export type WalletProps = {
 export function Wallet({ chainName, onChainChange }: WalletProps) {
   const walletName = useWallet();
   
-  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName, walletName);
+  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName, !!walletName);
   const { setWalletAddress } = useWalletAddress(); // Use the context
 
   const [isAlertVisible, setIsAlertVisible] = useState(false);
@@ -52,12 +52,6 @@ export function Wallet({ chainName, onChainChange }: WalletProps) {
     }} />,
     [WalletStatus.NotExist]: <ButtonNotExist onClick={openView} />,
   }[status] || <ButtonConnect onClick={connect} />;
-
-  useEffect(() => {
-    if (status === WalletStatus.Disconnected || status === WalletStatus.Error || status === WalletStatus.Rejected) {
-      connect();
-    }
-  }, [chainName, status, connect]);
 
   return (
     <Box position="relative">
