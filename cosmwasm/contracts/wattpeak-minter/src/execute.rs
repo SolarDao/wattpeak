@@ -23,6 +23,7 @@ pub fn execute(
             description,
             document_deal_link,
             max_wattpeak,
+            image_link,
         } => upload_project(
             deps,
             info,
@@ -30,6 +31,7 @@ pub fn execute(
             description,
             document_deal_link,
             max_wattpeak,
+            image_link,
         ),
         ExecuteMsg::EditProject {
             id,
@@ -37,6 +39,7 @@ pub fn execute(
             description,
             document_deal_link,
             max_wattpeak,
+            image_link,
         } => edit_project(
             deps,
             info,
@@ -45,6 +48,7 @@ pub fn execute(
             description,
             document_deal_link,
             max_wattpeak,
+            image_link,
         ),
         ExecuteMsg::UpdateConfig {
             admin,
@@ -76,6 +80,7 @@ pub fn upload_project(
     description: String,
     document_deal_link: String,
     max_wattpeak: u64,
+    image_link: String,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can upload a new project
     let config = CONFIG.load(deps.as_ref().storage).unwrap();
@@ -89,6 +94,7 @@ pub fn upload_project(
         description,
         document_deal_link,
         max_wattpeak,
+        image_link,
         minted_wattpeak_count: 0,
     };
 
@@ -114,6 +120,7 @@ pub fn edit_project(
     description: String,
     document_deal_link: String,
     max_wattpeak: u64,
+    image_link: String,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can edit a project
     let config = CONFIG.load(deps.as_ref().storage)?;
@@ -130,6 +137,7 @@ pub fn edit_project(
     project.description = description;
     project.document_deal_link = document_deal_link;
     project.max_wattpeak = max_wattpeak;
+    project.image_link = image_link;
 
     project.validate()?;
 
@@ -319,6 +327,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
@@ -375,6 +384,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 0,
+                image_link: "ipfs://test-image".to_string(),
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
             assert_eq!(
@@ -404,6 +414,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
@@ -428,6 +439,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -436,6 +448,7 @@ mod tests {
                 description: "test description2".to_string(),
                 document_deal_link: "ipfs://test-link2".to_string(),
                 max_wattpeak: 3000,
+                image_link: "ipfs://test-image2".to_string(),
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -444,6 +457,7 @@ mod tests {
                 description: "test description3".to_string(),
                 document_deal_link: "ipfs://test-link3".to_string(),
                 max_wattpeak: 3000,
+                image_link: "ipfs://test-image3".to_string(),
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -455,18 +469,21 @@ mod tests {
             assert_eq!(project1.description, "test description");
             assert_eq!(project1.document_deal_link, "ipfs://test-link");
             assert_eq!(project1.max_wattpeak, 1000);
+            assert_eq!(project1.image_link, "ipfs://test-image");
 
             let project2 = PROJECTS.load(deps.as_ref().storage, 2).unwrap();
             assert_eq!(project2.name, "test name2");
             assert_eq!(project2.description, "test description2");
             assert_eq!(project2.document_deal_link, "ipfs://test-link2");
             assert_eq!(project2.max_wattpeak, 3000);
+            assert_eq!(project2.image_link, "ipfs://test-image2");
 
             let project3 = PROJECTS.load(deps.as_ref().storage, 3).unwrap();
             assert_eq!(project3.name, "test name3");
             assert_eq!(project3.description, "test description3");
             assert_eq!(project3.document_deal_link, "ipfs://test-link3");
             assert_eq!(project3.max_wattpeak, 3000);
+            assert_eq!(project3.image_link, "ipfs://test-image3");
         }
     }
     #[cfg(test)]
@@ -498,6 +515,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -507,6 +525,7 @@ mod tests {
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 2000,
+                image_link: "ipfs://new-image".to_string(),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
@@ -515,6 +534,7 @@ mod tests {
             assert_eq!(project_deal.name, "new name");
             assert_eq!(project_deal.description, "new description");
             assert_eq!(project_deal.document_deal_link, "ipfs://new-link");
+            assert_eq!(project_deal.image_link, "ipfs://new-image");
             assert_eq!(project_deal.max_wattpeak, 2000);
             assert_eq!(project_deal.minted_wattpeak_count, 0);
         }
@@ -539,6 +559,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -548,6 +569,7 @@ mod tests {
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
+                image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 0,
             };
             let err_max_wattpeak = execute(
@@ -570,6 +592,7 @@ mod tests {
                 name: "".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
+                image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
             };
             let err_empty_name =
@@ -587,6 +610,7 @@ mod tests {
                 name: "new name".to_string(),
                 description: "".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
+                image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
             };
             let err_empty_description = execute(
@@ -622,6 +646,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -631,6 +656,7 @@ mod tests {
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
+                image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 2000,
             };
             let non_admin_info = mock_info("non_admin", &[]);
@@ -844,6 +870,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -914,6 +941,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -951,6 +979,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -988,6 +1017,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1052,6 +1082,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1060,6 +1091,7 @@ mod tests {
                 name: "test name2".to_string(),
                 description: "test description2".to_string(),
                 document_deal_link: "ipfs://test-link2".to_string(),
+                image_link: "ipfs://test-image2".to_string(),
                 max_wattpeak: 1000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1123,6 +1155,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1153,6 +1186,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 2000,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1192,6 +1226,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1222,6 +1257,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
@@ -1248,6 +1284,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1268,6 +1305,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
@@ -1302,6 +1340,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1327,6 +1366,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1360,6 +1400,7 @@ mod tests {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();

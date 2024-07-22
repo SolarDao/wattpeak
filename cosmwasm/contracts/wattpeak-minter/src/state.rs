@@ -49,6 +49,8 @@ pub struct Project {
     pub document_deal_link: String,
     /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
     pub max_wattpeak: u64,
+    /// image_link is a link to an image of the project
+    pub image_link: String,
     /// minted_wattpeak_count is the number of wattpeak that have been minted for this project
     pub minted_wattpeak_count: u64,
 }

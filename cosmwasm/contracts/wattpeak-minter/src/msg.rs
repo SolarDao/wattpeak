@@ -19,6 +19,8 @@ pub enum ExecuteMsg {
         document_deal_link: String,
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
+        /// image_link is a link to an image of the project
+        image_link: String,
     },
     EditProject {
         id: u64,
@@ -26,6 +28,7 @@ pub enum ExecuteMsg {
         description: String,
         document_deal_link: String,
         max_wattpeak: u64,
+        image_link: String,
     },
     /// Update contract configuration
     UpdateConfig {

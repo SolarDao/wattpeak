@@ -88,6 +88,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
             let upload_second = ExecuteMsg::UploadProject {
@@ -95,6 +96,7 @@ mod tests {
                 description: "test description 2".to_string(),
                 document_deal_link: "ipfs://test-link-2".to_string(),
                 max_wattpeak: 2000,
+                image_link: "ipfs://test-image-2".to_string(),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_second).unwrap();
 
@@ -127,6 +129,7 @@ mod tests {
                     description: format!("test description {}", i),
                     document_deal_link: format!("ipfs://test-link-{}", i),
                     max_wattpeak: 1000 * (i + 1),
+                    image_link: format!("ipfs://test-image-{}", i),
                 };
                 execute(deps.as_mut(), mock_env(), info.clone(), upload).unwrap();
             }
@@ -179,6 +182,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
+                image_link: "ipfs://test-image".to_string(),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
 
