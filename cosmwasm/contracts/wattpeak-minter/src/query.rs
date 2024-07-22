@@ -89,6 +89,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: crate::msg::Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
             let upload_second = ExecuteMsg::UploadProject {
@@ -97,6 +101,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link-2".to_string(),
                 max_wattpeak: 2000,
                 image_link: "ipfs://test-image-2".to_string(),
+                location: crate::msg::Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_second).unwrap();
 
@@ -130,6 +138,10 @@ mod tests {
                     document_deal_link: format!("ipfs://test-link-{}", i),
                     max_wattpeak: 1000 * (i + 1),
                     image_link: format!("ipfs://test-image-{}", i),
+                    location: crate::msg::Location {
+                        latitude: 1.0,
+                        longitude: 1.0,
+                    },
                 };
                 execute(deps.as_mut(), mock_env(), info.clone(), upload).unwrap();
             }
@@ -167,7 +179,7 @@ mod tests {
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::execute::execute;
         use crate::instantiate;
-        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
         use crate::query::query;
         use crate::query::tests::{MOCK_ADMIN, mock_config};
 
@@ -183,6 +195,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
 

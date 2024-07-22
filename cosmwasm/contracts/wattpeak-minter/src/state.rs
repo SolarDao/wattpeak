@@ -2,6 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Decimal, Deps, StdError, StdResult};
 use cw_storage_plus::{Item, Map};
 
+use crate::msg::Location;
+
 #[cw_serde]
 pub struct Config {
     /// admin is the address of the admin which are the only entity allowed to upload new projects
@@ -51,6 +53,8 @@ pub struct Project {
     pub max_wattpeak: u64,
     /// image_link is a link to an image of the project
     pub image_link: String,
+    /// location is the location of the project
+    pub location: Location,
     /// minted_wattpeak_count is the number of wattpeak that have been minted for this project
     pub minted_wattpeak_count: u64,
 }

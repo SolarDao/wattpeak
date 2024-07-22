@@ -21,6 +21,8 @@ pub enum ExecuteMsg {
         max_wattpeak: u64,
         /// image_link is a link to an image of the project
         image_link: String,
+        /// location is the location of the project
+        location: Location,
     },
     EditProject {
         id: u64,
@@ -29,6 +31,7 @@ pub enum ExecuteMsg {
         document_deal_link: String,
         max_wattpeak: u64,
         image_link: String,
+        location: Location,
     },
     /// Update contract configuration
     UpdateConfig {
@@ -67,6 +70,12 @@ pub struct NewDenom {
 pub struct InitialBalance {
     pub address: String,
     pub amount: Uint128,
+}
+
+#[cw_serde]
+pub struct Location {
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 #[cw_serde]

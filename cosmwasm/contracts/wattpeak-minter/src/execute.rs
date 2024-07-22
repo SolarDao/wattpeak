@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::msg::Location;
 use crate::state::{
     Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, FULL_DENOM, PROJECTS, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT
 };
@@ -24,6 +25,7 @@ pub fn execute(
             document_deal_link,
             max_wattpeak,
             image_link,
+            location,
         } => upload_project(
             deps,
             info,
@@ -32,6 +34,7 @@ pub fn execute(
             document_deal_link,
             max_wattpeak,
             image_link,
+            location,
         ),
         ExecuteMsg::EditProject {
             id,
@@ -40,6 +43,7 @@ pub fn execute(
             document_deal_link,
             max_wattpeak,
             image_link,
+            location,
         } => edit_project(
             deps,
             info,
@@ -49,6 +53,7 @@ pub fn execute(
             document_deal_link,
             max_wattpeak,
             image_link,
+            location,
         ),
         ExecuteMsg::UpdateConfig {
             admin,
@@ -81,6 +86,7 @@ pub fn upload_project(
     document_deal_link: String,
     max_wattpeak: u64,
     image_link: String,
+    location: Location,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can upload a new project
     let config = CONFIG.load(deps.as_ref().storage).unwrap();
@@ -95,6 +101,7 @@ pub fn upload_project(
         document_deal_link,
         max_wattpeak,
         image_link,
+        location,
         minted_wattpeak_count: 0,
     };
 
@@ -121,6 +128,7 @@ pub fn edit_project(
     document_deal_link: String,
     max_wattpeak: u64,
     image_link: String,
+    location: Location,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can edit a project
     let config = CONFIG.load(deps.as_ref().storage)?;
@@ -138,6 +146,7 @@ pub fn edit_project(
     project.document_deal_link = document_deal_link;
     project.max_wattpeak = max_wattpeak;
     project.image_link = image_link;
+    project.location = location;
 
     project.validate()?;
 
@@ -302,7 +311,7 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
-        use crate::msg::InstantiateMsg;
+        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
         use crate::state::{PROJECTS, PROJECT_DEALS_COUNT};
         use crate::{instantiate, state};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
@@ -328,6 +337,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: crate::msg::Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
@@ -379,12 +392,16 @@ mod tests {
             )
             .unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 0,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
             assert_eq!(
@@ -409,12 +426,16 @@ mod tests {
             )
             .unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
@@ -434,30 +455,42 @@ mod tests {
             )
             .unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name2".to_string(),
                 description: "test description2".to_string(),
                 document_deal_link: "ipfs://test-link2".to_string(),
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image2".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name3".to_string(),
                 description: "test description3".to_string(),
                 document_deal_link: "ipfs://test-link3".to_string(),
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image3".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
@@ -491,7 +524,7 @@ mod tests {
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
         use crate::instantiate;
-        use crate::msg::InstantiateMsg;
+        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
         use crate::state::PROJECTS;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, StdError};
@@ -510,22 +543,30 @@ mod tests {
             )
             .unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-            let edit_msg = crate::msg::ExecuteMsg::EditProject {
+            let edit_msg = ExecuteMsg::EditProject {
                 id: 1,
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 max_wattpeak: 2000,
                 image_link: "ipfs://new-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
@@ -554,23 +595,31 @@ mod tests {
             .unwrap();
 
             // First, successfully upload a project
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
             // Attempt to edit the project with an invalid max_wattpeak
-            let edit_msg_max_wattpeak = crate::msg::ExecuteMsg::EditProject {
+            let edit_msg_max_wattpeak = ExecuteMsg::EditProject {
                 id: 1,
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 0,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let err_max_wattpeak = execute(
                 deps.as_mut(),
@@ -587,13 +636,17 @@ mod tests {
             );
 
             // Attempt to edit the project with an empty name
-            let edit_msg_empty_name = crate::msg::ExecuteMsg::EditProject {
+            let edit_msg_empty_name = ExecuteMsg::EditProject {
                 id: 1,
                 name: "".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let err_empty_name =
                 execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
@@ -605,13 +658,17 @@ mod tests {
             );
 
             // Attempt to edit the project with an empty description
-            let edit_msg_empty_description = crate::msg::ExecuteMsg::EditProject {
+            let edit_msg_empty_description = ExecuteMsg::EditProject {
                 id: 1,
                 name: "new name".to_string(),
                 description: "".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let err_empty_description = execute(
                 deps.as_mut(),
@@ -642,22 +699,30 @@ mod tests {
             )
             .unwrap();
 
-            let msg = crate::msg::ExecuteMsg::UploadProject {
+            let msg = ExecuteMsg::UploadProject {
                 name: "test name".to_string(),
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
-            let edit_msg = crate::msg::ExecuteMsg::EditProject {
+            let edit_msg = ExecuteMsg::EditProject {
                 id: 1,
                 name: "new name".to_string(),
                 description: "new description".to_string(),
                 document_deal_link: "ipfs://new-link".to_string(),
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 2000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err =
@@ -850,7 +915,7 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::{execute, mint_tokens_msg};
         use crate::instantiate;
-        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
         use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdError, Uint128};
@@ -872,6 +937,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -943,6 +1012,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -981,6 +1054,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1019,6 +1096,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1084,6 +1165,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1093,6 +1178,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link2".to_string(),
                 image_link: "ipfs://test-image2".to_string(),
                 max_wattpeak: 1000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1157,6 +1246,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1188,6 +1281,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 2000,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1228,6 +1325,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1259,6 +1360,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
             assert_eq!(
@@ -1286,6 +1391,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1307,6 +1416,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
 
@@ -1342,6 +1455,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1368,6 +1485,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1402,6 +1523,10 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
+                location: Location {
+                    latitude: 1.0,
+                    longitude: 1.0,
+                },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
