@@ -85,6 +85,7 @@ export function Wallet({ chainName, onChainChange }: WalletProps) {
             flex="1"
             width="full"
             display="flex"
+            paddingRight="0"
             height="$16"
             overflow="hidden"
             justifyContent="center"

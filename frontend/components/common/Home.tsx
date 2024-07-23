@@ -1,17 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useWalletAddress } from "../../context/WalletAddressContext";
 import { queryStakers } from "../../utils/queryStaker";
-import { Spinner, Box } from "@interchain-ui/react";
+import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
 import StackedBarChart from "./stackedBarChart";
 import { getBalances } from "@/utils/junoBalances";
 import { useChains } from "@cosmos-kit/react";
 import { getStargazeBalances } from "@/utils/stargazeBalances";
+import { Flex } from "@chakra-ui/react";
 
 const formatDenom = (denom) => {
+  let formattedDenom = denom;
+
   if (denom.startsWith("factory")) {
-    return denom.split("/").pop();
+    formattedDenom = denom.split("/").pop();
   }
-  return denom;
+
+  if (formattedDenom.startsWith("u")) {
+    formattedDenom = formattedDenom.slice(1);
+  }
+
+  if (formattedDenom === "stars" || formattedDenom === "junox") {
+    formattedDenom = formattedDenom.toUpperCase();
+  }
+
+  if (formattedDenom === "wattpeaka") {
+    formattedDenom = "WattPeak";
+  }
+
+  if (formattedDenom === "som") {
+    formattedDenom = "SoM";
+  }
+  return formattedDenom;
 };
 
 export const Home = () => {
@@ -20,6 +39,10 @@ export const Home = () => {
   const [error, setError] = useState(null);
   const { walletAddress } = useWalletAddress();
   const [balances, setBalances] = useState([]);
+  const backgroundColor = useColorModeValue(
+    "rgba(0, 0, 0, 0.04)",
+    "rgba(52, 52, 52, 1)"
+  );
   const chains = useChains(["stargazetestnet", "junotestnet"]);
   const connected = Object.values(chains).every(
     (chain) => chain.isWalletConnected
@@ -70,31 +93,27 @@ export const Home = () => {
     );
   }
 
-  if (!walletAddress) {
-    return <Box>Connect Wallet</Box>;
-  }
-
   const filteredBalances = balances.filter(
     (balance) =>
       balance.denom ===
         "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka" ||
       balance.denom === "ujunox" ||
       balance.denom === "ustars" ||
-      balance.denom === "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
+      balance.denom ===
+        "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
   );
 
   return (
     <div>
-      <div style={{ width: "50%", margin: "auto" }}>
-        <StackedBarChart balances={filteredBalances} />
-      </div>
-      <Box>{chains.junotestnet.address}</Box>
-      <Box>{chains.stargazetestnet.address}</Box>
-      {filteredBalances.map((balance) => (
-        <div key={balance.denom}>
-          {formatDenom(balance.denom)} : {balance.amount}
-        </div>
-      ))}
+      <Flex borderRadius="23px" backgroundColor={backgroundColor} width="20%" padding="20px" flexDirection="column" gap="5px">
+      <h3>My Wallet</h3>
+        {filteredBalances.map((balance) => (
+          <div key={balance.denom}>
+            {formatDenom(balance.denom)} :{" "}
+            {parseFloat((balance.amount / 1000000).toFixed(2))}
+          </div>
+        ))}
+      </Flex>
     </div>
   );
 };

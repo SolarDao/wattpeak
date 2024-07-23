@@ -38,6 +38,8 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
         maxHeight="$18"
         marginBottom="$0"
         marginLeft="$6"
+        marginRight="$6"
+        
       >
         <Box
           as="a"
@@ -53,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
           <Image src={SolarDaoImage} alt={"SolarDaoImage"} width={200} height={25} />
         </Box>
 
-        <Box display="flex" alignItems="center" gap="$15">
+        <Box display="flex" alignItems="center" gap="$15" marginLeft="20px">
           {navItems.map((item) => (
             <Box
               key={item.id}
@@ -62,7 +64,6 @@ export const Header: React.FC<HeaderProps> = ({ setCurrentSection, chainName }) 
               attributes={{
                 fontWeight: "$medium",
                 fontSize: { mobile: "$xl", tablet: "$2xl" },
-                marginRight: "$4",
                 cursor: "pointer",
                 textDecoration: "none",
                 color: "white",
