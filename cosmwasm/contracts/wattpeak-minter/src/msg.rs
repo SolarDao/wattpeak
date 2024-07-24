@@ -74,8 +74,8 @@ pub struct InitialBalance {
 
 #[cw_serde]
 pub struct Location {
-    pub latitude: f64,
-    pub longitude: f64,
+    pub latitude: Decimal,
+    pub longitude: Decimal,
 }
 
 #[cw_serde]

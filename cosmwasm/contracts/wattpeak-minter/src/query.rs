@@ -62,7 +62,7 @@ mod tests {
     }
 
     mod test_query_projects {
-        use cosmwasm_std::{coins, from_json};
+        use cosmwasm_std::{coins, from_json, Decimal};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::execute::execute;
         use crate::instantiate;
@@ -90,8 +90,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: crate::msg::Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
@@ -102,8 +102,8 @@ mod tests {
                 max_wattpeak: 2000,
                 image_link: "ipfs://test-image-2".to_string(),
                 location: crate::msg::Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_second).unwrap();
@@ -122,6 +122,13 @@ mod tests {
             assert_eq!(res.projects[1].description, "test description 2");
             assert_eq!(res.projects[1].document_deal_link, "ipfs://test-link-2");
             assert_eq!(res.projects[1].max_wattpeak, 2000);
+            assert_eq!(res.projects[0].minted_wattpeak_count, 0);
+            assert_eq!(res.projects[0].image_link, "ipfs://test-image");
+            assert_eq!(res.projects[1].image_link, "ipfs://test-image-2");
+            assert_eq!(res.projects[0].location.latitude, Decimal::from_ratio(1u64, 1u64));
+            assert_eq!(res.projects[0].location.longitude, Decimal::from_ratio(1u64, 1u64));
+            assert_eq!(res.projects[1].location.latitude, Decimal::from_ratio(1u64, 1u64));
+            assert_eq!(res.projects[1].location.longitude, Decimal::from_ratio(1u64, 1u64));
         }
 
         #[test]
@@ -139,9 +146,8 @@ mod tests {
                     max_wattpeak: 1000 * (i + 1),
                     image_link: format!("ipfs://test-image-{}", i),
                     location: crate::msg::Location {
-                        latitude: 1.0,
-                        longitude: 1.0,
-                    },
+                        latitude: Decimal::from_ratio(1u64, 1u64),
+                        longitude: Decimal::from_ratio(1u64, 1u64),                    },
                 };
                 execute(deps.as_mut(), mock_env(), info.clone(), upload).unwrap();
             }
@@ -175,7 +181,7 @@ mod tests {
     }
 
     mod test_query_project {
-        use cosmwasm_std::{coins, from_json, StdError};
+        use cosmwasm_std::{coins, from_json, Decimal, StdError};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use crate::execute::execute;
         use crate::instantiate;
@@ -196,8 +202,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1001u64, 10u64),
+                    longitude: Decimal::from_ratio(1001u64, 10u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), upload_first).unwrap();
@@ -205,12 +211,15 @@ mod tests {
             let res = query(deps.as_ref(), mock_env(), crate::msg::QueryMsg::Project {
                 id: 1,
             }).unwrap();
+            
             let project: crate::state::Project = from_json(&res).unwrap();
             assert_eq!(project.name, "test name");
             assert_eq!(project.description, "test description");
             assert_eq!(project.document_deal_link, "ipfs://test-link");
             assert_eq!(project.max_wattpeak, 1000);
             assert_eq!(project.minted_wattpeak_count, 0);
+            assert_eq!(project.image_link, "ipfs://test-image");
+            assert_eq!(project.location.latitude, Decimal::from_ratio(1001u64, 10u64));
         }
 
         #[test]

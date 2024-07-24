@@ -260,7 +260,6 @@ pub fn mint_tokens_msg(
     });
 
     let full_denom = FULL_DENOM.load(deps.storage).unwrap();
-    println!("full_denom: {:?}", full_denom);
     
     // Prepare the minting message
     let mint_msg = TokenFactoryMsg::MintTokens {
@@ -315,7 +314,7 @@ mod tests {
         use crate::state::{PROJECTS, PROJECT_DEALS_COUNT};
         use crate::{instantiate, state};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, StdError};
+        use cosmwasm_std::{coins, Decimal, StdError};
 
         #[test]
         fn test_upload_project() {
@@ -338,8 +337,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: crate::msg::Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -399,8 +398,8 @@ mod tests {
                 max_wattpeak: 0,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
@@ -433,8 +432,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let non_admin_info = mock_info("non_admin", &[]);
@@ -462,8 +461,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -475,8 +474,8 @@ mod tests {
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image2".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -488,8 +487,8 @@ mod tests {
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image3".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -527,7 +526,7 @@ mod tests {
         use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
         use crate::state::PROJECTS;
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, StdError};
+        use cosmwasm_std::{coins, Decimal, StdError};
 
         #[test]
         fn test_edit_project() {
@@ -550,8 +549,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -564,8 +563,8 @@ mod tests {
                 max_wattpeak: 2000,
                 image_link: "ipfs://new-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
@@ -602,8 +601,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -617,8 +616,8 @@ mod tests {
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 0,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let err_max_wattpeak = execute(
@@ -644,8 +643,8 @@ mod tests {
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let err_empty_name =
@@ -666,8 +665,8 @@ mod tests {
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let err_empty_description = execute(
@@ -706,8 +705,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -720,8 +719,8 @@ mod tests {
                 image_link: "ipfs://new-image".to_string(),
                 max_wattpeak: 2000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let non_admin_info = mock_info("non_admin", &[]);
@@ -938,8 +937,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1013,8 +1012,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1055,8 +1054,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1097,8 +1096,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1166,8 +1165,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1179,8 +1178,8 @@ mod tests {
                 image_link: "ipfs://test-image2".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1247,8 +1246,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1282,8 +1281,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 2000,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1326,8 +1325,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1361,8 +1360,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
@@ -1392,8 +1391,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1417,8 +1416,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
@@ -1456,8 +1455,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1486,8 +1485,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 400,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1524,8 +1523,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 300,
                 location: Location {
-                    latitude: 1.0,
-                    longitude: 1.0,
+                    latitude: Decimal::from_ratio(1u64, 1u64),
+                    longitude: Decimal::from_ratio(1u64, 1u64),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
