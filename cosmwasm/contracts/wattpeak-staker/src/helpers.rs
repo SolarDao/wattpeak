@@ -77,10 +77,7 @@ pub fn calculate_staker_share_of_reward(
             .interest_wattpeak
             .checked_div(total_interest_wattpeak)
             .unwrap();
-        println!("{}", staker.interest_wattpeak);
-        println!("{}", share);
         let reward = decimal_amount.checked_mul(share).unwrap();
-        println!("{}", reward);
         staker.claimable_rewards = staker.claimable_rewards.checked_add(reward).unwrap();
         staker.interest_wattpeak = Decimal::zero();
 
