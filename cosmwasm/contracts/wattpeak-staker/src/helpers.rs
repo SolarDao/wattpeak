@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::state::{CONFIG, EPOCH_COUNT, PERCENTAGE_OF_YEAR, STAKERS, TOTAL_INTEREST_WATTPEAK};
-use cosmwasm_std::{Decimal, DepsMut, Env, Order, Response, StdResult, Uint128};
+use cosmwasm_std::{Decimal, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult, Uint128};
 
 pub fn set_yearly_percentage(deps: DepsMut, epoch_length: u64) -> StdResult<()> {
     let time_staked = Decimal::from_ratio(epoch_length, 1u64);
@@ -10,11 +10,14 @@ pub fn set_yearly_percentage(deps: DepsMut, epoch_length: u64) -> StdResult<()> 
     PERCENTAGE_OF_YEAR.save(deps.storage, &percentage_of_year)?;
     Ok(())
 }
-pub fn calculate_interest_after_epoch(deps: DepsMut) -> StdResult<Response> {
-    // Load or initialize TOTAL_INTEREST_WATTPEAK
+
+pub fn calculate_interest_after_epoch(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
+    if info.sender != CONFIG.load(deps.storage)?.admin {
+        return Err(StdError::generic_err("Unauthorized"));
+    }
+
     let mut total_interest_wattpeak = TOTAL_INTEREST_WATTPEAK.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
-    
-    // Load stakers
+  
     let stakers = STAKERS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
@@ -90,10 +93,14 @@ pub fn calculate_staker_share_of_reward(
 #[cfg(test)]
 mod tests {
 
-    use crate::{instantiate, msg::{ExecuteMsg, InstantiateMsg}, state::Config};
-    use cosmwasm_std::{testing::mock_info, Coin, Decimal};
-    use crate::execute::execute;
     use super::*;
+    use crate::execute::execute;
+    use crate::{
+        instantiate,
+        msg::{ExecuteMsg, InstantiateMsg},
+        state::Config,
+    };
+    use cosmwasm_std::{testing::mock_info, Coin, Decimal};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env},
         Addr,
@@ -111,13 +118,31 @@ mod tests {
         CONFIG.save(&mut deps.storage, &config).unwrap();
 
         let env = mock_env();
-        let info = mock_info("anyone", &[]);
+        let info = mock_info("admin", &[]);
         let msg = InstantiateMsg { config };
-        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-        
-        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
-        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
-        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        let staker_info1 = mock_info(
+            "addr1",
+            &[Coin::new(
+                100000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info2 = mock_info(
+            "addr2",
+            &[Coin::new(
+                200000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info3 = mock_info(
+            "addr3",
+            &[Coin::new(
+                300000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
 
         execute(
             deps.as_mut(),
@@ -143,17 +168,11 @@ mod tests {
         )
         .unwrap();
 
-        calculate_interest_after_epoch(deps.as_mut()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut(), info.clone()).unwrap();
 
-        let updated_staker1 = STAKERS
-            .load(&deps.storage, staker_info1.sender)
-            .unwrap();
-        let updated_staker2 = STAKERS
-            .load(&deps.storage, staker_info2.sender)
-            .unwrap();
-        let updated_staker3 = STAKERS
-            .load(&deps.storage, staker_info3.sender)
-            .unwrap();
+        let updated_staker1 = STAKERS.load(&deps.storage, staker_info1.sender).unwrap();
+        let updated_staker2 = STAKERS.load(&deps.storage, staker_info2.sender).unwrap();
+        let updated_staker3 = STAKERS.load(&deps.storage, staker_info3.sender).unwrap();
 
         let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);
         assert_eq!(
@@ -172,10 +191,7 @@ mod tests {
             updated_staker3.interest_wattpeak,
             Decimal::from_ratio(81757012707765u128, 1000000000u128)
         );
-        assert_eq!(
-            EPOCH_COUNT.load(&deps.storage).unwrap(),
-            1
-        )
+        assert_eq!(EPOCH_COUNT.load(&deps.storage).unwrap(), 1)
     }
     #[test]
     fn multiple_epoch_calculation() {
@@ -189,13 +205,31 @@ mod tests {
         CONFIG.save(&mut deps.storage, &config).unwrap();
 
         let env = mock_env();
-        let info = mock_info("anyone", &[]);
+        let info = mock_info("admin", &[]);
         let msg = InstantiateMsg { config };
-        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-        
-        let staker_info1 = mock_info("addr1", &[Coin::new(100000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
-        let staker_info2 = mock_info("addr2", &[Coin::new(200000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
-        let staker_info3 = mock_info("addr3", &[Coin::new(300000000u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
+        let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        let staker_info1 = mock_info(
+            "addr1",
+            &[Coin::new(
+                100000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info2 = mock_info(
+            "addr2",
+            &[Coin::new(
+                200000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info3 = mock_info(
+            "addr3",
+            &[Coin::new(
+                300000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
 
         execute(
             deps.as_mut(),
@@ -221,19 +255,13 @@ mod tests {
         )
         .unwrap();
 
-        calculate_interest_after_epoch(deps.as_mut()).unwrap();
-        calculate_interest_after_epoch(deps.as_mut()).unwrap();
-        calculate_interest_after_epoch(deps.as_mut()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut(), info.clone()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut(), info.clone()).unwrap();
+        calculate_interest_after_epoch(deps.as_mut(), info.clone()).unwrap();
 
-        let updated_staker1 = STAKERS
-            .load(&deps.storage, staker_info1.sender)
-            .unwrap();
-        let updated_staker2 = STAKERS
-            .load(&deps.storage, staker_info2.sender)
-            .unwrap();
-        let updated_staker3 = STAKERS
-            .load(&deps.storage, staker_info3.sender)
-            .unwrap();
+        let updated_staker1 = STAKERS.load(&deps.storage, staker_info1.sender).unwrap();
+        let updated_staker2 = STAKERS.load(&deps.storage, staker_info2.sender).unwrap();
+        let updated_staker3 = STAKERS.load(&deps.storage, staker_info3.sender).unwrap();
         let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);
         assert_eq!(
             total_interest.unwrap(),
@@ -251,10 +279,72 @@ mod tests {
             updated_staker3.interest_wattpeak,
             Decimal::from_ratio(245271038123295u128, 1000000000u128)
         );
-        assert_eq!(
-            EPOCH_COUNT.load(&deps.storage).unwrap(),
-            3
-        )
+        assert_eq!(EPOCH_COUNT.load(&deps.storage).unwrap(), 3)
+    }
+    #[test]
+    fn unauthorized_new_epoch() {
+        let mut deps = mock_dependencies();
 
+        let config = Config {
+            admin: Addr::unchecked("admin"),          // Example admin address
+            rewards_percentage: Decimal::percent(10), // Example rewards percentage
+            epoch_length: 86000,                      // Example epoch length
+        };
+        CONFIG.save(&mut deps.storage, &config).unwrap();
+
+        let env = mock_env();
+        let info = mock_info("admin", &[]);
+        let msg = InstantiateMsg { config };
+        let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
+
+        let staker_info1 = mock_info(
+            "addr1",
+            &[Coin::new(
+                100000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info2 = mock_info(
+            "addr2",
+            &[Coin::new(
+                200000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+        let staker_info3 = mock_info(
+            "addr3",
+            &[Coin::new(
+                300000000u128,
+                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+            )],
+        );
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info1.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info2.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            staker_info3.clone(),
+            ExecuteMsg::Stake {},
+        )
+        .unwrap();
+
+        let unauthorized_info = mock_info("addr1", &[]);
+        let res = calculate_interest_after_epoch(deps.as_mut(), unauthorized_info.clone());
+        assert_eq!(res.unwrap_err().to_string(), "Generic error: Unauthorized");
     }
 }

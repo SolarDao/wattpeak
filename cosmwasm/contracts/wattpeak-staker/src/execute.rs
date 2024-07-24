@@ -23,7 +23,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
         ExecuteMsg::Unstake { amount } => unstake_wattpeak(deps, env, info, amount),
         ExecuteMsg::DepositRewards {} => deposit_rewards(deps, env, info),
         ExecuteMsg::ClaimReward {} => claim_rewards(deps, env, info),
-        ExecuteMsg::NewEpoch {} => calculate_interest_after_epoch(deps),
+        ExecuteMsg::NewEpoch {} => calculate_interest_after_epoch(deps, info),
     }
 }
 
@@ -126,6 +126,7 @@ fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respo
 }
 
 fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
+
     let amount = info
         .funds
         .iter()
@@ -845,8 +846,8 @@ mod tests {
                 },
             };
 
-            let info = mock_info("creator", &[]);
-            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+            let info = mock_info("admin", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
             let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
@@ -875,7 +876,7 @@ mod tests {
             )
             .unwrap();
 
-            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut(), info.clone()).unwrap();
 
             env = mock_env();
             let funds = Coin {
@@ -1097,8 +1098,8 @@ mod tests {
                 },
             };
 
-            let info = mock_info("creator", &[]);
-            let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+            let info = mock_info("admin", &[]);
+            let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
             let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak")]);
@@ -1127,7 +1128,7 @@ mod tests {
             )
             .unwrap();
 
-            calculate_interest_after_epoch(deps.as_mut()).unwrap();
+            calculate_interest_after_epoch(deps.as_mut(), info).unwrap();
 
             env = mock_env();
             let funds = Coin {
