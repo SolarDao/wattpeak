@@ -7,11 +7,10 @@ import { Swap } from "./Swap";
 import { Faq } from "./Faq";
 import { useState, useEffect } from "react";
 import { SideNavbar } from "./SideNavbar";
-import { Analytics } from "./Analytics";
 import { Home } from "./Home";
 import { CHAIN_NAME_STORAGE_KEY } from "@/config";
 import { useWallet } from "@cosmos-kit/react";
-import { Button, Center } from "@chakra-ui/react";
+import { Center } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 
 const JUNO_CHAIN_NAME = "junotestnet";

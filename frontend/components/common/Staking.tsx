@@ -12,13 +12,14 @@ import {
   Center,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
-import { getBalances } from "../../utils/junoBalances";
+import { getBalances } from "../../utils/balances/junoBalances";
 import { queryStakers } from "@/utils/queryStaker";
 import { queryStakingConfig } from "@/utils/queryStakingConfig";
 import Confetti from "react-confetti";
 import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { CloseIcon } from "@chakra-ui/icons";
+import { Loading } from "./Loading";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -221,20 +222,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
 
   if (loading || !signingClient || !config || !staker || !balances) {
     return (
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        width="100%"
-        height="100%"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor="rgba(0, 0, 0, 0.5)"
-        zIndex="9999"
-      >
-        <Spinner size="$10xl" color="white" />
-      </Box>
+      <Loading/>
     );
   }
   return (

@@ -7,7 +7,7 @@ import {
   Spinner,
   useColorModeValue,
 } from "@interchain-ui/react";
-import { getBalances } from "@/utils/junoBalances";
+import { getBalances } from "@/utils/balances/junoBalances";
 import { queryProjects } from "../../utils/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
@@ -16,6 +16,7 @@ import { Button, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
 import { toast } from "react-toastify";
+import { Loading } from "./Loading";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -280,20 +281,7 @@ export const Minting = ({ chainName }) => {
 
   if (loading || !config || !junoBalance || !projects || !wattpeakBalance) {
     return (
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        width="100%"
-        height="100%"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor="rgba(0, 0, 0, 0.5)"
-        zIndex="9999"
-      >
-        <Spinner size="$10xl" color="white" />
-      </Box>
+      <Loading />
     );
   }
 

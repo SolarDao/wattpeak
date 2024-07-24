@@ -1,9 +1,9 @@
 import React, { SetStateAction, useEffect, useState } from "react";
 import { queryStakers } from "../../utils/queryStaker";
 import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
-import { getBalances } from "@/utils/junoBalances";
+import { getBalances } from "@/utils/balances/junoBalances";
 import { useChains } from "@cosmos-kit/react";
-import { getStargazeBalances } from "@/utils/stargazeBalances";
+import { getStargazeBalances } from "@/utils/balances/stargazeBalances";
 import { Flex, Button } from "@chakra-ui/react";
 import Carousel from "react-multi-carousel";
 import Modal from "react-modal";
@@ -11,6 +11,7 @@ import { queryProjects } from "@/utils/queryProjects";
 import Image from "next/image";
 import { queryTotalWattpeakStaked } from "@/utils/queryTotalWattpeakStaked";
 import { CloseIcon } from "@chakra-ui/icons";
+import { Loading } from "./Loading";
 
 const formatDenom = (denom: string) => {
   let formattedDenom = denom;
@@ -144,20 +145,7 @@ export const Home = () => {
 
   if (loading) {
     return (
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        width="100%"
-        height="100%"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor="rgba(0, 0, 0, 0.5)"
-        zIndex="9999"
-      >
-        <Spinner size="$10xl" color="white" />
-      </Box>
+        <Loading />
     );
   }
 
