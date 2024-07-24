@@ -1,12 +1,16 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWalletAddress } from "../../context/WalletAddressContext";
 import { queryStakers } from "../../utils/queryStaker";
 import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
-import StackedBarChart from "./stackedBarChart";
 import { getBalances } from "@/utils/junoBalances";
 import { useChains } from "@cosmos-kit/react";
 import { getStargazeBalances } from "@/utils/stargazeBalances";
-import { Flex } from "@chakra-ui/react";
+import { Flex, Button } from "@chakra-ui/react";
+import Carousel from "react-multi-carousel";
+import Modal from "react-modal";
+import { queryProjects } from "@/utils/queryProjects";
+import Image from "next/image";
+import { queryTotalWattpeakStaked } from "@/utils/queryTotalWattpeakStaked";
 
 const formatDenom = (denom) => {
   let formattedDenom = denom;
@@ -33,20 +37,42 @@ const formatDenom = (denom) => {
   return formattedDenom;
 };
 
+const responsive = {
+  desktop: {
+    breakpoint: { max: 3000, min: 1024 },
+    items: 4,
+    slidesToSlide: 4,
+  },
+  tablet: {
+    breakpoint: { max: 1024, min: 600 },
+    items: 2,
+    slidesToSlide: 2,
+  },
+  mobile: {
+    breakpoint: { max: 600, min: 0 },
+    items: 1,
+    slidesToSlide: 1,
+  },
+};
+
 export const Home = () => {
   const [staker, setStakers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { walletAddress } = useWalletAddress();
   const [balances, setBalances] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [totalMintedWattpeak, setTotalMintedWattpeak] = useState(0);
+  const [totalStakedWattpeak, setTotalStakedWattpeak] = useState(0);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const inputColor = useColorModeValue("black", "white");
+  const borderColor = useColorModeValue("black", "white");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
   );
   const chains = useChains(["stargazetestnet", "junotestnet"]);
-  const connected = Object.values(chains).every(
-    (chain) => chain.isWalletConnected
-  );
 
   useEffect(() => {
     const fetchStakers = async () => {
@@ -57,13 +83,29 @@ export const Home = () => {
           setStakers(stakersResult);
 
           const balancesResult = await getBalances(walletAddress);
-          setBalances(balancesResult);
-
           const stargazeBalances = await getStargazeBalances(
             chains.stargazetestnet.address
           );
-          setBalances((balances) => [...balances, ...stargazeBalances]);
-          console.log(balances);
+          setBalances([...balancesResult, ...stargazeBalances]);
+
+          const totalStakedWattpeak = await queryTotalWattpeakStaked();
+          setTotalStakedWattpeak(totalStakedWattpeak);
+          console.log(totalStakedWattpeak);
+          
+          const result = await queryProjects();
+          const projectsWithId = result.map((project, index) => ({
+            ...project,
+            projectId: index + 1,
+          }));
+          setProjects(projectsWithId);
+          console.log(projects);
+
+          setTotalMintedWattpeak(projectsWithId.reduce(
+            (acc, project) => acc + (project.minted_wattpeak_count / 1000000).toFixed(2),
+            0
+          ));
+          console.log(totalMintedWattpeak);
+          
         } catch (err) {
           setError(err);
         } finally {
@@ -72,9 +114,19 @@ export const Home = () => {
       }
     };
     fetchStakers();
-  }, [walletAddress]);
+  }, [walletAddress, totalMintedWattpeak, totalStakedWattpeak, projects]);
 
-  if (loading) {
+  const openModal = (project) => {
+    setSelectedProject(project);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setSelectedProject(null);
+  };
+
+  if (loading || projects.length === 0 || !balances) {
     return (
       <Box
         position="fixed"
@@ -105,8 +157,15 @@ export const Home = () => {
 
   return (
     <div>
-      <Flex borderRadius="23px" backgroundColor={backgroundColor} width="20%" padding="20px" flexDirection="column" gap="5px">
-      <h3>My Wallet</h3>
+      <Flex
+        borderRadius="23px"
+        backgroundColor={backgroundColor}
+        width="20%"
+        padding="20px"
+        flexDirection="column"
+        gap="5px"
+      >
+        <h3>My Wallet</h3>
         {filteredBalances.map((balance) => (
           <div key={balance.denom}>
             {formatDenom(balance.denom)} :{" "}
@@ -114,6 +173,74 @@ export const Home = () => {
           </div>
         ))}
       </Flex>
+      <Box mt={10}>
+        <h3>Projects</h3>
+        <Carousel responsive={responsive} infinite={false} arrows={true}>
+          {projects.map((project) => (
+            <Box
+              key={project.projectId}
+              className="project-card"
+              backgroundColor={backgroundColor}
+            >
+              <Image
+                src={require("../../images/panel.png")}
+                alt={project.name}
+              />
+              <Box mt={4}>
+                <h4>{project.name}</h4>
+                <Button
+                  onClick={() => openModal(project)}
+                  className="projectButton"
+                  color={inputColor}
+                  borderColor={borderColor}
+                >
+                  View Details
+                </Button>
+              </Box>
+            </Box>
+          ))}
+        </Carousel>
+      </Box>
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        contentLabel="Project Details"
+        ariaHideApp={false}
+        style={{
+          content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -50%)",
+            borderRadius: "10px",
+            padding: "20px",
+            maxWidth: "500px",
+            width: "100%",
+            color: "black",
+          },
+          overlay: {
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+          },
+        }}
+      >
+        {selectedProject && (
+          <Box>
+            <Image src={require("../../images/panel.png")} alt={selectedProject.name} />
+            <h2>{selectedProject.name}</h2>
+            <p>{selectedProject.description}</p>
+            <p>Max WattPeak: {selectedProject.max_wattpeak / 1000000}</p>
+            <p>
+              Minted WattPeak: {selectedProject.minted_wattpeak_count / 1000000}
+            </p>
+
+            <Button onClick={closeModal} colorScheme="blue" mt={4}>
+              Close
+            </Button>
+          </Box>
+        )}
+      </Modal>
     </div>
   );
 };

@@ -412,6 +412,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 placeholder="Amount"
               />
             </Box>
+            <Box className="stakeDetails" backgroundColor={backgroundColor}>
+              <h3>You will unstake {amount} WattPeak</h3>
+            </Box>
             <Center>
               <Button
                 onClick={handleUnstake}
