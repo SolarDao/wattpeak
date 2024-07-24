@@ -15,7 +15,7 @@ import { setConfig } from "next/config";
 import { Button, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -347,10 +347,10 @@ export const Minting = ({ chainName }) => {
             <span>Juno</span>
             <br />
             <span className="balance">Balance: {junoBalance}</span>
-            <button onClick={handleMaxClick} className="maxButtonMinting">
-              Max
-            </button>
           </div>
+          <button onClick={handleMaxClick} className="maxButtonMinting">
+            Max
+          </button>
           <Input
             type="number"
             value={cryptoAmount}

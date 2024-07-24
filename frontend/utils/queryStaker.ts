@@ -1,8 +1,8 @@
 import { getCosmWasmClient } from "./junoSetup";
 
-const WATTPEAK_STAKER_CONTRACT = process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS; // Replace with your contract address
+const WATTPEAK_STAKER_CONTRACT = process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS ?? "";
 
-export async function queryStakers( address ) {
+export async function queryStakers( address: string ) {
   const client = await getCosmWasmClient();
   const queryMsg = {
     staker: { address }

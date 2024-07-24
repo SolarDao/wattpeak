@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { useWalletAddress } from "../../context/WalletAddressContext";
+import React, { SetStateAction, useEffect, useState } from "react";
 import { queryStakers } from "../../utils/queryStaker";
 import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/junoBalances";
@@ -11,12 +10,13 @@ import Modal from "react-modal";
 import { queryProjects } from "@/utils/queryProjects";
 import Image from "next/image";
 import { queryTotalWattpeakStaked } from "@/utils/queryTotalWattpeakStaked";
+import { CloseIcon } from "@chakra-ui/icons";
 
-const formatDenom = (denom) => {
+const formatDenom = (denom: string) => {
   let formattedDenom = denom;
 
   if (denom.startsWith("factory")) {
-    formattedDenom = denom.split("/").pop();
+    formattedDenom = denom.split("/").pop() as string;
   }
 
   if (formattedDenom.startsWith("u")) {
@@ -56,13 +56,25 @@ const responsive = {
 };
 
 export const Home = () => {
-  const [staker, setStakers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [stakers, setStakers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { walletAddress } = useWalletAddress();
-  const [balances, setBalances] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [balances, setBalances] = useState<{ amount: number; denom: string }[]>(
+    []
+  );
+  const [projects, setProjects] = useState<
+    {
+      name: string;
+      projectId: number;
+    }[]
+  >([]);
+  const [selectedProject, setSelectedProject] = useState<null | {
+    minted_wattpeak_count: number;
+    max_wattpeak: number;
+    description: ReactNode;
+    name: string;
+    projectId: number;
+  }>(null);
   const [totalMintedWattpeak, setTotalMintedWattpeak] = useState(0);
   const [totalStakedWattpeak, setTotalStakedWattpeak] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -73,50 +85,54 @@ export const Home = () => {
     "rgba(52, 52, 52, 1)"
   );
   const chains = useChains(["stargazetestnet", "junotestnet"]);
+  const stargazeAddress = chains.stargazetestnet.address;
+  const junoAddress = chains.junotestnet.address;
 
   useEffect(() => {
-    const fetchStakers = async () => {
-      if (walletAddress) {
-        setLoading(true);
+    const fetchData = async () => {
+      if (stargazeAddress && junoAddress) {
         try {
-          const stakersResult = await queryStakers(walletAddress);
+          setLoading(true);
+
+          const projectsResult = await queryProjects();
+          const projectsWithId = projectsResult.map(
+            (project: any, index: number) => ({
+              ...project,
+              projectId: index + 1,
+            })
+          );
+          setProjects(projectsWithId);
+
+          const stakersResult = await queryStakers(junoAddress);
           setStakers(stakersResult);
 
-          const balancesResult = await getBalances(walletAddress);
-          const stargazeBalances = await getStargazeBalances(
-            chains.stargazetestnet.address
-          );
+          const balancesResult = await getBalances(junoAddress);
+          const stargazeBalances = await getStargazeBalances(stargazeAddress);
           setBalances([...balancesResult, ...stargazeBalances]);
 
-          const totalStakedWattpeak = await queryTotalWattpeakStaked();
-          setTotalStakedWattpeak(totalStakedWattpeak);
-          console.log(totalStakedWattpeak);
-          
-          const result = await queryProjects();
-          const projectsWithId = result.map((project, index) => ({
-            ...project,
-            projectId: index + 1,
-          }));
-          setProjects(projectsWithId);
-          console.log(projects);
+          const stakedWattpeakResults = await queryTotalWattpeakStaked();
+          setTotalStakedWattpeak(stakedWattpeakResults);
 
-          setTotalMintedWattpeak(projectsWithId.reduce(
-            (acc, project) => acc + (project.minted_wattpeak_count / 1000000).toFixed(2),
+          const totalMinted = projectsWithId.reduce(
+            (acc: number, project: { minted_wattpeak_count: number }) =>
+              acc + project.minted_wattpeak_count,
             0
-          ));
-          console.log(totalMintedWattpeak);
-          
+          );
+          setTotalMintedWattpeak(totalMinted);
         } catch (err) {
-          setError(err);
+          setError(err as SetStateAction<null>);
         } finally {
           setLoading(false);
         }
       }
     };
-    fetchStakers();
-  }, [walletAddress, totalMintedWattpeak, totalStakedWattpeak, projects]);
 
-  const openModal = (project) => {
+    fetchData();
+  }, [stargazeAddress, junoAddress]);
+
+  const openModal = (
+    project: React.SetStateAction<null | { name: string; projectId: number }>
+  ) => {
     setSelectedProject(project);
     setModalIsOpen(true);
   };
@@ -126,7 +142,7 @@ export const Home = () => {
     setSelectedProject(null);
   };
 
-  if (loading || projects.length === 0 || !balances) {
+  if (loading) {
     return (
       <Box
         position="fixed"
@@ -193,6 +209,11 @@ export const Home = () => {
                   className="projectButton"
                   color={inputColor}
                   borderColor={borderColor}
+                  _hover={{
+                    background:
+                      "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                    color: "black",
+                  }}
                 >
                   View Details
                 </Button>
@@ -215,10 +236,13 @@ export const Home = () => {
             marginRight: "-50%",
             transform: "translate(-50%, -50%)",
             borderRadius: "10px",
-            padding: "20px",
-            maxWidth: "500px",
+            maxWidth: "250px",
             width: "100%",
             color: "black",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           },
           overlay: {
             backgroundColor: "rgba(0, 0, 0, 0.75)",
@@ -227,17 +251,28 @@ export const Home = () => {
       >
         {selectedProject && (
           <Box>
-            <Image src={require("../../images/panel.png")} alt={selectedProject.name} />
+            <Button
+              onClick={() => setModalIsOpen(false)}
+              style={{
+                position: "absolute",
+                right: "20px",
+                backgroundColor: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <CloseIcon color={inputColor} />
+            </Button>
+            <Image
+              src={require("../../images/panel.png")}
+              alt={selectedProject.name}
+            />
             <h2>{selectedProject.name}</h2>
             <p>{selectedProject.description}</p>
             <p>Max WattPeak: {selectedProject.max_wattpeak / 1000000}</p>
             <p>
               Minted WattPeak: {selectedProject.minted_wattpeak_count / 1000000}
             </p>
-
-            <Button onClick={closeModal} colorScheme="blue" mt={4}>
-              Close
-            </Button>
           </Box>
         )}
       </Modal>

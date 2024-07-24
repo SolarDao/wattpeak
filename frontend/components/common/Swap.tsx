@@ -1,5 +1,4 @@
-import React, { use, useEffect, useState } from "react";
-import { useWalletAddress } from "../../context/WalletAddressContext";
+import React, { useEffect, useState } from "react";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import {
@@ -29,11 +28,10 @@ const SWAP_CONTRACT_ADDRESS =
 // Set the app element for accessibility
 Modal.setAppElement("#__next");
 
-export const Swap = ({ chainName }) => {
+export const Swap = ({ chainName }: { chainName: string }) => {
   let wallet = useWallet();
   let walletName = wallet?.wallet?.name ?? "";
 
-  const { walletAddress } = useWalletAddress();
   const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
     chainName,
     walletName
@@ -68,9 +66,9 @@ export const Swap = ({ chainName }) => {
 
   useEffect(() => {
     const fetchNfts = async () => {
-      if (walletAddress.startsWith("stars")) {
+      if (address.startsWith("stars")) {
         try {
-          const walletNftsResult = await queryNftsByAddress(walletAddress);
+          const walletNftsResult = await queryNftsByAddress(address);
           setWalletNfts(walletNftsResult); // Adjust based on your query response structure
 
           const contractNftsResult = await queryNftsByAddress(
@@ -90,7 +88,7 @@ export const Swap = ({ chainName }) => {
     };
 
     fetchNfts();
-  }, [walletAddress]);
+  }, [address]);
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -147,7 +145,7 @@ export const Swap = ({ chainName }) => {
       };
 
       const result = await signingClient.execute(
-        walletAddress, // Sender address
+        address, // Sender address
         HERO_CONTRACT_ADDRESS, // Swap Contract address
         swapMsg, // Swap message
         {
@@ -156,7 +154,7 @@ export const Swap = ({ chainName }) => {
         }
       );
       setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      const walletNftsResult = await queryNftsByAddress(address);
       setWalletNfts(walletNftsResult); // Adjust based on your query response structure
 
       const contractNftsResult = await queryNftsByAddress(
@@ -213,7 +211,7 @@ export const Swap = ({ chainName }) => {
         msgs.push({
           typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
           value: {
-            sender: walletAddress,
+            sender: address,
             contract: HERO_CONTRACT_ADDRESS,
             msg: toUtf8(JSON.stringify(approveMsg)),
             funds: [],
@@ -231,7 +229,7 @@ export const Swap = ({ chainName }) => {
       msgs.push({
         typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
         value: {
-          sender: walletAddress,
+          sender: address,
           contract: SWAP_CONTRACT_ADDRESS,
           msg: toUtf8(JSON.stringify(swapMsg)),
           funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
@@ -245,7 +243,7 @@ export const Swap = ({ chainName }) => {
 
       // Sign and broadcast the transaction
       const result = await signingClient.signAndBroadcast(
-        walletAddress,
+        address,
         msgs,
         fee
       );
@@ -254,7 +252,7 @@ export const Swap = ({ chainName }) => {
         throw new Error(`Error executing transaction: ${result.rawLog}`);
       }
 
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      const walletNftsResult = await queryNftsByAddress(address);
       setWalletNfts(walletNftsResult);
 
       const contractNftsResult = await queryNftsByAddress(
@@ -294,7 +292,7 @@ export const Swap = ({ chainName }) => {
         return {
           typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
           value: {
-            sender: walletAddress,
+            sender: address,
             contract: HERO_CONTRACT_ADDRESS,
             msg: toUtf8(
               JSON.stringify({
@@ -317,7 +315,7 @@ export const Swap = ({ chainName }) => {
 
       // Sign and broadcast the transaction
       const result = await signingClient.signAndBroadcast(
-        walletAddress,
+        address,
         msgs,
         fee
       );
@@ -326,7 +324,7 @@ export const Swap = ({ chainName }) => {
         throw new Error(`Error executing transaction: ${result.rawLog}`);
       }
 
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      const walletNftsResult = await queryNftsByAddress(address);
       setWalletNfts(walletNftsResult);
 
       const contractNftsResult = await queryNftsByAddress(
@@ -365,7 +363,7 @@ export const Swap = ({ chainName }) => {
         return {
           typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
           value: {
-            sender: walletAddress,
+            sender: address,
             contract: SWAP_CONTRACT_ADDRESS,
             msg: toUtf8(JSON.stringify(swapMsg)),
             funds: [
@@ -382,7 +380,7 @@ export const Swap = ({ chainName }) => {
 
       // Sign and broadcast the transaction
       const result = await signingClient.signAndBroadcast(
-        walletAddress,
+        address,
         msgs,
         fee
       );
@@ -391,7 +389,7 @@ export const Swap = ({ chainName }) => {
         throw new Error(`Error executing transaction: ${result.rawLog}`);
       }
 
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
+      const walletNftsResult = await queryNftsByAddress(address);
       setWalletNfts(walletNftsResult);
 
       const contractNftsResult = await queryNftsByAddress(

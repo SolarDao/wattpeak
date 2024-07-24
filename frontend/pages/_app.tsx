@@ -4,14 +4,7 @@ import type { AppProps } from "next/app";
 import { wallets } from "cosmos-kit";
 import { ChainProvider } from "@cosmos-kit/react";
 import { assets, chains } from "chain-registry";
-import {
-  Box,
-  ThemeProvider,
-  useColorModeValue,
-  useTheme,
-} from "@interchain-ui/react";
-import { WalletAddressProvider } from "../context/WalletAddressContext";
-import { BalancesProvider } from "@/context/junoBalancesContext";
+import { Box, ThemeProvider, useColorModeValue } from "@interchain-ui/react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -21,8 +14,6 @@ const includedChains = chains.filter((chain) =>
 );
 
 function CreateCosmosApp({ Component, pageProps }: AppProps) {
-  //const { themeClass } = useTheme();
-
   return (
     <ThemeProvider>
       <ToastContainer />
@@ -43,20 +34,15 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
           },
         }}
       >
-        <WalletAddressProvider>
-          <BalancesProvider>
-            <Box
-              //className={themeClass}
-              minHeight="100dvh"
-              backgroundColor={useColorModeValue(
-                "linear-gradient(116.82deg, #FCB023 0%, #141406 99.99%, #070D1C 100%)",
-                "$black"
-              )}
-            >
-              <Component {...pageProps} />
-            </Box>
-          </BalancesProvider>
-        </WalletAddressProvider>
+        <Box
+          minHeight="100dvh"
+          backgroundColor={useColorModeValue(
+            "linear-gradient(116.82deg, #FCB023 0%, #141406 99.99%, #070D1C 100%)",
+            "$black"
+          )}
+        >
+          <Component {...pageProps} />
+        </Box>
       </ChainProvider>
     </ThemeProvider>
   );

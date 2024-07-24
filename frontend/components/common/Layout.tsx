@@ -57,14 +57,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         return <Swap chainName={chainName} />;
       case "faq":
         return <Faq />;
-      case "analytics":
-        return <Analytics />;
       default:
         return <Home />;
     }
   };
 
-  if (wallet?.status !== "Connected" && currentSection !== "home") {
+  if (wallet?.status !== "Connected") {
     return (
       <Container maxWidth="80rem" attributes={{ py: "$14" }}>
         <Box

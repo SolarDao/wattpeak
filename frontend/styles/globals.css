@@ -131,6 +131,7 @@ a {
     background-color: rgba(0, 0, 0, 0.04);
     border-radius: 23px;
     padding: 10px;
+    position: relative; /* Added to ensure relative positioning */
   }
 
   .balanceWrapper {
@@ -195,7 +196,7 @@ a {
     margin-left: 5px;
     position: absolute;
     right: 20px;
-    top: 5px;
+    top: 20px;
   }
 
   .maxButtonMinting:hover {

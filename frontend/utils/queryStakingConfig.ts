@@ -7,7 +7,13 @@ export async function queryStakingConfig() {
   
   const queryMsg = { config: {} };
   
-  const queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
+  let queryResult;
+  
+  if (nftContractAddress) {
+    queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
+  } else {
+    throw new Error("Staking contract address is undefined.");
+  }
   
   return queryResult;
 }

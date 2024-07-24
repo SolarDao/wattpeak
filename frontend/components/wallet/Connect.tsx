@@ -1,6 +1,5 @@
 import { MouseEventHandler } from "react";
 import { Button as UIButton, IconName } from "@interchain-ui/react";
-import { color } from "framer-motion";
 
 export type ButtonProps = {
   text?: string;

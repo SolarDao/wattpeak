@@ -1,13 +1,10 @@
 import {
   Box,
-  useColorModeValue,
-  useTheme,
 } from "@interchain-ui/react";
 import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction } from 'react';
 import SolarDaoImage from "../../public/Group 121.png"
 import Image from 'next/image';
-import { color } from "framer-motion";
 
 type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
