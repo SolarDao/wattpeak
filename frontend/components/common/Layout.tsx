@@ -8,13 +8,13 @@ import { Faq } from "./Faq";
 import { useState, useEffect } from "react";
 import { SideNavbar } from "./SideNavbar";
 import { Home } from "./Home";
-import { CHAIN_NAME_STORAGE_KEY } from "@/config";
 import { useWallet } from "@cosmos-kit/react";
 import { Center } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 
 const JUNO_CHAIN_NAME = "junotestnet";
 const STARGAZE_CHAIN_NAME = "stargazetestnet";
+const CHAIN_NAME_STORAGE_KEY = "junotestnet";
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSection, setCurrentSection] = useState("home");

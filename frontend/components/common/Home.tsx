@@ -1,4 +1,4 @@
-import React, { SetStateAction, useEffect, useState } from "react";
+import React, { ReactNode, SetStateAction, useEffect, useState } from "react";
 import { queryStakers } from "../../utils/queryStaker";
 import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
@@ -12,49 +12,9 @@ import Image from "next/image";
 import { queryTotalWattpeakStaked } from "@/utils/queryTotalWattpeakStaked";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./Loading";
+import { responsive } from "@/styles/responsiveCarousel";
+import { formatDenom } from "@/utils/formatDenoms";
 
-const formatDenom = (denom: string) => {
-  let formattedDenom = denom;
-
-  if (denom.startsWith("factory")) {
-    formattedDenom = denom.split("/").pop() as string;
-  }
-
-  if (formattedDenom.startsWith("u")) {
-    formattedDenom = formattedDenom.slice(1);
-  }
-
-  if (formattedDenom === "stars" || formattedDenom === "junox") {
-    formattedDenom = formattedDenom.toUpperCase();
-  }
-
-  if (formattedDenom === "wattpeaka") {
-    formattedDenom = "WattPeak";
-  }
-
-  if (formattedDenom === "som") {
-    formattedDenom = "SoM";
-  }
-  return formattedDenom;
-};
-
-const responsive = {
-  desktop: {
-    breakpoint: { max: 3000, min: 1024 },
-    items: 4,
-    slidesToSlide: 4,
-  },
-  tablet: {
-    breakpoint: { max: 1024, min: 600 },
-    items: 2,
-    slidesToSlide: 2,
-  },
-  mobile: {
-    breakpoint: { max: 600, min: 0 },
-    items: 1,
-    slidesToSlide: 1,
-  },
-};
 
 export const Home = () => {
   const [stakers, setStakers] = useState([]);
