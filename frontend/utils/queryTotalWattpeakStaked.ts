@@ -5,7 +5,7 @@ const nftContractAddress = process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDR
 export async function queryTotalWattpeakStaked() {
   const client = await getCosmWasmClient();
   
-  const queryMsg = { TotalWattpeakStaked: {} };
+  const queryMsg = { total_wattpeak_staked: {} };
   
   const queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
   

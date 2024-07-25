@@ -65,14 +65,13 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           setBalances(balancesResult);
           const stakersResult = await queryStakers(address);
           setStakers(stakersResult);
-          const claimable = stakersResult.claimable_rewards / 1000000; // Assuming claimable_rewards is in micro units
+          const claimable = stakersResult.claimable_rewards / 1000000; 
           setClaimableRewards(claimable);
           if (claimable > 0) {
-            setModalIsOpen(true); // Open the modal if there are claimable rewards
+            setModalIsOpen(true); 
           }
           const configResult = await queryStakingConfig();
           setConfig(configResult);
-          console.log("Staking config:", configResult);
         } else {
           await connect();
         }

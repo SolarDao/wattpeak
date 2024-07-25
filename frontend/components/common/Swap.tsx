@@ -96,7 +96,6 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
           const configResult = await queryNftConfig();
           setConfig(configResult);
-          console.log("Config result:", configResult);
 
           setLoading(false);
         } catch (err) {

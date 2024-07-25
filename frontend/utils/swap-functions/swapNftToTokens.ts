@@ -67,7 +67,6 @@ export const swapNftToTokens = async ({
         gas: "300000", // gas limit
       }
     );
-    console.log("Swap result:", result);
 
     setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
     const walletNftsResult = await queryNftsByAddress(address ?? "");

@@ -13,7 +13,6 @@ export async function getStargazeBalances(address: string) {
 
   const client = await StargateClient.connect(rpcEndpoint ?? '');
   const balances = await client.getAllBalances(address);
-  console.log(balances);
   
   return balances;
 }

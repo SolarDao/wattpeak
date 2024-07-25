@@ -15,11 +15,10 @@ import { Loading } from "./Loading";
 import { responsive } from "@/styles/responsiveCarousel";
 import { formatDenom } from "@/utils/formatDenoms";
 
-
 export const Home = () => {
   const [stakers, setStakers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<null | Error>(null);
   const [balances, setBalances] = useState<{ amount: number; denom: string }[]>(
     []
   );
@@ -56,6 +55,7 @@ export const Home = () => {
           setLoading(true);
 
           const projectsResult = await queryProjects();
+
           const projectsWithId = projectsResult.map(
             (project: any, index: number) => ({
               ...project,
@@ -72,7 +72,7 @@ export const Home = () => {
           setBalances([...balancesResult, ...stargazeBalances]);
 
           const stakedWattpeakResults = await queryTotalWattpeakStaked();
-          setTotalStakedWattpeak(stakedWattpeakResults);
+          setTotalStakedWattpeak(stakedWattpeakResults); // Ensure this is the correct property
 
           const totalMinted = projectsWithId.reduce(
             (acc: number, project: { minted_wattpeak_count: number }) =>
@@ -81,7 +81,8 @@ export const Home = () => {
           );
           setTotalMintedWattpeak(totalMinted);
         } catch (err) {
-          setError(err as SetStateAction<null>);
+          setError(err as SetStateAction<null | Error>);
+          console.error("Error fetching data:", err);
         } finally {
           setLoading(false);
         }
@@ -104,9 +105,7 @@ export const Home = () => {
   };
 
   if (loading) {
-    return (
-        <Loading />
-    );
+    return <Loading />;
   }
 
   const filteredBalances = balances.filter(

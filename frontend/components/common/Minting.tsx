@@ -203,7 +203,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           if (!config) {
             await queryNftConfig().then((result) => {
               setConfig(result);
-              console.log(result);
 
               setCryptoAmount(result.minting_price.amount);
             });
