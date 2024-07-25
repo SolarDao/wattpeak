@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::msg::Location;
+use crate::state::Location;
 use crate::state::{
     Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, FULL_DENOM, PROJECTS, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT
 };
@@ -310,8 +310,8 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
-        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
-        use crate::state::{PROJECTS, PROJECT_DEALS_COUNT};
+        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::state::{PROJECTS, PROJECT_DEALS_COUNT, Location};
         use crate::{instantiate, state};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, Decimal, StdError};
@@ -336,7 +336,7 @@ mod tests {
                 document_deal_link: "ipfs://test-link".to_string(),
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
-                location: crate::msg::Location {
+                location: Location {
                     latitude: Decimal::from_ratio(1u64, 1u64),
                     longitude: Decimal::from_ratio(1u64, 1u64),
                 },
@@ -523,8 +523,8 @@ mod tests {
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
         use crate::instantiate;
-        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
-        use crate::state::PROJECTS;
+        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::state::{PROJECTS, Location};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, Decimal, StdError};
 
@@ -914,8 +914,8 @@ mod tests {
         use crate::error::ContractError;
         use crate::execute::{execute, mint_tokens_msg};
         use crate::instantiate;
-        use crate::msg::{ExecuteMsg, InstantiateMsg, Location};
-        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
+        use crate::msg::{ExecuteMsg, InstantiateMsg};
+        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, Location};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdError, Uint128};
         use token_bindings::TokenFactoryMsg;

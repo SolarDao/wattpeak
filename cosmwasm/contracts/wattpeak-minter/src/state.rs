@@ -2,8 +2,6 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Decimal, Deps, StdError, StdResult};
 use cw_storage_plus::{Item, Map};
 
-use crate::msg::Location;
-
 #[cw_serde]
 pub struct Config {
     /// admin is the address of the admin which are the only entity allowed to upload new projects
@@ -18,12 +16,20 @@ pub struct Config {
     pub minting_fee_address: Addr,
 }
 
+#[cw_serde]
+pub struct Location {
+    pub latitude: Decimal,
+    pub longitude: Decimal,
+}
+
 // Implement a validation function for the config
 impl Config {
     pub fn validate(&self, deps: Deps) -> StdResult<()> {
         deps.api.addr_validate(&self.admin.to_string())?;
-        deps.api.addr_validate(&self.minting_payment_address.to_string())?;
-        deps.api.addr_validate(&self.minting_fee_address.to_string())?;
+        deps.api
+            .addr_validate(&self.minting_payment_address.to_string())?;
+        deps.api
+            .addr_validate(&self.minting_fee_address.to_string())?;
 
         if self.minting_price.amount.is_zero() {
             return Err(StdError::generic_err("minting_price cannot be zero"));
@@ -32,9 +38,11 @@ impl Config {
             return Err(StdError::generic_err("minting_price denom cannot be empty"));
         }
         if self.minting_fee_percentage > Decimal::percent(100) {
-            return Err(StdError::generic_err("minting_fee_percentage cannot be greater than 100%"));
+            return Err(StdError::generic_err(
+                "minting_fee_percentage cannot be greater than 100%",
+            ));
         }
-        
+
         Ok(())
     }
 }
@@ -71,7 +79,9 @@ impl Project {
             return Err(StdError::generic_err("description cannot be empty"));
         }
         if self.minted_wattpeak_count > self.max_wattpeak {
-            return Err(StdError::generic_err("minted_wattpeak_count cannot be greater than max_wattpeak"));
+            return Err(StdError::generic_err(
+                "minted_wattpeak_count cannot be greater than max_wattpeak",
+            ));
         }
         Ok(())
     }
@@ -95,9 +105,9 @@ pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_min
 
 pub const FULL_DENOM: Item<String> = Item::new("token_full_denom");
 
-
 pub const SUBDENOM: &str = "uwattpeak";
-pub const DESCRIPTION: &str = "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
+pub const DESCRIPTION: &str =
+    "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
 pub const SYMBOL: &str = "WTP";
 pub const DECIMALS: u32 = 6;
 pub const NAME: &str = "WattPeak";

@@ -1,4 +1,4 @@
-use crate::state::{Config, Project};
+use crate::state::{Config, Location, Project};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
@@ -70,12 +70,6 @@ pub struct NewDenom {
 pub struct InitialBalance {
     pub address: String,
     pub amount: Uint128,
-}
-
-#[cw_serde]
-pub struct Location {
-    pub latitude: Decimal,
-    pub longitude: Decimal,
 }
 
 #[cw_serde]
