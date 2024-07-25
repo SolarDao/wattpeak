@@ -14,6 +14,9 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./Loading";
 import { responsive } from "@/styles/responsiveCarousel";
 import { formatDenom } from "@/utils/formatDenoms";
+import DonutChart from "./walletStakedWattpeakDonutChart";
+import WattpeakPieChart from "./MintedWattpeakChart";
+import StakedWattpeakPieChart from "./stakedWattpeakChart";
 
 export const Home = () => {
   const [stakers, setStakers] = useState([]);
@@ -37,6 +40,9 @@ export const Home = () => {
   }>(null);
   const [totalMintedWattpeak, setTotalMintedWattpeak] = useState(0);
   const [totalStakedWattpeak, setTotalStakedWattpeak] = useState(0);
+  const [stakerMintedWattpeak, setStakerMintedWattpeak] = useState(0);
+  const [stakerStakedWattpeak, setStakerStakedWattpeak] = useState(0);
+  const [totalWattpeak, setTotalWattpeak] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const inputColor = useColorModeValue("black", "white");
   const borderColor = useColorModeValue("black", "white");
@@ -66,6 +72,7 @@ export const Home = () => {
 
           const stakersResult = await queryStakers(junoAddress);
           setStakers(stakersResult);
+          setStakerStakedWattpeak(stakersResult.wattpeak_staked);
 
           const balancesResult = await getBalances(junoAddress);
           const stargazeBalances = await getStargazeBalances(stargazeAddress);
@@ -74,12 +81,30 @@ export const Home = () => {
           const stakedWattpeakResults = await queryTotalWattpeakStaked();
           setTotalStakedWattpeak(stakedWattpeakResults); // Ensure this is the correct property
 
+          const wattpeakBalance = balancesResult.find(
+            (balance) =>
+              balance.denom ===
+              "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+          );
+          if (wattpeakBalance) {
+            setStakerMintedWattpeak(wattpeakBalance.amount);
+          }
+
           const totalMinted = projectsWithId.reduce(
             (acc: number, project: { minted_wattpeak_count: number }) =>
               acc + project.minted_wattpeak_count,
             0
           );
           setTotalMintedWattpeak(totalMinted);
+
+          const totalWattpeakResults = projectsWithId.map(
+            (project) => project.max_wattpeak
+          );
+          const totalWattpeak = totalWattpeakResults.reduce(
+            (acc, curr) => acc + curr,
+            0
+          );
+          setTotalWattpeak(totalWattpeak);
         } catch (err) {
           setError(err as SetStateAction<null | Error>);
           console.error("Error fetching data:", err);
@@ -136,6 +161,25 @@ export const Home = () => {
           </div>
         ))}
       </Flex>
+      <Box mt={10}>
+        <h3>WattPeak Overview</h3>
+        <DonutChart
+          totalMinted={parseFloat((stakerMintedWattpeak / 1000000).toFixed(2))}
+          totalStaked={parseFloat((stakerStakedWattpeak / 1000000).toFixed(2))}
+        />
+      </Box>
+      <WattpeakPieChart
+        totalMinted={parseFloat((totalMintedWattpeak / 1000000).toFixed(2))}
+        totalWattpeak={parseFloat((totalWattpeak / 1000000).toFixed(2))}
+      />
+      <Box mt={10}>
+        <h3>Staked WattPeaks vs Minted</h3>
+        <StakedWattpeakPieChart
+          totalStaked={totalStakedWattpeak / 1000000}
+          totalMinted={totalMintedWattpeak / 1000000}
+        />
+      </Box>
+
       <Box mt={10}>
         <h3>Projects</h3>
         <Carousel responsive={responsive} infinite={false} arrows={true}>
@@ -216,9 +260,15 @@ export const Home = () => {
             />
             <h2>{selectedProject.name}</h2>
             <p>{selectedProject.description}</p>
-            <p>Max WattPeak: {selectedProject.max_wattpeak / 1000000}</p>
             <p>
-              Minted WattPeak: {selectedProject.minted_wattpeak_count / 1000000}
+              Max WattPeak:{" "}
+              {parseFloat((selectedProject.max_wattpeak / 1000000).toFixed(2))}
+            </p>
+            <p>
+              Minted WattPeak:{" "}
+              {parseFloat(
+                (selectedProject.minted_wattpeak_count / 1000000).toFixed(2)
+              )}
             </p>
           </Box>
         )}
