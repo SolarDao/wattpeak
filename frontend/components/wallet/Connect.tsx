@@ -29,8 +29,9 @@ export function Button({
       domAttributes={{
         style: {
           flex: 1,
+          color: "black",
           backgroundImage:
-            "linear-gradient(109.6deg, rgba(157,75,199,1) 11.2%, rgba(119,81,204,1) 83.1%)",
+            "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
         },
       }}
     >

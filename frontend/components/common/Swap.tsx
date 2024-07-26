@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useWalletAddress } from "../../context/WalletAddressContext";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
 import { useChainWallet, useWallet } from "@cosmos-kit/react";
 import {
-  Alert,
-  AlertIcon,
+  Center,
   Tabs,
   TabList,
   TabPanels,
@@ -12,49 +10,83 @@ import {
   TabPanel,
   Button,
   Box,
+  ListItem,
+  UnorderedList,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
+import Modal from "react-modal";
+import { handleApproveAndSwap } from "@/utils/swap-functions/handleApproveAndSwap";
+import NftDetailsModal from "./SwapModal";
+import MultipleSelectBox from "./MultipleSelectBox";
+import { swapNftToTokens } from "@/utils/swap-functions/swapNftToTokens";
+import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handleMultipleNftSwap";
+import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
+import { Loading } from "./Loading";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
 const SWAP_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_NFT_SWAPPER_CONTRACT_ADDRESS; // Adjust if different
 
-export const Swap = ({ chainName }) => {
+// Set the app element for accessibility
+Modal.setAppElement("#__next");
+
+export const Swap = ({ chainName }: { chainName: string }) => {
   let wallet = useWallet();
   let walletName = wallet?.wallet?.name ?? "";
 
-  const { walletAddress } = useWalletAddress();
   const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
     chainName,
     walletName
   );
-  const [walletNfts, setWalletNfts] = useState([]);
-  const [contractNfts, setContractNfts] = useState([]);
+  interface Nft {
+    name: string;
+    image: any;
+    tokenId: string;
+  }
+
+  const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
+  const [contractNfts, setContractNfts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
-  const [selectedNft, setSelectedNft] = useState(null);
+  const [selectedNft, setSelectedNft] = useState<string | null>(null);
+  const [multipleSelect, setMultipleSelect] = useState(false);
   const [swapping, setSwapping] = useState(false);
-  const [swappingToNft, setSwappingToNft] = useState(false);
-  const [config, setConfig] = useState({
-    price_per_nft: "0",
-    token_denom: "ustars",
-  });
+  const [tabIndex, setTabIndex] = useState(0);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
   const inputColor = useColorModeValue("black", "white");
   const borderColor = useColorModeValue("black", "white");
-  const nftBorderColor = useColorModeValue("black", "yellow");
+  const nftBackgroundColor = useColorModeValue("rgba(0, 0, 0, 0.07)", "black");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
   );
+  const modalBackgroundColor = useColorModeValue(
+    "rgba(0, 0, 0, 0.07)",
+    "rgba(35, 35, 35, 1)"
+  );
+  const [selectedNftDetails, setSelectedNftDetails] = useState<null | {
+    tokenId: string;
+  }>(null);
+  const [selectedMultipleNfts, setSelectedMultipleNfts] = useState<string[]>(
+    []
+  );
+
+  const [config, setConfig] = useState({
+    price_per_nft: "5",
+    token_denom: "ustars",
+  });
 
   useEffect(() => {
     const fetchNfts = async () => {
-      if (walletAddress.startsWith("stars")) {
+      if (status === "Connected" && (address ?? "").startsWith("stars")) {
         try {
-          const walletNftsResult = await queryNftsByAddress(walletAddress);
+          const client = await getSigningCosmWasmClient();
+          setSigningClient(client);
+
+          const walletNftsResult = await queryNftsByAddress(address);
           setWalletNfts(walletNftsResult); // Adjust based on your query response structure
 
           const contractNftsResult = await queryNftsByAddress(
@@ -67,14 +99,15 @@ export const Swap = ({ chainName }) => {
 
           setLoading(false);
         } catch (err) {
-          setError(err);
+          setError(err as React.SetStateAction<null>);
+          console.error("Error fetching NFTs or configuration:", err);
           setLoading(false);
         }
       }
     };
 
     fetchNfts();
-  }, [walletAddress]);
+  }, [status, address, getSigningCosmWasmClient]);
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -83,7 +116,7 @@ export const Swap = ({ chainName }) => {
           const client = await getSigningCosmWasmClient();
           setSigningClient(client);
         } catch (err) {
-          setError(err);
+          setError(err as React.SetStateAction<null>);
           console.error("Error getting signing client:", err);
         }
       } else {
@@ -94,157 +127,105 @@ export const Swap = ({ chainName }) => {
     fetchClient();
   }, [status, getSigningCosmWasmClient, connect]);
 
-  const swapNftToTokens = async () => {
-    if (!signingClient || !selectedNft) {
-      console.error("Signing client or selected NFT not initialized");
-      return;
-    }
-
-    try {
-      setSwapping(true);
-
-      const msgDetails = JSON.stringify({
-        amount: config.price_per_nft,
-        denom: config.token_denom,
-      });
-      const msgBase64 = btoa(msgDetails);
-      const swapMsg = {
-        send_nft: {
-          contract: SWAP_CONTRACT_ADDRESS,
-          token_id: selectedNft,
-          msg: msgBase64,
-        },
-      };
-
-      const result = await signingClient.execute(
-        walletAddress, // Sender address
-        HERO_CONTRACT_ADDRESS, // Swap Contract address
-        swapMsg, // Swap message
-        {
-          amount: [{ denom: "ustars", amount: "7500" }], // fee
-          gas: "300000", // gas limit
-        }
+  const handleNftClick = (nft: { tokenId: string }) => {
+    if (multipleSelect) {
+      setSelectedMultipleNfts((prevSelected) =>
+        prevSelected.includes(nft.tokenId)
+          ? prevSelected.filter((id) => id !== nft.tokenId)
+          : [...prevSelected, nft.tokenId]
       );
-      setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
-      setWalletNfts(walletNftsResult); // Adjust based on your query response structure
-
-      const contractNftsResult = await queryNftsByAddress(
-        SWAP_CONTRACT_ADDRESS
-      );
-      setContractNfts(contractNftsResult); // Adjust based on your query response structure
-
-      setSelectedNft(null);
-    } catch (err) {
-      setError(err);
-      console.error("Error executing swap:", err);
-    } finally {
-      setSwapping(false);
+    } else {
+      setSelectedNft(nft.tokenId);
+      setSelectedNftDetails(nft);
+      setModalIsOpen(true);
     }
   };
 
-  const handleApproveAndSwap = async () => {
-    if (!signingClient || !selectedNft) {
-      console.error("Signing client or selected NFT not initialized");
-      return;
-    }
-
-    try {
-      setSwapping(true);
-
-      // Query existing approval
-      const approvalQueryMsg = {
-        approval: {
-          spender: SWAP_CONTRACT_ADDRESS,
-          token_id: selectedNft,
-        },
-      };
-
-      const approvalQueryResult = await signingClient.queryContractSmart(
-        HERO_CONTRACT_ADDRESS,
-        approvalQueryMsg
-      );
-
-      // If approval is not granted or expired, grant approval
-      if (!approvalQueryResult || !approvalQueryResult.approval) {
-        const approveMsg = {
-          approve: {
-            spender: SWAP_CONTRACT_ADDRESS,
-            token_id: selectedNft,
-            expires: { at_time: Math.floor(Date.now() / 1000) + 60 }, // Expires in 1 hour
-          },
-        };
-
-        const approveResult = await signingClient.execute(
-          walletAddress, // Sender address
-          HERO_CONTRACT_ADDRESS, // NFT Contract address
-          approveMsg, // Approve message
-          {
-            amount: [{ denom: "ustars", amount: "7500" }], // fee
-            gas: "200000", // gas limit
-          }
-        );
-      }
-
-      // Swap the NFT for tokens
-      const swapMsg = {
-        swap_token: {
-          nft_id: selectedNft,
-        },
-      };
-
-      const swapResult = await signingClient.execute(
-        walletAddress, // Sender address
-        SWAP_CONTRACT_ADDRESS, // Swap Contract address
-        swapMsg, // Swap message
-        {
-          amount: [{ denom: "ustars", amount: "7500" }], // fee
-          gas: "300000", // gas limit
-        },
-        "",
-        [{ denom: config.token_denom, amount: config.price_per_nft }]
-      );
-      setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
-      const walletNftsResult = await queryNftsByAddress(walletAddress);
-      setWalletNfts(walletNftsResult); // Adjust based on your query response structure
-
-      const contractNftsResult = await queryNftsByAddress(
-        SWAP_CONTRACT_ADDRESS
-      );
-      setContractNfts(contractNftsResult); // Adjust based on your query response structure
-
-      setSelectedNft(null);
-    } catch (err) {
-      setError(err);
-      console.error("Error executing approve and swap:", err);
-    } finally {
-      setSwapping(false);
-    }
+  const handleSolarSwap = () => {
+    handleApproveAndSwap({
+      signingClient,
+      selectedNft,
+      SWAP_CONTRACT_ADDRESS,
+      HERO_CONTRACT_ADDRESS,
+      address,
+      config,
+      setSwapping,
+      setWalletNfts,
+      setContractNfts,
+      setSelectedNft,
+      setModalIsOpen,
+      setError,
+    });
   };
 
-  if (loading) {
-    return (
-      <Box
-        position="fixed"
-        top="0"
-        left="0"
-        width="100%"
-        height="100%"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor="rgba(0, 0, 0, 0.5)"
-        zIndex="9999"
-      >
-        <Spinner size="$10xl" color="white" />
-      </Box>
-    );
+  const handleNftSwap = async () => {
+    swapNftToTokens({
+      signingClient,
+      selectedNft,
+      address,
+      config,
+      HERO_CONTRACT_ADDRESS,
+      SWAP_CONTRACT_ADDRESS,
+      queryNftsByAddress,
+      setWalletNfts,
+      setContractNfts,
+      setSelectedNft,
+      setModalIsOpen,
+      setError,
+      setSwapping,
+      walletNfts,
+    });
+  };
+
+  const handleMultipleNftSwap = async () => {
+    handleMultipleNftSwapFunctionUtil ({
+      signingClient,
+      selectedMultipleNfts,
+      address,
+      config,
+      HERO_CONTRACT_ADDRESS,
+      SWAP_CONTRACT_ADDRESS,
+      queryNftsByAddress,
+      setWalletNfts,
+      setContractNfts,
+      setSelectedMultipleNfts,
+      setError,
+      setSwapping,
+    })
   }
 
-  if (error) return <div>Error: {error.message}</div>;
+  const handleMultipleSolarSwap = async () => {
+    handleMultipleSolarSwapUtilFunction({
+      signingClient,
+      selectedMultipleNfts,
+      address,
+      config,
+      HERO_CONTRACT_ADDRESS,
+      SWAP_CONTRACT_ADDRESS,
+      queryNftsByAddress,
+      setWalletNfts,
+      setContractNfts,
+      setSelectedMultipleNfts,
+      setError,
+      setSwapping,
+    });
+  }
+
+  const handleTabsChange = (index: React.SetStateAction<number>) => {
+    setTabIndex(index);
+    setSelectedNft(null);
+    setSelectedNftDetails(null);
+    setSelectedMultipleNfts([]);
+  };
+
+  if (loading || swapping) {
+    return (
+      <Loading/>
+    );
+  }
   return (
     <div>
-      <Tabs>
+      <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           <h2>Cyber Solar Heroes</h2>
           <TabList>
@@ -279,78 +260,144 @@ export const Swap = ({ chainName }) => {
               Swap Solar
             </Tab>
           </TabList>
-          <p>select multiple</p>
+
+          <Button
+            className="multipleSelectBtn"
+            color={multipleSelect ? "black" : inputColor}
+            borderColor={borderColor}
+            onClick={() => setMultipleSelect(!multipleSelect)}
+            background={
+              multipleSelect
+                ? "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+                : backgroundColor
+            }
+          >
+            {inputColor === "white" && !multipleSelect ? (
+              <Image
+                className="multipleSelectImg"
+                src={require("../../images/frame.png")}
+                alt={"multiple select"}
+                width={20}
+                height={20}
+              ></Image>
+            ) : (
+              <Image
+                className="multipleSelectImg"
+                src={require("../../images/frame_black.png")}
+                alt={"multiple select"}
+                width={20}
+                height={20}
+              />
+            )}
+            Select Multiple
+          </Button>
         </Box>
 
-        <TabPanels className="swapPanels" backgroundColor={backgroundColor}>
+        <TabPanels className="swapPanels" background={backgroundColor}>
           <TabPanel>
-            <ul className="nftList">
-              {walletNfts.map((nft, index) => (
-                <li
-                  key={index}
-                  className={`nft-item ${
-                    selectedNft === nft.tokenId ? "selected-nft" : ""
-                  }`}
-                  borderColor={borderColor}
-                  onClick={() => setSelectedNft(nft.tokenId)}
-                >
-                  <Image
-                    src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
-                    alt={nft.name}
-                    className="nftImage"
-                    width={220}
-                    height={220}
-                  />
-                  <p>Name: {nft.name}</p>
-                </li>
-              ))}
-            </ul>
-            {selectedNft && (
-              <div>
-                <h2>Selected NFT: {selectedNft}</h2>
-                <Button onClick={swapNftToTokens} disabled={swapping}>
-                  {swapping ? <Spinner /> : "Approve and Swap NFT for Tokens"}
-                </Button>
-              </div>
+            {walletNfts.length === 0 ? (
+              <Center height={500} fontSize={30}>
+                {" "}
+                No NFTs found in your wallet
+              </Center>
+            ) : (
+              <UnorderedList className="nftList">
+                {walletNfts.map((nft, index) => (
+                  <ListItem
+                    key={index}
+                    className={`nft-item ${
+                      multipleSelect &&
+                      selectedMultipleNfts.includes(nft.tokenId)
+                        ? "selected-nft"
+                        : ""
+                    }`}
+                    background={nftBackgroundColor}
+                    color={inputColor}
+                    onClick={() => handleNftClick(nft)}
+                  >
+                    <Image
+                      src={nft.image.replace(
+                        "ipfs://",
+                        "https://ipfs.io/ipfs/"
+                      )}
+                      alt={nft.name}
+                      className="nftImage"
+                      width={150}
+                      height={150}
+                    />
+                    <p>Name: {nft.name}</p>
+                  </ListItem>
+                ))}
+              </UnorderedList>
             )}
           </TabPanel>
           <TabPanel>
-            <ul className="nftList">
-              {contractNfts.map((nft, index) => (
-                <li
-                  key={index}
-                  className={`nft-item ${
-                    selectedNft === nft.tokenId ? "selected-nft" : ""
-                  }`}
-                  onClick={() => setSelectedNft(nft.tokenId)}
-                >
-                  <Image
-                    src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
-                    alt={nft.name}
-                    className="nftImage"
-                    width={220}
-                    height={220}
-                  />
-                  <p>Name: {nft.name}</p>
-                </li>
-              ))}
-            </ul>
-            {selectedNft && (
-              <div>
-                <h2>Selected NFT: {selectedNft}</h2>
-                <Button onClick={handleApproveAndSwap} disabled={swappingToNft}>
-                  {swappingToNft ? <Spinner /> : "Swap Tokens for NFT"}
-                </Button>
-              </div>
+            {contractNfts.length === 0 ? (
+              <Center height={500} fontSize={30}>
+                {" "}
+                No NFTs available in contract
+              </Center>
+            ) : (
+              <UnorderedList className="nftList">
+                {contractNfts.map((nft, index) => (
+                  <ListItem
+                    key={index}
+                    className={`nft-item ${
+                      multipleSelect &&
+                      selectedMultipleNfts.includes(nft.tokenId)
+                        ? "selected-nft"
+                        : ""
+                    }`}
+                    background={nftBackgroundColor}
+                    color={inputColor}
+                    onClick={() => handleNftClick(nft)}
+                  >
+                    <Image
+                      src={nft.image.replace(
+                        "ipfs://",
+                        "https://ipfs.io/ipfs/"
+                      )}
+                      alt={nft.name}
+                      className="nftImage"
+                      width={150}
+                      height={150}
+                    />
+                    <p>Name: {nft.name}</p>
+                  </ListItem>
+                ))}
+              </UnorderedList>
             )}
           </TabPanel>
         </TabPanels>
       </Tabs>
-      {error && (
-        <Alert status="error">
-          <AlertIcon />
-          {error.message}
-        </Alert>
+
+      {multipleSelect && selectedMultipleNfts.length > 0 && (
+        <MultipleSelectBox
+          tabIndex={tabIndex}
+          walletNfts={walletNfts}
+          contractNfts={contractNfts}
+          selectedMultipleNfts={selectedMultipleNfts}
+          setSelectedMultipleNfts={setSelectedMultipleNfts}
+          handleMultipleNftSwap={handleMultipleNftSwap}
+          handleMultipleSolarSwap={handleMultipleSolarSwap}
+          config={config}
+        />
+      )}
+
+      {selectedNftDetails && !multipleSelect && (
+        <NftDetailsModal
+          isOpen={modalIsOpen}
+          onRequestClose={() => setModalIsOpen(false)}
+          selectedNftDetails={selectedNftDetails}
+          config={config}
+          tabIndex={tabIndex}
+          swapping={swapping}
+          swapNftToTokens={() => handleNftSwap()}
+          handleSolarSwap={handleSolarSwap}
+          inputColor={inputColor}
+          modalBackgroundColor={modalBackgroundColor}
+          color={""}
+        />
       )}
     </div>
   );

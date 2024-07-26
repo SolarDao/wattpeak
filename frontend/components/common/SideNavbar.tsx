@@ -1,8 +1,5 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import Image from 'next/image';
-
-// Import the PNG images
-import settings from '../../public/settings.png';
 import swap from '../../public/swap.png';
 import faq from '../../images/faq.png';
 
@@ -11,7 +8,8 @@ const sideNavItems = [
   { icon: faq, id: "faq" },
 ];
 
-export const SideNavbar = ({ setCurrentSection }) => {
+export const SideNavbar = ({ setCurrentSection }: { setCurrentSection: (id: string) => void }) => {
+  const inputColor  = useColorModeValue("$gray900", "$gray100");
   return (
     <Box
       as="nav"
@@ -31,7 +29,7 @@ export const SideNavbar = ({ setCurrentSection }) => {
           key={item.id}
           as="a"
           onClick={() => setCurrentSection(item.id)}
-          color={useColorModeValue("$gray900", "$gray100")}
+          color={inputColor}
           fontWeight="$medium"
           fontSize={{ mobile: "$xl", tablet: "$2xl" }}
           my="$2"

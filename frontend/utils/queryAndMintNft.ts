@@ -7,13 +7,19 @@ export async function queryNftConfig() {
   
   const queryMsg = { config: {} };
   
-  const queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
+  let queryResult;
+  
+  if (nftContractAddress) {
+    queryResult = await client.queryContractSmart(nftContractAddress, queryMsg);
+  } else {
+    throw new Error("NFT contract address is undefined.");
+  }
   
   return queryResult;
 }
 
-export async function mintNft(amount, walletAddress) {
-  const client = await getCosmWasmClient();
+export async function mintNft(amount: number, walletAddress: string) {
+  const client: any = await getCosmWasmClient();
 
   const executeMsg = {
     mint: {

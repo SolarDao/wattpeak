@@ -16,35 +16,50 @@ pub fn calculate_interest_after_epoch(deps: DepsMut, info: MessageInfo) -> StdRe
         return Err(StdError::generic_err("Unauthorized"));
     }
 
-
+    let mut total_interest_wattpeak = TOTAL_INTEREST_WATTPEAK.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
+  
     let stakers = STAKERS
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
+    
+    // Load or initialize total wattpeak interest earned during period
     let mut total_wattpeak_interest_earned_during_period = Decimal::zero();
+    
+    // Load percentage of year
     let percentage_of_year = PERCENTAGE_OF_YEAR.load(deps.storage)?;
+    
+    // Load interest rate from config
     let interest_rate = CONFIG.load(deps.storage)?.rewards_percentage;
+
     for (key, mut staker) in stakers {
         let wattpeak_staked = Decimal::from_ratio(staker.wattpeak_staked, 1u64);
         let wattpeak_interest_per_year = wattpeak_staked.checked_mul(interest_rate).unwrap();
-        let wattpeak_interest_earned = wattpeak_interest_per_year
-            .checked_mul(percentage_of_year)
-            .unwrap();
+        let wattpeak_interest_earned = wattpeak_interest_per_year.checked_mul(percentage_of_year).unwrap();
+
         total_wattpeak_interest_earned_during_period = total_wattpeak_interest_earned_during_period
-            .checked_add(wattpeak_interest_earned)
-            .unwrap();
+            .checked_add(wattpeak_interest_earned).unwrap();
+        
         staker.interest_wattpeak = staker
             .interest_wattpeak
-            .checked_add(wattpeak_interest_earned)
-            .unwrap();
-
+            .checked_add(wattpeak_interest_earned).unwrap();
+        
         // Save the updated staker information
         STAKERS.save(deps.storage, key, &staker)?;
     }
-    TOTAL_INTEREST_WATTPEAK.save(deps.storage, &total_wattpeak_interest_earned_during_period)?;
+    
+    // Update total interest wattpeak
+    total_interest_wattpeak = total_interest_wattpeak
+        .checked_add(total_wattpeak_interest_earned_during_period).unwrap();
+    
+    // Save updated total interest wattpeak
+    TOTAL_INTEREST_WATTPEAK.save(deps.storage, &total_interest_wattpeak)?;
+    
+    // Increment epoch count
     EPOCH_COUNT.update(deps.storage, |count| -> StdResult<_> { Ok(count + 1) })?;
 
     Ok(Response::default())
 }
+
 
 pub fn calculate_staker_share_of_reward(
     deps: DepsMut,
@@ -247,7 +262,7 @@ mod tests {
         let total_interest = TOTAL_INTEREST_WATTPEAK.load(&deps.storage);
         assert_eq!(
             total_interest.unwrap(),
-            Decimal::from_ratio(16351402541553u128, 100000000u128)
+            Decimal::from_ratio(49054207624659u128, 100000000u128)
         );
         assert_eq!(
             updated_staker1.interest_wattpeak,
