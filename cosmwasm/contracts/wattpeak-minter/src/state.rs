@@ -16,12 +16,20 @@ pub struct Config {
     pub minting_fee_address: Addr,
 }
 
+#[cw_serde]
+pub struct Location {
+    pub latitude: Decimal,
+    pub longitude: Decimal,
+}
+
 // Implement a validation function for the config
 impl Config {
     pub fn validate(&self, deps: Deps) -> StdResult<()> {
         deps.api.addr_validate(&self.admin.to_string())?;
-        deps.api.addr_validate(&self.minting_payment_address.to_string())?;
-        deps.api.addr_validate(&self.minting_fee_address.to_string())?;
+        deps.api
+            .addr_validate(&self.minting_payment_address.to_string())?;
+        deps.api
+            .addr_validate(&self.minting_fee_address.to_string())?;
 
         if self.minting_price.amount.is_zero() {
             return Err(StdError::generic_err("minting_price cannot be zero"));
@@ -30,9 +38,11 @@ impl Config {
             return Err(StdError::generic_err("minting_price denom cannot be empty"));
         }
         if self.minting_fee_percentage > Decimal::percent(100) {
-            return Err(StdError::generic_err("minting_fee_percentage cannot be greater than 100%"));
+            return Err(StdError::generic_err(
+                "minting_fee_percentage cannot be greater than 100%",
+            ));
         }
-        
+
         Ok(())
     }
 }
@@ -49,6 +59,10 @@ pub struct Project {
     pub document_deal_link: String,
     /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
     pub max_wattpeak: u64,
+    /// image_link is a link to an image of the project
+    pub image_link: String,
+    /// location is the location of the project
+    pub location: Location,
     /// minted_wattpeak_count is the number of wattpeak that have been minted for this project
     pub minted_wattpeak_count: u64,
 }
@@ -65,7 +79,9 @@ impl Project {
             return Err(StdError::generic_err("description cannot be empty"));
         }
         if self.minted_wattpeak_count > self.max_wattpeak {
-            return Err(StdError::generic_err("minted_wattpeak_count cannot be greater than max_wattpeak"));
+            return Err(StdError::generic_err(
+                "minted_wattpeak_count cannot be greater than max_wattpeak",
+            ));
         }
         Ok(())
     }
@@ -89,9 +105,9 @@ pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_min
 
 pub const FULL_DENOM: Item<String> = Item::new("token_full_denom");
 
-
 pub const SUBDENOM: &str = "uwattpeak";
-pub const DESCRIPTION: &str = "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
+pub const DESCRIPTION: &str =
+    "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
 pub const SYMBOL: &str = "WTP";
 pub const DECIMALS: u32 = 6;
 pub const NAME: &str = "WattPeak";

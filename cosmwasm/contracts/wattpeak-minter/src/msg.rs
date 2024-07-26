@@ -1,4 +1,4 @@
-use crate::state::{Config, Project};
+use crate::state::{Config, Location, Project};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 
@@ -19,6 +19,10 @@ pub enum ExecuteMsg {
         document_deal_link: String,
         /// max_wattpeak is the maximum amount of wattpeak that can be minted for this project
         max_wattpeak: u64,
+        /// image_link is a link to an image of the project
+        image_link: String,
+        /// location is the location of the project
+        location: Location,
     },
     EditProject {
         id: u64,
@@ -26,6 +30,8 @@ pub enum ExecuteMsg {
         description: String,
         document_deal_link: String,
         max_wattpeak: u64,
+        image_link: String,
+        location: Location,
     },
     /// Update contract configuration
     UpdateConfig {
