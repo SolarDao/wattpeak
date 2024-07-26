@@ -51,8 +51,6 @@ export function Wallet({ chainName, onChainChange }: WalletProps) {
           direction="vertical"
           attributes={{
             mx: "auto",
-            px: "$8",
-            py: "$15",
             maxWidth: "21rem",
             justifyContent: "center",
           }}

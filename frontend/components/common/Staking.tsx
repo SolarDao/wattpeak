@@ -322,7 +322,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               backgroundColor={backgroundColor}
             >
               <div className="stakingBalanceWrapper">
-                <p>Wattpeak balance: {wattpeakBalance}</p>
+                <p>Balance: {wattpeakBalance}</p>
                 <Button
                   onClick={() => setAmount(wattpeakBalance)}
                   mb="10px"
@@ -374,7 +374,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               backgroundColor={backgroundColor}
             >
               <div className="stakingBalanceWrapper">
-                <p>Staked Wattpeak: {stakedWattpeak}</p>
+                <p>Staked: {stakedWattpeak}</p>
                 <Button
                   onClick={() => setAmount(stakedWattpeak)}
                   mb="10px"

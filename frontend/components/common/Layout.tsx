@@ -11,6 +11,7 @@ import { Home } from "./Home";
 import { useWallet } from "@cosmos-kit/react";
 import { Center } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
+import { useMediaQuery } from "react-responsive";
 
 const JUNO_CHAIN_NAME = "junotestnet";
 const STARGAZE_CHAIN_NAME = "stargazetestnet";
@@ -20,6 +21,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [currentSection, setCurrentSection] = useState("home");
   const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const backgroundImage = useColorModeValue(
     "linear-gradient(116.82deg, #855d15 0%, #141406 99.99%, #070D1C 100%)",
@@ -61,17 +63,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }
   };
 
+
   if (wallet?.status !== "Connected") {
     return (
-      <Container maxWidth="80rem" attributes={{ py: "$14" }}>
+      <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
         <Box
           className="box"
           backgroundImage={backgroundImage}
           backgroundColor={backgroundColor}
         >
           <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-          <Box display="flex" className="whiteBox">
-            <SideNavbar setCurrentSection={handleSectionChange} />
+          <Box className="whiteBox" paddingLeft={isMobile ? "$10" : "$0"}>
+            {!isMobile && <SideNavbar setCurrentSection={handleSectionChange} />}
             <Box
               flex="1"
               p="$4"
@@ -86,7 +89,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               }}
             >
               <Center>
-              <Wallet chainName={chainName} />
+                <Wallet chainName={chainName} />
               </Center>
               {children}
             </Box>
@@ -98,15 +101,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }
 
   return (
-    <Container maxWidth="80rem" attributes={{ py: "$14" }}>
+    <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
       <Box
         className="box"
         backgroundImage={backgroundImage}
         backgroundColor={backgroundColor}
       >
         <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-        <Box display="flex" className="whiteBox">
-          <SideNavbar setCurrentSection={handleSectionChange} />
+        <Box className="whiteBox">
+          {!isMobile && <SideNavbar setCurrentSection={handleSectionChange} />}
           <Box
             flex="1"
             p="$4"

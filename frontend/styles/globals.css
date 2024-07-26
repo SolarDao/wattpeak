@@ -31,7 +31,16 @@ a {
   }
 
   .whiteBox {
+    display: flex;
     min-height: 80vh;
+    min-width: 98%;
+  }
+
+  @media screen and (max-width: 768px) {
+    .whiteBox {
+      padding-left: 20px;
+    }
+    
   }
 
   .headerBox{
@@ -105,6 +114,8 @@ a {
     align-items: center;
     gap: 10px;
   }
+
+
 
   .mintWattpeakInput {
     margin-top: 10px;
@@ -405,5 +416,29 @@ a {
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.04);
     height: auto;
+  }
+  .hamburgerMenu {
+    width: 30px;
+    height: 30px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .mintBox {
+      flex-direction: column;
+    }
+    .inputWrapper {
+      width: 100%;
+      margin-bottom: 0;
+    }
+    .priceDetails {
+      margin-top: 20px;
+      width: 100%;
+    }
+    .mintBtn {
+      width: 10rem;
+    }
+    .stakeTab {
+      width: 65%;
+    }
   }
 }
