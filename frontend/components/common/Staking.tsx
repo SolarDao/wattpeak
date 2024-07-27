@@ -210,7 +210,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       backgroundColor: useColorModeValue("white", "rgba(52, 52, 52, 1)"),
       color: useColorModeValue("black", "white"),
       borderRadius: "15px",
-      height: "20%",
+      height: "200px",
       width: "300px",
     },
     overlay: {

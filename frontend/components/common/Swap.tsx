@@ -23,6 +23,7 @@ import { swapNftToTokens } from "@/utils/swap-functions/swapNftToTokens";
 import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handleMultipleNftSwap";
 import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
 import { Loading } from "./Loading";
+import { useMediaQuery } from "react-responsive";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -78,6 +79,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     price_per_nft: "5",
     token_denom: "ustars",
   });
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   useEffect(() => {
     const fetchNfts = async () => {
@@ -227,7 +229,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     <div>
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
+          {!isMobile && 
           <h2>Cyber Solar Heroes</h2>
+          }
           <TabList>
             <Tab
               className="swapTabs"
@@ -260,7 +264,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               Swap Solar
             </Tab>
           </TabList>
-
+          {!isMobile &&
           <Button
             className="multipleSelectBtn"
             color={multipleSelect ? "black" : inputColor}
@@ -272,6 +276,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 : backgroundColor
             }
           >
+  
             {inputColor === "white" && !multipleSelect ? (
               <Image
                 className="multipleSelectImg"
@@ -291,6 +296,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
             )}
             Select Multiple
           </Button>
+          }
         </Box>
 
         <TabPanels className="swapPanels" background={backgroundColor}>

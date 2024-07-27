@@ -13,11 +13,11 @@ import Image from "next/image";
 import { Button, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
-import { toast } from "react-toastify";
 import { Loading } from "./Loading";
 import { queryNftConfig } from "@/utils/queryAndMintNft";
 import { responsive } from "@/styles/responsiveCarousel";
 import { handleMint } from "@/utils/handleMint";
+import { useMediaQuery } from "react-responsive";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
@@ -66,6 +66,8 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     chainName,
     walletName
   );
+
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   
   const handleMintClick = async () => {
     handleMint({
@@ -171,7 +173,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         setProjects(projectsWithId);
       } catch (err) {
         setError(err);
-        toast.error("Error fetching projects");
+        console.error("Error querying the projects:", err);
       } finally {
         setLoading(false);
       }
@@ -214,7 +216,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           setCorrectBalances(balances);
         } catch (err) {
           setError(err);
-          toast.error("Error querying the NFT contract");
           console.error("Error querying the NFT contract:", err);
         } finally {
           setLoading(false);
@@ -242,10 +243,12 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       <Box>
         <div className="headerBox">
           <h3>Available Projects to mint</h3>
+          {!isMobile && (
           <p>
             Price per wattpeak: {config.minting_price.amount}{" "}
             {config.minting_price.denom}
           </p>
+        )}
         </div>
         <Carousel responsive={responsive} infinite={false} arrows={true}>
           {projects.map((project) => (
