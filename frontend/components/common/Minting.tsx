@@ -10,7 +10,7 @@ import { getBalances } from "@/utils/balances/junoBalances";
 import { queryProjects } from "../../utils/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
-import { Button, Input } from "@chakra-ui/react";
+import { Button, Heading, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
 import { Loading } from "./Loading";
@@ -26,7 +26,7 @@ const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
 export const Minting = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
   const walletName = wallet?.wallet?.name ?? "";
-  const inputColor = useColorModeValue("black", "white");
+  const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
   interface Config {
     minting_price: {
@@ -239,15 +239,29 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   return (
     <Container>
       <Box>
-        <div className="headerBox">
-          <h3>Available Projects to mint</h3>
+        <Box className="headerBox" display="flex" justifyContent={isMobile ? "center" : "space-between"}>
+          <Heading
+            fontSize="20px"
+            color={inputColor}
+            marginBottom="5px"
+            marginTop="20px"
+            paddingLeft={isMobile ? "0px" : "15px"}
+          >
+            Available Projects to Mint
+          </Heading>
           {!isMobile && (
-            <p>
+            <Heading
+              fontSize="20px"
+              color={inputColor}
+              marginBottom="5px"
+              marginTop="20px"
+              paddingRight="15px"
+            >
               Price per wattpeak: {config?.minting_price.amount}{" "}
               {config?.minting_price.denom}
-            </p>
+            </Heading>
           )}
-        </div>
+        </Box>
         <Carousel responsive={responsive} infinite={false} arrows={true}>
           {!projects.length && <p>No projects available to mint</p>}
           {projects.map((project) => (

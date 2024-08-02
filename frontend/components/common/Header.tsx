@@ -5,6 +5,7 @@ import SolarDaoImage from "../../public/Group 121.png";
 import Image from "next/image";
 import { slide as Menu } from "react-burger-menu";
 import { useMediaQuery } from "react-responsive";
+import { color } from "framer-motion";
 
 type HeaderProps = {
   setCurrentSection: Dispatch<SetStateAction<string>>;
@@ -199,6 +200,8 @@ export const Header: React.FC<HeaderProps> = ({
                     cursor: "pointer",
                     textDecoration: "none",
                     color: "white",
+                    
+                    
                   }}
                 >
                   {item.name}

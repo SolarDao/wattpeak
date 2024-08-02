@@ -147,7 +147,7 @@ export const Home = () => {
 
   return (
     <Box color={inputColor} fontFamily="inter">
-      <Flex gap="40px" justifyContent="center" alignItems="center">
+      <Flex gap="40px" justifyContent="center" alignItems="center" flexWrap="wrap">
         <Center>
           <Flex
             height="auto"
@@ -166,12 +166,13 @@ export const Home = () => {
               flexDirection="row"
               width="100%" // Ensure it takes full width of the container
               gap="10px"
-              minWidth="200px"
               paddingBottom="20px"
               borderRadius="23px"
               backgroundColor={backgroundColor}
+              flexWrap="wrap"
+              justifyContent="center"
             >
-              <Flex flexDirection="column" gap="15px" padding="20px">
+              <Flex flexDirection="column" gap="10px" padding="20px">
                 <Heading
                   fontSize="20px"
                   textAlign="center"
@@ -182,7 +183,7 @@ export const Home = () => {
                   My Wallet
                 </Heading>
                 {filteredBalances.map((balance) => (
-                  <Box key={balance.denom} fontSize="20px" minWidth="200px">
+                  <Box key={balance.denom} fontSize="18px" minWidth="200px" display="flex" alignItems="center" justifyContent="center">
                     {formatDenom(balance.denom)} :{" "}
                     {parseFloat((balance.amount / 1000000).toFixed(2))}
                   </Box>
@@ -228,7 +229,9 @@ export const Home = () => {
               minWidth="200px"
               paddingBottom="20px"
               borderRadius="23px"
+              justifyContent="center"
               backgroundColor={backgroundColor}
+              flexWrap="wrap"
             >
               <Box mt={10} padding="20px">
                 <h3 className="headingsHomePage">Minted Wattpeak</h3>
