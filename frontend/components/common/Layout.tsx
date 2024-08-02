@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { SideNavbar } from "./SideNavbar";
 import { Home } from "./Home";
 import { useWallet } from "@cosmos-kit/react";
-import { Center } from "@chakra-ui/react";
+import { Center, Flex } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 import { useMediaQuery } from "react-responsive";
 
@@ -88,9 +88,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 color: inputColor,
               }}
             >
-              <Center>
+              <Flex justifyContent="center" alignItems="center" height="100%">
                 <Wallet chainName={chainName} />
-              </Center>
+              </Flex>
               {children}
             </Box>
           </Box>
