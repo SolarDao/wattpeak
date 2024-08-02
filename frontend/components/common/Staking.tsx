@@ -303,7 +303,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       )}
 
       {confetti && <Confetti numberOfPieces={3000} recycle={false} />}
-      <Tabs variant="enclosed">
+      <Tabs variant="enclosed" onChange={() => setAmount(0)}>
         <TabList className="tabListStaking">
           <Tab
             className="stakeTab"

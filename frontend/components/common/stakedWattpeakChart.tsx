@@ -17,7 +17,7 @@ type StakedWattpeakPieChartProps = {
 
 const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalStaked, totalMinted }) => {
   const data = {
-    labels: ['Staked Wattpeak', 'Unstaked Wattpeak'],
+    labels: ['Staked', 'Unstaked'],
     datasets: [
       {
         data: [totalStaked, totalMinted - totalStaked],
@@ -36,7 +36,7 @@ const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalSt
   };
 
   return (
-    <div style={{ height: '300px', width: '300px' }}>
+    <div style={{ height: '200px', width: '200px' }}>
       <Pie data={data} options={options} />
     </div>
   );

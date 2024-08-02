@@ -39,7 +39,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => 
   };
 
   return (
-    <Box style={{ height: '250px', width: '250px' }}>
+    <Box style={{ height: '200px', width: '200px' }}>
       <Doughnut data={data} options={options} />
     </Box>
   );

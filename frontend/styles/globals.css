@@ -419,6 +419,10 @@ a {
     width: 30px;
     height: 30px;
   }
+  .headingsHomePage {
+    text-align: center;
+    margin-top: 0px;
+  }
 
   @media screen and (max-width: 768px) {
     .mintBox {

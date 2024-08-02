@@ -44,11 +44,15 @@ export const Home = () => {
   const [stakerStakedWattpeak, setStakerStakedWattpeak] = useState(0);
   const [totalWattpeak, setTotalWattpeak] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const inputColor = useColorModeValue("black", "white");
+  const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
+  );
+  const modalBackgroundColor = useColorModeValue(
+    "white",
+    "rgba(35, 35, 35, 1)"
   );
   const chains = useChains(["stargazetestnet", "junotestnet"]);
   const stargazeAddress = chains.stargazetestnet.address;
@@ -142,101 +146,129 @@ export const Home = () => {
   );
 
   return (
-    <Box>
-      <Heading textAlign="center" marginBottom="6px">
-        My Wallet
-      </Heading>{" "}
-      <Center>
-        <Flex
-          borderRadius="23px"
-          backgroundColor={backgroundColor}
-          width="80%"
-          height="auto"
-          flexDirection="column" // Change to column to stack the heading and content
-          alignItems="center" // Center the content horizontally
-          marginBottom="20px"
-        >
+    <Box color={inputColor} fontFamily="inter">
+      <Flex gap="40px" justifyContent="center" alignItems="center">
+        <Center>
           <Flex
-            flexDirection="row"
-            justifyContent="space-evenly"
-            width="100%" // Ensure it takes full width of the container
-            gap="5px"
-            minWidth="200px"
-            paddingBottom="20px"
+            height="auto"
+            flexDirection="column" // Change to column to stack the heading and content
+            alignItems="center" // Center the content horizontally
           >
-            <Flex
-              flexDirection="column"
-              gap="25px"
-              padding="20px"
-              borderRadius="10px"
+            <Heading
+              marginBottom="10px"
+              color="#000000B2"
+              fontSize="20px"
+              lineHeight="19.36px"
             >
-              <Heading fontSize="sm" textAlign="center" marginTop="0px">
-                Balances
-              </Heading>
-              {filteredBalances.map((balance) => (
-                <Box key={balance.denom} fontSize="20px">
-                  {formatDenom(balance.denom)} :{" "}
-                  {parseFloat((balance.amount / 1000000).toFixed(2))}
-                </Box>
-              ))}
-            </Flex>
+              Portfolio
+            </Heading>{" "}
+            <Flex
+              flexDirection="row"
+              width="100%" // Ensure it takes full width of the container
+              gap="10px"
+              minWidth="200px"
+              paddingBottom="20px"
+              borderRadius="23px"
+              backgroundColor={backgroundColor}
+            >
+              <Flex flexDirection="column" gap="15px" padding="20px">
+                <Heading
+                  fontSize="20px"
+                  textAlign="center"
+                  marginTop="0px"
+                  color="#000000B2"
+                  marginBottom="2px"
+                >
+                  My Wallet
+                </Heading>
+                {filteredBalances.map((balance) => (
+                  <Box key={balance.denom} fontSize="20px" minWidth="200px">
+                    {formatDenom(balance.denom)} :{" "}
+                    {parseFloat((balance.amount / 1000000).toFixed(2))}
+                  </Box>
+                ))}
+              </Flex>
 
-            <Box>
-              <Heading>WattPeak Distribution</Heading>
-              <DonutChart
-                totalMinted={parseFloat(
-                  (stakerMintedWattpeak / 1000000).toFixed(2)
-                )}
-                totalStaked={parseFloat(
-                  (stakerStakedWattpeak / 1000000).toFixed(2)
-                )}
-              />
-            </Box>
+              <Box padding="20px">
+                <Heading
+                  fontSize="20px"
+                  textAlign="center"
+                  marginTop="0px"
+                  color="#000000B2"
+                >
+                  WattPeak Distribution
+                </Heading>
+                <DonutChart
+                  totalMinted={parseFloat(
+                    (stakerMintedWattpeak / 1000000).toFixed(2)
+                  )}
+                  totalStaked={parseFloat(
+                    (stakerStakedWattpeak / 1000000).toFixed(2)
+                  )}
+                />
+              </Box>
+            </Flex>
           </Flex>
-        </Flex>
-      </Center>
-      <Heading textAlign="center" marginBottom="6px">
-        Tokens Global
-      </Heading>{" "}
-      <Center>
-        <Flex
-          borderRadius="23px"
-          backgroundColor={backgroundColor}
-          width="80%"
-          height="auto"
-          flexDirection="column" // Change to column to stack the heading and content
-          alignItems="center" // Center the content horizontally
+        </Center>
+        <Center>
+          <Flex height="auto" flexDirection="column" alignItems="center">
+            <Heading
+              textAlign="left"
+              marginBottom="10px"
+              color="#000000B2"
+              fontSize="20px"
+              lineHeight="19.36px"
+            >
+              Tokens Global
+            </Heading>{" "}
+            <Flex
+              flexDirection="row"
+              width="100%"
+              gap="5px"
+              minWidth="200px"
+              paddingBottom="20px"
+              borderRadius="23px"
+              backgroundColor={backgroundColor}
+            >
+              <Box mt={10} padding="20px">
+                <h3 className="headingsHomePage">Minted Wattpeak</h3>
+                <WattpeakPieChart
+                  totalMinted={parseFloat(
+                    (totalMintedWattpeak / 1000000).toFixed(2)
+                  )}
+                  totalWattpeak={parseFloat(
+                    (totalWattpeak / 1000000).toFixed(2)
+                  )}
+                />
+              </Box>
+              <Box mt={10} padding="20px">
+                <h3 className="headingsHomePage">Staked WattPeaks</h3>
+                <StakedWattpeakPieChart
+                  totalStaked={totalStakedWattpeak / 1000000}
+                  totalMinted={totalMintedWattpeak / 1000000}
+                />
+              </Box>
+            </Flex>
+          </Flex>
+        </Center>
+      </Flex>
+      <Box mt={10} width="90%" margin="auto">
+        <Heading
+          fontSize="20px"
+          textAlign="left"
+          paddingLeft="15px"
+          color="#000000B2"
+          marginBottom="5px"
+          marginTop="20px"
         >
-          <Flex
-            flexDirection="row"
-            justifyContent="space-evenly"
-            width="100%" // Ensure it takes full width of the container
-            gap="5px"
-            minWidth="200px"
-            paddingBottom="20px"
-          >
-            <Box mt={10}>
-              <h3>Available WattPeaks vs Minted</h3>
-              <WattpeakPieChart
-                totalMinted={parseFloat(
-                  (totalMintedWattpeak / 1000000).toFixed(2)
-                )}
-                totalWattpeak={parseFloat((totalWattpeak / 1000000).toFixed(2))}
-              />
-            </Box>
-            <Box mt={10}>
-              <h3>Staked WattPeaks % of Minted</h3>
-              <StakedWattpeakPieChart
-                totalStaked={totalStakedWattpeak / 1000000}
-                totalMinted={totalMintedWattpeak / 1000000}
-              />
-            </Box>
-          </Flex>
-        </Flex>
-      </Center>
-      <Box mt={10}>
-        <h3>Projects</h3>
-        <Carousel responsive={responsive} infinite={false} arrows={true}>
+          Projects
+        </Heading>
+        <Carousel
+          responsive={responsive}
+          infinite={false}
+          arrows={true}
+          containerClass="carousel-container"
+        >
           {projects.map((project) => (
             <Box
               key={project.projectId}
@@ -282,12 +314,14 @@ export const Home = () => {
             transform: "translate(-50%, -50%)",
             borderRadius: "10px",
             maxWidth: "250px",
+            maxHeight: "600px",
             width: "100%",
-            color: "black",
+            color: inputColor,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            backgroundColor: modalBackgroundColor,
           },
           overlay: {
             backgroundColor: "rgba(0, 0, 0, 0.75)",
@@ -306,24 +340,34 @@ export const Home = () => {
                 cursor: "pointer",
               }}
             >
-              <CloseIcon color={inputColor} />
+              <CloseIcon color={inputColor} position="absolute" right="-2px" />
             </Button>
-            <Image
-              src={require("../../images/panel.png")}
-              alt={selectedProject.name}
-            />
-            <h2>{selectedProject.name}</h2>
-            <p>{selectedProject.description}</p>
-            <p>
-              Max WattPeak:{" "}
-              {parseFloat((selectedProject.max_wattpeak / 1000000).toFixed(2))}
-            </p>
-            <p>
-              Minted WattPeak:{" "}
-              {parseFloat(
-                (selectedProject.minted_wattpeak_count / 1000000).toFixed(2)
-              )}
-            </p>
+            <Flex
+              flexDirection="column"
+              alignItems="center"
+              marginTop="20px"
+              padding="0"
+            >
+              <Image
+                src={require("../../images/panel.png")}
+                alt={selectedProject.name}
+              />
+
+              <h2>{selectedProject.name}</h2>
+              <p>{selectedProject.description}</p>
+              <p>
+                Max WattPeak:{" "}
+                {parseFloat(
+                  (selectedProject.max_wattpeak / 1000000).toFixed(2)
+                )}
+              </p>
+              <p>
+                Minted WattPeak:{" "}
+                {parseFloat(
+                  (selectedProject.minted_wattpeak_count / 1000000).toFixed(2)
+                )}
+              </p>
+            </Flex>
           </Box>
         )}
       </Modal>
