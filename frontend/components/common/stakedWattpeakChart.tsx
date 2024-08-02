@@ -21,8 +21,7 @@ const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalSt
     datasets: [
       {
         data: [totalStaked, totalMinted - totalStaked],
-        backgroundColor: ['#FF6384', '#36A2EB'],
-        hoverBackgroundColor: ['#FF6384', '#36A2EB'],
+        backgroundColor: ['#FAD987', '#FFBC1A'],
       },
     ],
   };

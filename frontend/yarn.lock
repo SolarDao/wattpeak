@@ -4728,6 +4728,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-leaflet/core@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "@react-leaflet/core@npm:2.1.0"
+  peerDependencies:
+    leaflet: ^1.9.0
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10c0/d5218c79ab9decd458e1fa8a0ec3757542e3ea4e569afa151a32ef0e9ceb63a13174f3fbc740fe0d514df8b0b3e30d913bfb0b8b661dac13924934d7e430bfc9
+  languageName: node
+  linkType: hard
+
 "@react-stately/calendar@npm:^3.5.1":
   version: 3.5.1
   resolution: "@react-stately/calendar@npm:3.5.1"
@@ -5665,6 +5676,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/geojson@npm:*":
+  version: 7946.0.14
+  resolution: "@types/geojson@npm:7946.0.14"
+  checksum: 10c0/54f3997708fa2970c03eeb31f7e4540a0eb6387b15e9f8a60513a1409c23cafec8d618525404573468b59c6fecbfd053724b3327f7fca416729c26271d799f55
+  languageName: node
+  linkType: hard
+
 "@types/jquery@npm:*":
   version: 3.5.30
   resolution: "@types/jquery@npm:3.5.30"
@@ -5678,6 +5696,15 @@ __metadata:
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
   checksum: 10c0/6bf5337bc447b706bb5b4431d37686aa2ea6d07cfd6f79cc31de80170d6ff9b1c7384a9c0ccbc45b3f512bae9e9f75c2e12109806a15331dc94e8a8db6dbb4ac
+  languageName: node
+  linkType: hard
+
+"@types/leaflet@npm:^1":
+  version: 1.9.12
+  resolution: "@types/leaflet@npm:1.9.12"
+  dependencies:
+    "@types/geojson": "npm:*"
+  checksum: 10c0/067f6c91cd5b97b0bf234e5a2847bd8d00e0333f017451eb646ac2ccb9766c55ad9bd92787877b660bb62890d5ab3af408550b6d56bc5f7e36331f4f460e86bd
   languageName: node
   linkType: hard
 
@@ -9768,6 +9795,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"leaflet@npm:^1.9.4":
+  version: 1.9.4
+  resolution: "leaflet@npm:1.9.4"
+  checksum: 10c0/f639441dbb7eb9ae3fcd29ffd7d3508f6c6106892441634b0232fafb9ffb1588b05a8244ec7085de2c98b5ed703894df246898477836cfd0ce5b96d4717b5ca1
+  languageName: node
+  linkType: hard
+
 "levn@npm:^0.4.1":
   version: 0.4.1
   resolution: "levn@npm:0.4.1"
@@ -11158,6 +11192,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-leaflet@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "react-leaflet@npm:4.2.1"
+  dependencies:
+    "@react-leaflet/core": "npm:^2.1.0"
+  peerDependencies:
+    leaflet: ^1.9.0
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10c0/2e9d1687e883fd7d2e9798e51a04600e1b14784dc98b981a44507e65eb39a24f08c7f237c7522ae5667e999eb53b8d565ebd0f5baa25ef73a0278d6bfcc369e1
+  languageName: node
+  linkType: hard
+
 "react-lifecycles-compat@npm:^3.0.0":
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
@@ -11829,6 +11876,7 @@ __metadata:
     "@interchain-ui/react": "npm:1.23.22"
     "@interchain-ui/react-no-ssr": "npm:^0.1.6"
     "@types/add": "npm:^2"
+    "@types/leaflet": "npm:^1"
     "@types/node": "npm:18.19.37"
     "@types/react": "npm:18.2.0"
     "@types/react-dom": "npm:18.2.0"
@@ -11842,6 +11890,7 @@ __metadata:
     eslint-config-next: "npm:13.0.5"
     fast-fuzzy: "npm:1.12.0"
     framer-motion: "npm:^9.0.7"
+    leaflet: "npm:^1.9.4"
     match-sorter: "npm:^6.3.3"
     next: "npm:^13"
     react: "npm:^18.2.0"
@@ -11850,6 +11899,7 @@ __metadata:
     react-confetti: "npm:^6.1.0"
     react-dom: "npm:^18.2.0"
     react-icons: "npm:4.6.0"
+    react-leaflet: "npm:^4.2.1"
     react-modal: "npm:^3.16.1"
     react-multi-carousel: "npm:^2.8.5"
     react-responsive: "npm:^10.0.0"

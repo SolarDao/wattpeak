@@ -17,12 +17,11 @@ type WattpeakPieChartProps = {
 
 const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({ totalMinted, totalWattpeak }) => {
   const data = {
-    labels: ['Minted Wattpeak', 'Unminted Wattpeak'],
+    labels: ['Minted Wattpeak', 'Available Wattpeak'],
     datasets: [
       {
         data: [totalMinted, totalWattpeak],
-        backgroundColor: ['#FF6384', '#36A2EB'],
-        hoverBackgroundColor: ['#FF6384', '#36A2EB'],
+        backgroundColor: ['#ff5b1a', '#009886'],
       },
     ],
   };

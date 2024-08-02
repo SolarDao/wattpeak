@@ -33,6 +33,7 @@
     "cosmos-kit": "2.18.0",
     "fast-fuzzy": "1.12.0",
     "framer-motion": "^9.0.7",
+    "leaflet": "^1.9.4",
     "match-sorter": "^6.3.3",
     "next": "^13",
     "react": "^18.2.0",
@@ -41,6 +42,7 @@
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
     "react-icons": "4.6.0",
+    "react-leaflet": "^4.2.1",
     "react-modal": "^3.16.1",
     "react-multi-carousel": "^2.8.5",
     "react-responsive": "^10.0.0",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@types/add": "^2",
+    "@types/leaflet": "^1",
     "@types/node": "18.19.37",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",

@@ -1,10 +1,10 @@
 import React, { ReactNode, SetStateAction, useEffect, useState } from "react";
 import { queryStakers } from "../../utils/queryStaker";
-import { Spinner, Box, useColorModeValue } from "@interchain-ui/react";
+import { Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
 import { useChains } from "@cosmos-kit/react";
 import { getStargazeBalances } from "@/utils/balances/stargazeBalances";
-import { Flex, Button } from "@chakra-ui/react";
+import { Flex, Button, Heading, Center } from "@chakra-ui/react";
 import Carousel from "react-multi-carousel";
 import Modal from "react-modal";
 import { queryProjects } from "@/utils/queryProjects";
@@ -53,6 +53,7 @@ export const Home = () => {
   const chains = useChains(["stargazetestnet", "junotestnet"]);
   const stargazeAddress = chains.stargazetestnet.address;
   const junoAddress = chains.junotestnet.address;
+  const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,9 +83,7 @@ export const Home = () => {
           setTotalStakedWattpeak(stakedWattpeakResults); // Ensure this is the correct property
 
           const wattpeakBalance = balancesResult.find(
-            (balance) =>
-              balance.denom ===
-              "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+            (balance) => balance.denom === wattPeakDenom
           );
           if (wattpeakBalance) {
             setStakerMintedWattpeak(wattpeakBalance.amount);
@@ -135,8 +134,7 @@ export const Home = () => {
 
   const filteredBalances = balances.filter(
     (balance) =>
-      balance.denom ===
-        "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka" ||
+      balance.denom === wattPeakDenom ||
       balance.denom === "ujunox" ||
       balance.denom === "ustars" ||
       balance.denom ===
@@ -144,42 +142,98 @@ export const Home = () => {
   );
 
   return (
-    <div>
-      <Flex
-        borderRadius="23px"
-        backgroundColor={backgroundColor}
-        width="20%"
-        padding="20px"
-        flexDirection="column"
-        gap="5px"
-      >
-        <h3>My Wallet</h3>
-        {filteredBalances.map((balance) => (
-          <div key={balance.denom}>
-            {formatDenom(balance.denom)} :{" "}
-            {parseFloat((balance.amount / 1000000).toFixed(2))}
-          </div>
-        ))}
-      </Flex>
-      <Box mt={10}>
-        <h3>WattPeak Overview</h3>
-        <DonutChart
-          totalMinted={parseFloat((stakerMintedWattpeak / 1000000).toFixed(2))}
-          totalStaked={parseFloat((stakerStakedWattpeak / 1000000).toFixed(2))}
-        />
-      </Box>
-      <WattpeakPieChart
-        totalMinted={parseFloat((totalMintedWattpeak / 1000000).toFixed(2))}
-        totalWattpeak={parseFloat((totalWattpeak / 1000000).toFixed(2))}
-      />
-      <Box mt={10}>
-        <h3>Staked WattPeaks vs Minted</h3>
-        <StakedWattpeakPieChart
-          totalStaked={totalStakedWattpeak / 1000000}
-          totalMinted={totalMintedWattpeak / 1000000}
-        />
-      </Box>
+    <Box>
+      <Heading textAlign="center" marginBottom="6px">
+        My Wallet
+      </Heading>{" "}
+      <Center>
+        <Flex
+          borderRadius="23px"
+          backgroundColor={backgroundColor}
+          width="80%"
+          height="auto"
+          flexDirection="column" // Change to column to stack the heading and content
+          alignItems="center" // Center the content horizontally
+          marginBottom="20px"
+        >
+          <Flex
+            flexDirection="row"
+            justifyContent="space-evenly"
+            width="100%" // Ensure it takes full width of the container
+            gap="5px"
+            minWidth="200px"
+            paddingBottom="20px"
+          >
+            <Flex
+              flexDirection="column"
+              gap="25px"
+              padding="20px"
+              borderRadius="10px"
+            >
+              <Heading fontSize="sm" textAlign="center" marginTop="0px">
+                Balances
+              </Heading>
+              {filteredBalances.map((balance) => (
+                <Box key={balance.denom} fontSize="20px">
+                  {formatDenom(balance.denom)} :{" "}
+                  {parseFloat((balance.amount / 1000000).toFixed(2))}
+                </Box>
+              ))}
+            </Flex>
 
+            <Box>
+              <Heading>WattPeak Distribution</Heading>
+              <DonutChart
+                totalMinted={parseFloat(
+                  (stakerMintedWattpeak / 1000000).toFixed(2)
+                )}
+                totalStaked={parseFloat(
+                  (stakerStakedWattpeak / 1000000).toFixed(2)
+                )}
+              />
+            </Box>
+          </Flex>
+        </Flex>
+      </Center>
+      <Heading textAlign="center" marginBottom="6px">
+        Tokens Global
+      </Heading>{" "}
+      <Center>
+        <Flex
+          borderRadius="23px"
+          backgroundColor={backgroundColor}
+          width="80%"
+          height="auto"
+          flexDirection="column" // Change to column to stack the heading and content
+          alignItems="center" // Center the content horizontally
+        >
+          <Flex
+            flexDirection="row"
+            justifyContent="space-evenly"
+            width="100%" // Ensure it takes full width of the container
+            gap="5px"
+            minWidth="200px"
+            paddingBottom="20px"
+          >
+            <Box mt={10}>
+              <h3>Available WattPeaks vs Minted</h3>
+              <WattpeakPieChart
+                totalMinted={parseFloat(
+                  (totalMintedWattpeak / 1000000).toFixed(2)
+                )}
+                totalWattpeak={parseFloat((totalWattpeak / 1000000).toFixed(2))}
+              />
+            </Box>
+            <Box mt={10}>
+              <h3>Staked WattPeaks % of Minted</h3>
+              <StakedWattpeakPieChart
+                totalStaked={totalStakedWattpeak / 1000000}
+                totalMinted={totalMintedWattpeak / 1000000}
+              />
+            </Box>
+          </Flex>
+        </Flex>
+      </Center>
       <Box mt={10}>
         <h3>Projects</h3>
         <Carousel responsive={responsive} infinite={false} arrows={true}>
@@ -273,7 +327,7 @@ export const Home = () => {
           </Box>
         )}
       </Modal>
-    </div>
+    </Box>
   );
 };
 

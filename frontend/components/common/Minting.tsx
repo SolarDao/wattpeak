@@ -21,6 +21,7 @@ import { useMediaQuery } from "react-responsive";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
 
 export const Minting = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
@@ -35,7 +36,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     minting_fee_percentage: number;
     // Add other properties as needed
   }
-  
+
   const [config, setConfig] = useState<Config | null>(null);
   const [amount, setAmount] = useState(1);
   const [balances, setBalances] = useState<string[]>([]);
@@ -48,7 +49,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     max_wattpeak: number;
     minted_wattpeak_count: number;
   }
-  
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   );
 
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
-  
+
   const handleMintClick = async () => {
     handleMint({
       signingClient,
@@ -188,11 +189,8 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         1000000 || 0
     );
     setWattpeakBalance(
-      balances?.find(
-        (balance) =>
-          balance.denom ===
-          "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
-      )?.amount / 1000000 || 0
+      balances?.find((balance) => balance.denom === wattPeakDenom)?.amount /
+        1000000 || 0
     );
   }
 
@@ -244,13 +242,14 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         <div className="headerBox">
           <h3>Available Projects to mint</h3>
           {!isMobile && (
-          <p>
-            Price per wattpeak: {config.minting_price.amount}{" "}
-            {config.minting_price.denom}
-          </p>
-        )}
+            <p>
+              Price per wattpeak: {config?.minting_price.amount}{" "}
+              {config?.minting_price.denom}
+            </p>
+          )}
         </div>
         <Carousel responsive={responsive} infinite={false} arrows={true}>
+          {!projects.length && <p>No projects available to mint</p>}
           {projects.map((project) => (
             <Box
               key={project.projectId}
@@ -329,7 +328,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             {parseFloat(
               (
                 parseFloat(cryptoAmount) +
-                cryptoAmount * config.minting_fee_percentage
+                cryptoAmount * config?.minting_fee_percentage
               ).toFixed(6)
             ).toString()}{" "}
             uJunox for {amount} Wattpeak
@@ -337,12 +336,16 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           <p>
             Minting fee:{" "}
             {parseFloat(
-              (cryptoAmount * config.minting_fee_percentage).toFixed(6)
+              (cryptoAmount * config?.minting_fee_percentage).toFixed(6)
             ).toString()}{" "}
             uJunox
           </p>
         </Box>
-        <button onClick={handleMintClick} disabled={minting} className="mintBtn">
+        <button
+          onClick={handleMintClick}
+          disabled={minting}
+          className="mintBtn"
+        >
           {minting ? <Spinner size="sm" color="black" /> : "MINT"}
         </button>
       </Box>

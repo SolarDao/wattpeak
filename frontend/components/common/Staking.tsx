@@ -23,8 +23,8 @@ import { Loading } from "./Loading";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
-const wattpeadDenom =
-  "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka";
+
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
 
 export const Staking = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
@@ -45,45 +45,67 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   const [config, setConfig] = useState({});
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const wattpeakBalance =
-    balances.find((balance) => balance.denom === wattpeadDenom)?.amount /
+    balances.find((balance) => balance.denom === wattPeakDenom)?.amount /
       1000000 || 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
+  console.log(stakedWattpeak);
+  
   const inputColor = useColorModeValue("black", "white");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
   );
 
-  useEffect(() => {
-    const fetchClient = async () => {
-      setLoading(true);
-      try {
-        if (status === "Connected") {
-          const client = await getSigningCosmWasmClient();
-          setSigningClient(client);
-          const balancesResult = await getBalances(address);
-          setBalances(balancesResult);
-          const stakersResult = await queryStakers(address);
+  const fetchClient = async (retryCount = 0) => {
+    setLoading(true);
+    try {
+      if (status === "Connected") {
+        const client = await getSigningCosmWasmClient();
+        setSigningClient(client);
+
+        const balancesResult = await getBalances(address);
+        setBalances(balancesResult);
+
+        const stakersResult = await queryStakers(address);
+
+        // Check if the staker exists and has expected properties
+        if (
+          !stakersResult ||
+          typeof stakersResult.wattpeak_staked === "undefined" ||
+          typeof stakersResult.claimable_rewards === "undefined"
+        ) {
+          // Initialize staker data if it doesn't exist or is incomplete
+          setStakers({
+            wattpeak_staked: 0,
+            claimable_rewards: 0,
+          });
+        } else {
           setStakers(stakersResult);
-          const claimable = stakersResult.claimable_rewards / 1000000; 
+          const claimable = stakersResult.claimable_rewards / 1000000;
           setClaimableRewards(claimable);
           if (claimable > 0) {
-            setModalIsOpen(true); 
+            setModalIsOpen(true);
           }
-          const configResult = await queryStakingConfig();
-          setConfig(configResult);
-        } else {
-          await connect();
         }
-      } catch (err) {
-        setError(err);
-        toast.error("Error connecting to wallet");
-        console.error("Error getting signing client:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
+        const configResult = await queryStakingConfig();
+        setConfig(configResult);
+      } else if (retryCount < 3) {
+        await connect();
+        fetchClient(retryCount + 1);
+      } else {
+        throw new Error("Failed to connect after multiple attempts");
+      }
+    } catch (err) {
+      setError(err);
+      toast.error("Error connecting to wallet");
+      console.error("Error getting signing client:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchClient();
   }, [status, getSigningCosmWasmClient, connect, address]);
 
@@ -108,7 +130,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           gas: "3000000", // gas limit
         },
         "", // Optional memo
-        [{ denom: wattpeadDenom, amount: (amount * 1000000).toString() }] // Funds sent with transaction
+        [{ denom: wattPeakDenom, amount: (amount * 1000000).toString() }] // Funds sent with transaction
       );
       const balancesResult = await getBalances(address);
       setBalances(balancesResult);
@@ -197,6 +219,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       console.error("Error executing claim rewards:", err);
     } finally {
       setLoading(false);
+      setTimeout(() => setConfetti(false), 6000);
     }
   };
 
@@ -220,10 +243,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   };
 
   if (loading || !signingClient || !config || !staker || !balances) {
-    return (
-      <Loading/>
-    );
+    return <Loading />;
   }
+
   return (
     <Box
       width="100%"
@@ -347,26 +369,32 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 placeholder="Amount"
               />
             </Box>
-            <Box className="stakeDetails" backgroundColor={backgroundColor}>
-              <h3>You will stake {amount} WattPeak</h3>
-              <p>Current ROI: {config.rewards_percentage * 100} % per year</p>
-              <p>
-                Reward:{" "}
-                {parseFloat((amount * config.rewards_percentage).toFixed(6))
-                  .toString()
-                  .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")}{" "}
-                WattPeak per year
-              </p>
-            </Box>
-            <Center>
-              <Button
-                onClick={handleStake}
-                disabled={loading}
-                className="stakeBtn"
-              >
-                {loading ? <Spinner /> : "STAKE"}
-              </Button>
-            </Center>
+            {amount > 0 && (
+              <>
+                <Box className="stakeDetails" backgroundColor={backgroundColor}>
+                  <h3>You will stake {amount} WattPeak</h3>
+                  <p>
+                    Current ROI: {config.rewards_percentage * 100} % per year
+                  </p>
+                  <p>
+                    Reward:{" "}
+                    {parseFloat((amount * config.rewards_percentage).toFixed(6))
+                      .toString()
+                      .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")}{" "}
+                    WattPeak per year
+                  </p>
+                </Box>
+                <Center>
+                  <Button
+                    onClick={handleStake}
+                    disabled={loading}
+                    className="stakeBtn"
+                  >
+                    {loading ? <Spinner /> : "STAKE"}
+                  </Button>
+                </Center>
+              </>
+            )}
           </TabPanel>
           <TabPanel>
             <Box
@@ -374,9 +402,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               backgroundColor={backgroundColor}
             >
               <div className="stakingBalanceWrapper">
-                <p>Staked: {stakedWattpeak}</p>
+                <p>Staked: {staker.wattpeak_staked / 1000000}</p>
                 <Button
-                  onClick={() => setAmount(stakedWattpeak)}
+                  onClick={() => setAmount(staker.wattpeak_staked / 1000000)}
                   mb="10px"
                   className="maxButtonStaking"
                 >
@@ -390,27 +418,31 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 color={inputColor}
                 onChange={(e) =>
                   setAmount(
-                    Math.min(parseFloat(e.target.value), stakedWattpeak)
+                    Math.min(parseFloat(e.target.value), staker.wattpeak_staked / 1000000)
                   )
                 }
                 min="1"
-                max={stakedWattpeak}
+                max={staker.wattpeak_staked / 1000000}
                 step="1"
                 placeholder="Amount"
               />
             </Box>
-            <Box className="stakeDetails" backgroundColor={backgroundColor}>
-              <h3>You will unstake {amount} WattPeak</h3>
-            </Box>
-            <Center>
-              <Button
-                onClick={handleUnstake}
-                disabled={loading}
-                className="stakeBtn"
-              >
-                {loading ? <Spinner /> : "UNSTAKE"}
-              </Button>
-            </Center>
+            {amount > 0 && (
+              <>
+                <Box className="stakeDetails" backgroundColor={backgroundColor}>
+                  <h3>You will unstake {amount} WattPeak</h3>
+                </Box>
+                <Center>
+                  <Button
+                    onClick={handleUnstake}
+                    disabled={loading}
+                    className="stakeBtn"
+                  >
+                    {loading ? <Spinner /> : "UNSTAKE"}
+                  </Button>
+                </Center>
+              </>
+            )}
           </TabPanel>
         </TabPanels>
       </Tabs>
