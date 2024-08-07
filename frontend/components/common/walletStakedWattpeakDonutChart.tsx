@@ -7,6 +7,7 @@ import {
   Legend,
   Title,
 } from 'chart.js';
+import { Box } from '@chakra-ui/react';
 
 // Register required components
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
@@ -22,15 +23,14 @@ const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => 
     datasets: [
       {
         data: [totalStaked, totalMinted],
-        backgroundColor: ['#FF6384', '#36A2EB'],
-        hoverBackgroundColor: ['#FF6384', '#36A2EB'],
+        backgroundColor: ['#FAD987', '#FFBC1A'],
       },
     ],
   };
 
   const options = {
+    responsive: true,
     maintainAspectRatio: false,
-    cutoutPercentage: 70,
     plugins: {
       legend: {
         position: 'bottom',
@@ -39,9 +39,9 @@ const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => 
   };
 
   return (
-    <div style={{ height: '300px', width: '300px' }}>
+    <Box style={{ height: '200px', width: '200px' }}>
       <Doughnut data={data} options={options} />
-    </div>
+    </Box>
   );
 };
 

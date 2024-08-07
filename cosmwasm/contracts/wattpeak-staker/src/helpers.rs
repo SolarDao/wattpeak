@@ -123,21 +123,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
 
@@ -210,21 +210,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
 
@@ -298,21 +298,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeak",
+                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
             )],
         );
 

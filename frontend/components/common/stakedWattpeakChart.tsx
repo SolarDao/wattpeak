@@ -17,12 +17,11 @@ type StakedWattpeakPieChartProps = {
 
 const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalStaked, totalMinted }) => {
   const data = {
-    labels: ['Staked Wattpeak', 'Unstaked Wattpeak'],
+    labels: ['Staked', 'Unstaked'],
     datasets: [
       {
         data: [totalStaked, totalMinted - totalStaked],
-        backgroundColor: ['#FF6384', '#36A2EB'],
-        hoverBackgroundColor: ['#FF6384', '#36A2EB'],
+        backgroundColor: ['#FAD987', '#FFBC1A'],
       },
     ],
   };
@@ -37,7 +36,7 @@ const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalSt
   };
 
   return (
-    <div style={{ height: '300px', width: '300px' }}>
+    <div style={{ height: '200px', width: '200px' }}>
       <Pie data={data} options={options} />
     </div>
   );

@@ -985,7 +985,7 @@ mod tests {
             assert_eq!(
                 res.messages[2].msg,
                 CosmosMsg::Custom(TokenFactoryMsg::MintTokens {
-                    denom: "factory/cosmos2contract/uwattpeak".to_string(),
+                    denom: "factory/cosmos2contract/uwattpeakb".to_string(),
                     amount: amount_to_mint,
                     mint_to_address: "mint_to_addr".to_string(),
                 })
