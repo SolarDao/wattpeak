@@ -35,7 +35,6 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
         }}
       >
         <Box
-          minHeight="100dvh"
           backgroundColor={useColorModeValue(
             "linear-gradient(116.82deg, #FCB023 0%, #141406 99.99%, #070D1C 100%)",
             "$black"

@@ -12,6 +12,7 @@ import {
   Box,
   ListItem,
   UnorderedList,
+  Heading,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
@@ -23,6 +24,7 @@ import { swapNftToTokens } from "@/utils/swap-functions/swapNftToTokens";
 import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handleMultipleNftSwap";
 import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
 import { Loading } from "./Loading";
+import { useMediaQuery } from "react-responsive";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -56,7 +58,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const [swapping, setSwapping] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const inputColor = useColorModeValue("black", "white");
+  const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
   const nftBackgroundColor = useColorModeValue("rgba(0, 0, 0, 0.07)", "black");
   const backgroundColor = useColorModeValue(
@@ -78,6 +80,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     price_per_nft: "5",
     token_denom: "ustars",
   });
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   useEffect(() => {
     const fetchNfts = async () => {
@@ -178,7 +181,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   };
 
   const handleMultipleNftSwap = async () => {
-    handleMultipleNftSwapFunctionUtil ({
+    handleMultipleNftSwapFunctionUtil({
       signingClient,
       selectedMultipleNfts,
       address,
@@ -191,8 +194,8 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       setSelectedMultipleNfts,
       setError,
       setSwapping,
-    })
-  }
+    });
+  };
 
   const handleMultipleSolarSwap = async () => {
     handleMultipleSolarSwapUtilFunction({
@@ -209,7 +212,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       setError,
       setSwapping,
     });
-  }
+  };
 
   const handleTabsChange = (index: React.SetStateAction<number>) => {
     setTabIndex(index);
@@ -219,15 +222,23 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   };
 
   if (loading || swapping) {
-    return (
-      <Loading/>
-    );
+    return <Loading />;
   }
   return (
     <div>
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
-          <h2>Cyber Solar Heroes</h2>
+          {!isMobile && (
+            <Heading
+              fontSize="20px"
+              textAlign="left"
+              paddingLeft="15px"
+              color={inputColor}
+              marginBottom="5px"
+            >
+              Cyber Solar Heroes
+            </Heading>
+          )}
           <TabList>
             <Tab
               className="swapTabs"
@@ -260,37 +271,38 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               Swap Solar
             </Tab>
           </TabList>
-
-          <Button
-            className="multipleSelectBtn"
-            color={multipleSelect ? "black" : inputColor}
-            borderColor={borderColor}
-            onClick={() => setMultipleSelect(!multipleSelect)}
-            background={
-              multipleSelect
-                ? "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
-                : backgroundColor
-            }
-          >
-            {inputColor === "white" && !multipleSelect ? (
-              <Image
-                className="multipleSelectImg"
-                src={require("../../images/frame.png")}
-                alt={"multiple select"}
-                width={20}
-                height={20}
-              ></Image>
-            ) : (
-              <Image
-                className="multipleSelectImg"
-                src={require("../../images/frame_black.png")}
-                alt={"multiple select"}
-                width={20}
-                height={20}
-              />
-            )}
-            Select Multiple
-          </Button>
+          {!isMobile && (
+            <Button
+              className="multipleSelectBtn"
+              color={multipleSelect ? "black" : inputColor}
+              borderColor={borderColor}
+              onClick={() => setMultipleSelect(!multipleSelect)}
+              background={
+                multipleSelect
+                  ? "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+                  : backgroundColor
+              }
+            >
+              {inputColor === "white" && !multipleSelect ? (
+                <Image
+                  className="multipleSelectImg"
+                  src={require("../../images/frame.png")}
+                  alt={"multiple select"}
+                  width={20}
+                  height={20}
+                ></Image>
+              ) : (
+                <Image
+                  className="multipleSelectImg"
+                  src={require("../../images/frame_black.png")}
+                  alt={"multiple select"}
+                  width={20}
+                  height={20}
+                />
+              )}
+              Select Multiple
+            </Button>
+          )}
         </Box>
 
         <TabPanels className="swapPanels" background={backgroundColor}>

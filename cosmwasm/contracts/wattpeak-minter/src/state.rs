@@ -105,7 +105,7 @@ pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_min
 
 pub const FULL_DENOM: Item<String> = Item::new("token_full_denom");
 
-pub const SUBDENOM: &str = "uwattpeak";
+pub const SUBDENOM: &str = "uwattpeakb";
 pub const DESCRIPTION: &str =
     "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
 pub const SYMBOL: &str = "WTP";

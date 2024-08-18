@@ -8,6 +8,7 @@ import {
     Button,
     Box,
   } from "@chakra-ui/react";
+import { useMediaQuery } from "react-responsive";
 
 interface NftDetailsModalProps {
   isOpen: boolean;
@@ -35,9 +36,11 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
   inputColor,
   modalBackgroundColor,
 }) => {
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   if (!selectedNftDetails) {
     return null;
   }
+  
   const customStyles = {
     content: {
       top: "52%",
@@ -49,13 +52,14 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       color: useColorModeValue("black", "white"),
       borderRadius: "15px",
       height: "76%",
-      width: "23%",
+      width: isMobile ? "70%" : "400px",
     },
     overlay: {
       backgroundColor: "rgba(0, 0, 0, 0.5)",
       zIndex: 1000,
     },
   };
+  
 
   return (
     <Modal
