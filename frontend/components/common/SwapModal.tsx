@@ -37,6 +37,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
   modalBackgroundColor,
 }) => {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+  const backgroundColor = useColorModeValue("white", "rgba(52, 52, 52, 1)");
+  const textColor = useColorModeValue("black", "white");
   if (!selectedNftDetails) {
     return null;
   }
@@ -48,8 +50,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       right: "auto",
       bottom: "auto",
       transform: "translate(-50%, -50%)",
-      backgroundColor: useColorModeValue("white", "rgba(52, 52, 52, 1)"),
-      color: useColorModeValue("black", "white"),
+      backgroundColor: backgroundColor,
+      color: textColor,
       borderRadius: "15px",
       height: "76%",
       width: isMobile ? "70%" : "400px",
