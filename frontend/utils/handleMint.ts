@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 
 interface HandleMintProps {
   signingClient: SigningStargateClient | null;
-  address: string;
+  address: string | undefined;
   amount: number;
   selectedProjectId: number | null;
   price: string;

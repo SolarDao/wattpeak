@@ -30,7 +30,7 @@ const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({ totalMinted, totalW
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: 'bottom' as const,
       },
     },
   };

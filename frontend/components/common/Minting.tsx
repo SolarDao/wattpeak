@@ -18,10 +18,12 @@ import { queryNftConfig } from "@/utils/queryAndMintNft";
 import { responsive } from "@/styles/responsiveCarousel";
 import { handleMint } from "@/utils/handleMint";
 import { useMediaQuery } from "react-responsive";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { SigningStargateClient } from "@cosmjs/stargate";
 
 const nftContractAddress =
-  process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
-const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
+  process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM || ""; 
 
 export const Minting = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
@@ -38,10 +40,15 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }
 
   const [config, setConfig] = useState<Config | null>(null);
-  const [amount, setAmount] = useState(1);
-  const [balances, setBalances] = useState<string[]>([]);
+  const [amount, setAmount] = useState<number>(1);
+  interface Balance {
+    denom: string;
+    amount: number;
+  }
+  
+  const [balances, setBalances] = useState<Balance[]>([]);
   const [price, setPrice] = useState("0");
-  const [signingClient, setSigningClient] = useState(null);
+  const [signingClient, setSigningClient] = useState<SigningStargateClient | null>(null);
   const [minting, setMinting] = useState(false);
   interface Project {
     projectId: number;
@@ -57,7 +64,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   const [junoBalance, setJunoBalance] = useState(0);
   const [wattpeakBalance, setWattpeakBalance] = useState(0);
   const hasRunQuery = useRef(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
@@ -67,6 +74,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     chainName,
     walletName
   );
+  const addressValue = address ?? "";
 
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
@@ -104,7 +112,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     setAmount(newAmount);
     if (!isNaN(newAmount) && newAmount !== "") {
       setCryptoAmount(
-        (parseFloat(newAmount) * config.minting_price.amount)
+        (parseFloat(newAmount) * parseFloat(config?.minting_price?.amount || "0"))
           .toFixed(6)
           .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
       );
@@ -113,9 +121,9 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     }
   };
 
-  const handleCryptoAmountChange = (e) => {
+  const handleCryptoAmountChange = (e: { target: { value: any; }; }) => {
     let newCryptoAmount = e.target.value;
-
+  
     // Restrict to 6 decimal places
     if (newCryptoAmount.includes(".")) {
       const parts = newCryptoAmount.split(".");
@@ -123,16 +131,18 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         newCryptoAmount = `${parts[0]}.${parts[1].slice(0, 6)}`;
       }
     }
-
+  
     setCryptoAmount(newCryptoAmount);
-    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "") {
+    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "" && config) {
       setAmount(
-        (parseFloat(newCryptoAmount) / config.minting_price.amount)
-          .toFixed(6)
-          .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+        parseFloat(
+          (
+            parseFloat(newCryptoAmount) / parseFloat(config?.minting_price?.amount || "0")
+          ).toFixed(6)
+        )
       );
     } else {
-      setAmount("");
+      setAmount(0);
     }
   };
 
@@ -167,7 +177,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     const fetchProjects = async () => {
       try {
         const result = await queryProjects();
-        const projectsWithId = result.map((project, index) => ({
+        const projectsWithId = result.map((project: any, index: number) => ({
           ...project,
           projectId: index + 1,
         }));
@@ -183,13 +193,13 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     fetchProjects();
   }, []);
 
-  function setCorrectBalances(balances: string[]) {
+  function setCorrectBalances(balances: any) {
     setJunoBalance(
-      balances?.find((balance) => balance.denom === "ujunox")?.amount /
+      balances?.find((balance: { denom: string; }) => balance.denom === "ujunox")?.amount /
         1000000 || 0
     );
     setWattpeakBalance(
-      balances?.find((balance) => balance.denom === wattPeakDenom)?.amount /
+      balances?.find((balance: { denom: string; }) => balance.denom === wattPeakDenom)?.amount /
         1000000 || 0
     );
   }

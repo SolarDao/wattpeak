@@ -81,7 +81,13 @@ export const Home = () => {
 
           const balancesResult = await getBalances(junoAddress);
           const stargazeBalances = await getStargazeBalances(stargazeAddress);
-          setBalances([...balancesResult, ...stargazeBalances]);
+          const convertedBalances = [...balancesResult, ...stargazeBalances].map(
+            (balance) => ({
+              amount: Number(balance.amount),
+              denom: balance.denom,
+            })
+          );
+          setBalances(convertedBalances);
 
           const stakedWattpeakResults = await queryTotalWattpeakStaked();
           setTotalStakedWattpeak(stakedWattpeakResults); // Ensure this is the correct property
@@ -90,7 +96,7 @@ export const Home = () => {
             (balance) => balance.denom === wattPeakDenom
           );
           if (wattpeakBalance) {
-            setStakerMintedWattpeak(wattpeakBalance.amount);
+            setStakerMintedWattpeak(Number(wattpeakBalance.amount));
           }
 
           const totalMinted = projectsWithId.reduce(
@@ -101,10 +107,10 @@ export const Home = () => {
           setTotalMintedWattpeak(totalMinted);
 
           const totalWattpeakResults = projectsWithId.map(
-            (project) => project.max_wattpeak
+            (project: { max_wattpeak: Number; }) => project.max_wattpeak
           );
           const totalWattpeak = totalWattpeakResults.reduce(
-            (acc, curr) => acc + curr,
+            (acc: any, curr: any) => acc + curr,
             0
           );
           setTotalWattpeak(totalWattpeak);
@@ -118,10 +124,16 @@ export const Home = () => {
     };
 
     fetchData();
-  }, [stargazeAddress, junoAddress]);
+  }, [stargazeAddress, junoAddress, wattPeakDenom]);
 
   const openModal = (
-    project: React.SetStateAction<null | { name: string; projectId: number }>
+    project: {
+      minted_wattpeak_count: number;
+      max_wattpeak: number;
+      description: ReactNode;
+      name: string;
+      projectId: number;
+    } | null
   ) => {
     setSelectedProject(project);
     setModalIsOpen(true);
@@ -285,7 +297,13 @@ export const Home = () => {
               <Box mt={4}>
                 <h4>{project.name}</h4>
                 <Button
-                  onClick={() => openModal(project)}
+                  onClick={() => openModal({
+                    minted_wattpeak_count: 0,
+                    max_wattpeak: 0,
+                    description: null,
+                    name: project.name,
+                    projectId: project.projectId
+                  })}
                   className="projectButton"
                   color={inputColor}
                   borderColor={borderColor}
