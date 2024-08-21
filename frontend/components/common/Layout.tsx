@@ -17,7 +17,9 @@ const JUNO_CHAIN_NAME = "junotestnet";
 const STARGAZE_CHAIN_NAME = "stargazetestnet";
 const CHAIN_NAME_STORAGE_KEY = "junotestnet";
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const Layout: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [currentSection, setCurrentSection] = useState("home");
   const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
@@ -63,18 +65,68 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }
   };
 
-
   if (wallet?.status !== "Connected") {
     return (
+      <>
+        <Container
+          maxWidth="80rem"
+          attributes={{ py: isMobile ? "$7" : "$14" }}
+        >
+          <Box
+            className="box"
+            backgroundImage={backgroundImage}
+            backgroundColor={backgroundColor}
+          >
+            <Header
+              setCurrentSection={handleSectionChange}
+              chainName={chainName}
+            />
+            <Box className="whiteBox" paddingLeft={isMobile ? "$10" : "$0"}>
+              {!isMobile && (
+                <SideNavbar setCurrentSection={handleSectionChange} />
+              )}
+              <Box
+                flex="1"
+                p="$4"
+                minHeight="$fit"
+                borderRadius="$4xl"
+                color="Black"
+                marginRight="$10"
+                maxWidth="93%"
+                attributes={{
+                  backgroundColor: backgroundColor2,
+                  color: inputColor,
+                }}
+              >
+                <Flex justifyContent="center" alignItems="center" height="100%">
+                  <Wallet chainName={chainName} />
+                </Flex>
+                {children}
+              </Box>
+            </Box>
+            <Footer />
+          </Box>
+        </Container>
+      </>
+    );
+  }
+
+  return (
+    <>
       <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
         <Box
           className="box"
           backgroundImage={backgroundImage}
           backgroundColor={backgroundColor}
         >
-          <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-          <Box className="whiteBox" paddingLeft={isMobile ? "$10" : "$0"}>
-            {!isMobile && <SideNavbar setCurrentSection={handleSectionChange} />}
+          <Header
+            setCurrentSection={handleSectionChange}
+            chainName={chainName}
+          />
+          <Box className="whiteBox">
+            {!isMobile && (
+              <SideNavbar setCurrentSection={handleSectionChange} />
+            )}
             <Box
               flex="1"
               p="$4"
@@ -88,47 +140,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 color: inputColor,
               }}
             >
-              <Flex justifyContent="center" alignItems="center" height="100%">
-                <Wallet chainName={chainName} />
-              </Flex>
+              {renderSection()}
               {children}
             </Box>
           </Box>
           <Footer />
         </Box>
       </Container>
-    );
-  }
-
-  return (
-    <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
-      <Box
-        className="box"
-        backgroundImage={backgroundImage}
-        backgroundColor={backgroundColor}
-      >
-        <Header setCurrentSection={handleSectionChange} chainName={chainName} />
-        <Box className="whiteBox">
-          {!isMobile && <SideNavbar setCurrentSection={handleSectionChange} />}
-          <Box
-            flex="1"
-            p="$4"
-            minHeight="$fit"
-            borderRadius="$4xl"
-            color="Black"
-            marginRight="$10"
-            maxWidth="93%"
-            attributes={{
-              backgroundColor: backgroundColor2,
-              color: inputColor,
-            }}
-          >
-            {renderSection()}
-            {children}
-          </Box>
-        </Box>
-        <Footer />
-      </Box>
-    </Container>
+    </>
   );
 };
