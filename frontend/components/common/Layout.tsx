@@ -9,7 +9,7 @@ import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { SideNavbar } from "./SideNavbar";
 import { Home } from "./Home";
 import { useWallet } from "@cosmos-kit/react";
-import { Center, Flex } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 import { useMediaQuery } from "react-responsive";
 

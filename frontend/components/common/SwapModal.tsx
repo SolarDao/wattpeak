@@ -69,7 +69,6 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       onRequestClose={onRequestClose}
       style={customStyles}
       contentLabel="Selected NFT Details"
-      color={inputColor}
     >
       <button
         onClick={onRequestClose}

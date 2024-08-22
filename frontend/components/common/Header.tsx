@@ -169,6 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
             marginRight="$10"
           >
             <Box
+            
               as="a"
               onClick={() => handleItemClick("home")}
               attributes={{

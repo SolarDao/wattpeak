@@ -81,12 +81,13 @@ export const Home = () => {
 
           const balancesResult = await getBalances(junoAddress);
           const stargazeBalances = await getStargazeBalances(stargazeAddress);
-          const convertedBalances = [...balancesResult, ...stargazeBalances].map(
-            (balance) => ({
-              amount: Number(balance.amount),
-              denom: balance.denom,
-            })
-          );
+          const convertedBalances = [
+            ...balancesResult,
+            ...stargazeBalances,
+          ].map((balance) => ({
+            amount: Number(balance.amount),
+            denom: balance.denom,
+          }));
           setBalances(convertedBalances);
 
           const stakedWattpeakResults = await queryTotalWattpeakStaked();
@@ -107,7 +108,7 @@ export const Home = () => {
           setTotalMintedWattpeak(totalMinted);
 
           const totalWattpeakResults = projectsWithId.map(
-            (project: { max_wattpeak: Number; }) => project.max_wattpeak
+            (project: { max_wattpeak: Number }) => project.max_wattpeak
           );
           const totalWattpeak = totalWattpeakResults.reduce(
             (acc: any, curr: any) => acc + curr,
@@ -159,7 +160,12 @@ export const Home = () => {
 
   return (
     <Box color={inputColor} fontFamily="inter">
-      <Flex gap="40px" justifyContent="center" alignItems="center" flexWrap="wrap">
+      <Flex
+        gap="40px"
+        justifyContent="center"
+        alignItems="center"
+        flexWrap="wrap"
+      >
         <Center>
           <Flex
             height="auto"
@@ -168,7 +174,7 @@ export const Home = () => {
           >
             <Heading
               marginBottom="10px"
-              color="#000000B2"
+              color={inputColor}
               fontSize="20px"
               lineHeight="19.36px"
             >
@@ -189,13 +195,20 @@ export const Home = () => {
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
-                  color="#000000B2"
+                  color={inputColor}
                   marginBottom="2px"
                 >
                   My Wallet
                 </Heading>
                 {filteredBalances.map((balance) => (
-                  <Box key={balance.denom} fontSize="18px" minWidth="200px" display="flex" alignItems="center" justifyContent="center">
+                  <Box
+                    key={balance.denom}
+                    fontSize="18px"
+                    minWidth="200px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
                     {formatDenom(balance.denom)} :{" "}
                     {parseFloat((balance.amount / 1000000).toFixed(2))}
                   </Box>
@@ -207,7 +220,7 @@ export const Home = () => {
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
-                  color="#000000B2"
+                  color={inputColor}
                 >
                   WattPeak Distribution
                 </Heading>
@@ -228,7 +241,7 @@ export const Home = () => {
             <Heading
               textAlign="left"
               marginBottom="10px"
-              color="#000000B2"
+              color={inputColor}
               fontSize="20px"
               lineHeight="19.36px"
             >
@@ -272,7 +285,7 @@ export const Home = () => {
           fontSize="20px"
           textAlign="left"
           paddingLeft="15px"
-          color="#000000B2"
+          color={inputColor}
           marginBottom="5px"
           marginTop="20px"
         >
@@ -297,13 +310,15 @@ export const Home = () => {
               <Box mt={4}>
                 <h4>{project.name}</h4>
                 <Button
-                  onClick={() => openModal({
-                    minted_wattpeak_count: 0,
-                    max_wattpeak: 0,
-                    description: null,
-                    name: project.name,
-                    projectId: project.projectId
-                  })}
+                  onClick={() =>
+                    openModal({
+                      minted_wattpeak_count: 0,
+                      max_wattpeak: 0,
+                      description: null,
+                      name: project.name,
+                      projectId: project.projectId,
+                    })
+                  }
                   className="projectButton"
                   color={inputColor}
                   borderColor={borderColor}
