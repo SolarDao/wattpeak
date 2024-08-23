@@ -1,8 +1,8 @@
-import { SigningStargateClient } from "@cosmjs/stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
 
 interface HandleMintProps {
-  signingClient: SigningStargateClient | null;
+  signingClient: SigningCosmWasmClient | null;
   address: string | undefined;
   amount: number;
   selectedProjectId: number | null;
@@ -56,7 +56,7 @@ export const handleMint = async ({
 
   try {
     const result = await signingClient.execute(
-      address, // Sender address
+      address as string, // Sender address
       nftContractAddress, // Contract address
       mintMsg, // Execute message
       {
@@ -72,7 +72,7 @@ export const handleMint = async ({
       projectId: index + 1,
     }));
     setProjects(projectsWithId);
-    getBalances(address).then((result) => {
+    getBalances(address || "").then((result) => {
       setBalances(result);
     });
     setJunoBalance(
@@ -89,7 +89,7 @@ export const handleMint = async ({
     toast.success("Minting successful");
   } catch (err) {
     setError(err);
-    toast.error("Minting failed: " + err.message);
+    toast.error("Minting failed: " + (err as any).message);
     console.error("Error executing mint:", err);
   } finally {
     setMinting(false);

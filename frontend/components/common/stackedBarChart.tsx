@@ -19,7 +19,7 @@ ChartJS.register(
   Legend
 );
 
-const StackedBarChart = ({ balances }) => {
+const StackedBarChart = ({ balances }: { balances: Array<any> }) => {
   // Extract and map balances to chart data
   const labels = balances.map((balance) =>
     balance.denom === "ujunox" ? "JUNO" : "WattPeak"
@@ -38,13 +38,13 @@ const StackedBarChart = ({ balances }) => {
   };
 
   const options = {
-    indexAxis: "y",
+    indexAxis: "y" as const, // Explicitly type 'y' as a constant
     responsive: true,
     maintainAspectRatio: false, // Allow customization of height
     aspectRatio: 2, // Adjust this value to make the graph less high
     plugins: {
       legend: {
-        position: "bottom", // Move the legend to the bottom
+        position: "bottom" as const, // Explicitly cast 'bottom' as a literal type
         labels: {
           boxWidth: 20,
         },
@@ -92,8 +92,6 @@ const StackedBarChart = ({ balances }) => {
         padding: "20px",
       }}
     >
-      {" "}
-      {/* Adjust the height value here */}
       <Bar data={data} options={options} />
     </div>
   );

@@ -33,7 +33,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => 
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: 'bottom' as const,
       },
     },
   };

@@ -27,6 +27,9 @@ export const Home = () => {
   );
   const [projects, setProjects] = useState<
     {
+      description: string;
+      max_wattpeak: number;
+      minted_wattpeak_count: number;
       name: string;
       projectId: number;
     }[]
@@ -136,8 +139,16 @@ export const Home = () => {
       projectId: number;
     } | null
   ) => {
-    setSelectedProject(project);
-    setModalIsOpen(true);
+    if (project) {
+      setSelectedProject({
+        minted_wattpeak_count: project.minted_wattpeak_count,
+        max_wattpeak: project.max_wattpeak,
+        description: project.description,
+        name: project.name,
+        projectId: project.projectId,
+      });
+      setModalIsOpen(true);
+    }
   };
 
   const closeModal = () => {
@@ -312,11 +323,12 @@ export const Home = () => {
                 <Button
                   onClick={() =>
                     openModal({
-                      minted_wattpeak_count: 0,
-                      max_wattpeak: 0,
-                      description: null,
                       name: project.name,
                       projectId: project.projectId,
+                      minted_wattpeak_count: project.minted_wattpeak_count || 0, // Ensure default value
+                      max_wattpeak: project.max_wattpeak || 0, // Ensure default value
+                      description:
+                        project.description || "No description available.", // Ensure default description
                     })
                   }
                   className="projectButton"

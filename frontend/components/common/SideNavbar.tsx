@@ -28,6 +28,7 @@ export const SideNavbar = ({ setCurrentSection }: { setCurrentSection: (id: stri
         <Box
           key={item.id}
           as="a"
+          // @ts-ignore
           onClick={() => setCurrentSection(item.id)}
           color={inputColor}
           fontWeight="$medium"

@@ -20,11 +20,17 @@ import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./Loading";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
 
-const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM ||  "";
+
+interface Config {
+  rewards_percentage: number;
+  // Add any other properties you expect in config
+}
 
 export const Staking = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
@@ -35,18 +41,20 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   );
 
   const [amount, setAmount] = useState(0.0);
-  const [staker, setStakers] = useState([]);
-  const [balances, setBalances] = useState([]);
-  const [signingClient, setSigningClient] = useState(null);
+  const [staker, setStakers] = useState<{ wattpeak_staked: number, claimable_rewards: number }>({ wattpeak_staked: 0, claimable_rewards: 0 });
+  const [balances, setBalances] = useState<any[]>([]);
+  const [signingClient, setSigningClient] = useState<SigningCosmWasmClient | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<null | Error>(null);
   const [confetti, setConfetti] = useState(false);
   const [claimableRewards, setClaimableRewards] = useState(0);
-  const [config, setConfig] = useState({});
+  const [config, setConfig] = useState<Config | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const wattpeakBalance =
-    balances.find((balance) => balance.denom === wattPeakDenom)?.amount /
-      1000000 || 0;
+    balances.length > 0 && wattPeakDenom
+      ? balances.find((balance: any) => balance.denom === wattPeakDenom)?.amount /
+        1000000
+      : 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
   console.log(stakedWattpeak);
   
@@ -61,12 +69,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     try {
       if (status === "Connected") {
         const client = await getSigningCosmWasmClient();
-        setSigningClient(client);
+        setSigningClient(client as any);
 
         const balancesResult = await getBalances(address);
-        setBalances(balancesResult);
+        setBalances([...balancesResult] as any[]);
 
-        const stakersResult = await queryStakers(address);
+        const stakersResult = await queryStakers(address || "");
 
         // Check if the staker exists and has expected properties
         if (
@@ -97,7 +105,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         throw new Error("Failed to connect after multiple attempts");
       }
     } catch (err) {
-      setError(err);
+      setError(err as Error);
       toast.error("Error connecting to wallet");
       console.error("Error getting signing client:", err);
     } finally {
@@ -107,6 +115,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
 
   useEffect(() => {
     fetchClient();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, getSigningCosmWasmClient, connect, address]);
 
   const handleStake = async () => {
@@ -122,8 +131,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     try {
       setLoading(true);
       const result = await signingClient.execute(
-        address, // Sender address
-        STAKER_CONTRACT_ADDRESS, // Contract address
+        address as string, // Sender address
+        STAKER_CONTRACT_ADDRESS as string, // Contract address
         stakeMsg, // Execute message
         {
           amount: [{ denom: "ujunox", amount: "7500" }], // fee
@@ -133,14 +142,14 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         [{ denom: wattPeakDenom, amount: (amount * 1000000).toString() }] // Funds sent with transaction
       );
       const balancesResult = await getBalances(address);
-      setBalances(balancesResult);
-      const stakersResult = await queryStakers(address);
+      setBalances(balancesResult as any[]);
+      const stakersResult = await queryStakers(address || "");
       setStakers(stakersResult);
       setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
       toast.success("Tokens staked successfully!");
     } catch (err) {
-      setError(err);
+      setError(err as Error);
       toast.error("Error staking tokens");
       console.error("Error executing stake:", err);
     } finally {
@@ -161,8 +170,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     try {
       setLoading(true);
       const result = await signingClient.execute(
-        address, // Sender address
-        STAKER_CONTRACT_ADDRESS, // Contract address
+        address as string, // Sender address
+        STAKER_CONTRACT_ADDRESS as string, // Contract address
         unstakeMsg, // Execute message
         {
           amount: [{ denom: "ujunox", amount: "7500" }], // fee
@@ -170,14 +179,14 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         }
       );
       const balancesResult = await getBalances(address);
-      setBalances(balancesResult);
-      const stakersResult = await queryStakers(address);
+      setBalances([...balancesResult]);
+      const stakersResult = await queryStakers(address || "");
       setStakers(stakersResult);
       setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
       setAmount(0);
       toast.success("Tokens unstaked successfully!");
     } catch (err) {
-      setError(err);
+      setError(err as Error);
       toast.error("Error unstaking tokens");
       console.error("Error executing unstake:", err);
     } finally {
@@ -198,8 +207,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     try {
       setLoading(true);
       const result = await signingClient.execute(
-        address, // Sender address
-        STAKER_CONTRACT_ADDRESS, // Contract address
+        address as string, // Sender address
+        STAKER_CONTRACT_ADDRESS as string, // Contract address
         claimMsg, // Execute message
         {
           amount: [{ denom: "ujunox", amount: "7500" }], // fee
@@ -207,14 +216,14 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         }
       );
       const balancesResult = await getBalances(address);
-      setBalances(balancesResult);
-      const stakersResult = await queryStakers(address);
+      setBalances([...balancesResult]);
+      const stakersResult = await queryStakers(address || "");
       setStakers(stakersResult);
       setClaimableRewards(0); // Reset claimable rewards after claiming
       setConfetti(true);
       toast.success("Rewards claimed successfully!");
     } catch (err) {
-      setError(err);
+      setError(err as Error);
       toast.error("Error claiming rewards");
       console.error("Error executing claim rewards:", err);
     } finally {

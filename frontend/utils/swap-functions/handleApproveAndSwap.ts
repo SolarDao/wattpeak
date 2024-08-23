@@ -3,6 +3,8 @@ import { toUtf8 } from "@cosmjs/encoding";
 import { toast } from "react-toastify";
 import { queryNftsByAddress } from "@/utils/queryNfts";
 
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+
 export const handleApproveAndSwap = async ({
   signingClient,
   selectedNft,
@@ -16,6 +18,19 @@ export const handleApproveAndSwap = async ({
   setSelectedNft,
   setModalIsOpen,
   setError,
+}: {
+  signingClient: SigningCosmWasmClient | null;
+  selectedNft: string;
+  SWAP_CONTRACT_ADDRESS: string;
+  HERO_CONTRACT_ADDRESS: string;
+  address: string;
+  config: any; // Replace 'any' with the actual type of 'config'
+  setSwapping: (swapping: boolean) => void;
+  setWalletNfts: (nfts: any) => void; // Replace 'any' with the actual type of 'nfts'
+  setContractNfts: (nfts: any) => void; // Replace 'any' with the actual type of 'nfts'
+  setSelectedNft: (nft: any) => void; // Replace 'any' with the actual type of 'nft'
+  setModalIsOpen: (isOpen: boolean) => void;
+  setError: (error: any) => void; // Replace 'any' with the actual type of 'error'
 }) => {
   if (!signingClient || !selectedNft) {
     console.error("Signing client or selected NFT not initialized");

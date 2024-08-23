@@ -115,6 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Box
               as="a"
+              // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
                 fontWeight: "$medium",
@@ -171,6 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Box
             
               as="a"
+              // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
                 fontWeight: "$medium",
@@ -193,6 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Box
                   key={item.id}
                   as="a"
+                  // @ts-ignore
                   onClick={() => handleItemClick(item.id)}
                   attributes={{
                     fontWeight: "$medium",
