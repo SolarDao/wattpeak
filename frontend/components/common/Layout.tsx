@@ -21,6 +21,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentSection, setCurrentSection] = useState("home");
+  const [initialLoading, setInitialLoading] = useState(true);
   const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -46,7 +47,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     if (storedChainName) {
       setChainName(storedChainName);
     }
-  }, []);
+  
+    // Check for wallet connection
+    if (wallet?.status === "Connected") {
+      setInitialLoading(false); // Wallet connected, stop loading
+    } else {
+      setInitialLoading(true); // Still waiting for wallet connection
+    }
+  }, [wallet?.status]);
+  
 
   const renderSection = () => {
     switch (currentSection) {
@@ -65,7 +74,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  if (wallet?.status !== "Connected") {
+  if (initialLoading) {
     return (
       <>
         <Container
