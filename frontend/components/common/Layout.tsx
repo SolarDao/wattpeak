@@ -5,11 +5,11 @@ import { Minting } from "./Minting";
 import { Staking } from "./Staking";
 import { Swap } from "./Swap";
 import { Faq } from "./Faq";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { SideNavbar } from "./SideNavbar";
 import { Home } from "./Home";
 import { useWallet } from "@cosmos-kit/react";
-import { Center, Flex } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 import { useMediaQuery } from "react-responsive";
 
@@ -21,6 +21,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentSection, setCurrentSection] = useState("home");
+  const [initialLoading, setInitialLoading] = useState(true);
   const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -33,7 +34,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   const backgroundColor2 = useColorModeValue("$white", "rgba(35, 35, 35, 1)");
   const inputColor = useColorModeValue("$black", "$white");
 
-  const handleSectionChange = (section: string) => {
+  const handleSectionChange: Dispatch<SetStateAction<string>> = (section: SetStateAction<string>) => {
     setCurrentSection(section);
     const newChainName =
       section === "swapping" ? STARGAZE_CHAIN_NAME : JUNO_CHAIN_NAME;
@@ -46,7 +47,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     if (storedChainName) {
       setChainName(storedChainName);
     }
-  }, []);
+  
+    // Check for wallet connection
+    if (wallet?.status === "Connected") {
+      setInitialLoading(false); // Wallet connected, stop loading
+    } else {
+      setInitialLoading(true); // Still waiting for wallet connection
+    }
+  }, [wallet?.status]);
+  
 
   const renderSection = () => {
     switch (currentSection) {
@@ -65,7 +74,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  if (wallet?.status !== "Connected") {
+  if (initialLoading) {
     return (
       <>
         <Container

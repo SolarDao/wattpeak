@@ -25,6 +25,7 @@ import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handle
 import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
 import { Loading } from "./Loading";
 import { useMediaQuery } from "react-responsive";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -49,11 +50,12 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   }
 
   const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
-  const [contractNfts, setContractNfts] = useState<string[]>([]);
+  const [contractNfts, setContractNfts] = useState<Nft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [signingClient, setSigningClient] = useState(null);
-  const [selectedNft, setSelectedNft] = useState<string | null>(null);
+  const [signingClient, setSigningClient] =
+  useState<SigningCosmWasmClient | null>(null);
+  const [selectedNft, setSelectedNft] = useState<string | null>("");
   const [multipleSelect, setMultipleSelect] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
@@ -87,7 +89,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       if (status === "Connected" && (address ?? "").startsWith("stars")) {
         try {
           const client = await getSigningCosmWasmClient();
-          setSigningClient(client);
+          setSigningClient(client as unknown as SigningCosmWasmClient);
 
           const walletNftsResult = await queryNftsByAddress(address);
           setWalletNfts(walletNftsResult); // Adjust based on your query response structure
@@ -117,7 +119,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       if (status === "Connected") {
         try {
           const client = await getSigningCosmWasmClient();
-          setSigningClient(client);
+          setSigningClient(client as unknown as SigningCosmWasmClient);
         } catch (err) {
           setError(err as React.SetStateAction<null>);
           console.error("Error getting signing client:", err);
@@ -147,10 +149,10 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const handleSolarSwap = () => {
     handleApproveAndSwap({
       signingClient,
-      selectedNft,
-      SWAP_CONTRACT_ADDRESS,
-      HERO_CONTRACT_ADDRESS,
-      address,
+      selectedNft: selectedNft || "",
+      SWAP_CONTRACT_ADDRESS: HERO_CONTRACT_ADDRESS || "",
+      HERO_CONTRACT_ADDRESS: HERO_CONTRACT_ADDRESS || "",
+      address: address || "",
       config,
       setSwapping,
       setWalletNfts,
@@ -199,7 +201,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   const handleMultipleSolarSwap = async () => {
     handleMultipleSolarSwapUtilFunction({
-      signingClient,
+      signingClient: signingClient  as unknown as SigningCosmWasmClient,
       selectedMultipleNfts,
       address,
       config,

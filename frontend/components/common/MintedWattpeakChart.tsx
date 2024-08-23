@@ -1,13 +1,8 @@
-import React from 'react';
-import { Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import React from "react";
+import { Pie } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Box, useColorModeValue } from "@chakra-ui/react";
 
-// Register necessary chart components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 type WattpeakPieChartProps = {
@@ -15,13 +10,16 @@ type WattpeakPieChartProps = {
   totalWattpeak: number;
 };
 
-const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({ totalMinted, totalWattpeak }) => {
+const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({
+  totalMinted,
+  totalWattpeak,
+}) => {
   const data = {
-    labels: ['Minted', 'Available'],
+    labels: ["Minted", "Available"],
     datasets: [
       {
         data: [totalMinted, totalWattpeak],
-        backgroundColor: ['#ff5b1a', '#009886'],
+        backgroundColor: ["#ff5b1a", "#009886"],
       },
     ],
   };
@@ -30,15 +28,20 @@ const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({ totalMinted, totalW
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: "bottom" as const,
       },
     },
   };
 
   return (
-    <div style={{ height: '200px', width: '200px' }}>
+    <Box
+      style={{
+        height: "200px",
+        width: "200px",
+      }}
+    >
       <Pie data={data} options={options} />
-    </div>
+    </Box>
   );
 };
 

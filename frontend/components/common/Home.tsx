@@ -27,6 +27,9 @@ export const Home = () => {
   );
   const [projects, setProjects] = useState<
     {
+      description: string;
+      max_wattpeak: number;
+      minted_wattpeak_count: number;
       name: string;
       projectId: number;
     }[]
@@ -61,70 +64,87 @@ export const Home = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (stargazeAddress && junoAddress) {
-        try {
+      try {
+        if (stargazeAddress && junoAddress) {
+          // Start loading
           setLoading(true);
-
+  
           const projectsResult = await queryProjects();
-
-          const projectsWithId = projectsResult.map(
-            (project: any, index: number) => ({
-              ...project,
-              projectId: index + 1,
-            })
-          );
+          const projectsWithId = projectsResult.map((project: any, index: number) => ({
+            ...project,
+            projectId: index + 1,
+          }));
           setProjects(projectsWithId);
-
+  
           const stakersResult = await queryStakers(junoAddress);
           setStakers(stakersResult);
           setStakerStakedWattpeak(stakersResult.wattpeak_staked);
-
+  
           const balancesResult = await getBalances(junoAddress);
           const stargazeBalances = await getStargazeBalances(stargazeAddress);
-          setBalances([...balancesResult, ...stargazeBalances]);
-
+          const convertedBalances = [...balancesResult, ...stargazeBalances].map((balance) => ({
+            amount: Number(balance.amount),
+            denom: balance.denom,
+          }));
+          setBalances(convertedBalances);
+  
           const stakedWattpeakResults = await queryTotalWattpeakStaked();
-          setTotalStakedWattpeak(stakedWattpeakResults); // Ensure this is the correct property
-
+          setTotalStakedWattpeak(stakedWattpeakResults);
+  
           const wattpeakBalance = balancesResult.find(
             (balance) => balance.denom === wattPeakDenom
           );
           if (wattpeakBalance) {
-            setStakerMintedWattpeak(wattpeakBalance.amount);
+            setStakerMintedWattpeak(Number(wattpeakBalance.amount));
           }
-
+  
           const totalMinted = projectsWithId.reduce(
             (acc: number, project: { minted_wattpeak_count: number }) =>
               acc + project.minted_wattpeak_count,
             0
           );
           setTotalMintedWattpeak(totalMinted);
-
+  
           const totalWattpeakResults = projectsWithId.map(
-            (project) => project.max_wattpeak
+            (project: { max_wattpeak: Number }) => project.max_wattpeak
           );
-          const totalWattpeak = totalWattpeakResults.reduce(
-            (acc, curr) => acc + curr,
-            0
-          );
+          const totalWattpeak = totalWattpeakResults.reduce((acc: any, curr: any) => acc + curr, 0);
           setTotalWattpeak(totalWattpeak);
-        } catch (err) {
-          setError(err as SetStateAction<null | Error>);
-          console.error("Error fetching data:", err);
-        } finally {
-          setLoading(false);
         }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setLoading(false);
+      } finally {
+        // Stop loading once data is fetched
+        setLoading(false);
       }
     };
-
-    fetchData();
-  }, [stargazeAddress, junoAddress]);
+  
+    if (stargazeAddress && junoAddress) {
+      fetchData();
+    }
+  }, [stargazeAddress, junoAddress, wattPeakDenom]);
+  
 
   const openModal = (
-    project: React.SetStateAction<null | { name: string; projectId: number }>
+    project: {
+      minted_wattpeak_count: number;
+      max_wattpeak: number;
+      description: ReactNode;
+      name: string;
+      projectId: number;
+    } | null
   ) => {
-    setSelectedProject(project);
-    setModalIsOpen(true);
+    if (project) {
+      setSelectedProject({
+        minted_wattpeak_count: project.minted_wattpeak_count,
+        max_wattpeak: project.max_wattpeak,
+        description: project.description,
+        name: project.name,
+        projectId: project.projectId,
+      });
+      setModalIsOpen(true);
+    }
   };
 
   const closeModal = () => {
@@ -147,7 +167,12 @@ export const Home = () => {
 
   return (
     <Box color={inputColor} fontFamily="inter">
-      <Flex gap="40px" justifyContent="center" alignItems="center" flexWrap="wrap">
+      <Flex
+        gap="40px"
+        justifyContent="center"
+        alignItems="center"
+        flexWrap="wrap"
+      >
         <Center>
           <Flex
             height="auto"
@@ -156,7 +181,7 @@ export const Home = () => {
           >
             <Heading
               marginBottom="10px"
-              color="#000000B2"
+              color={inputColor}
               fontSize="20px"
               lineHeight="19.36px"
             >
@@ -177,13 +202,20 @@ export const Home = () => {
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
-                  color="#000000B2"
+                  color={inputColor}
                   marginBottom="2px"
                 >
                   My Wallet
                 </Heading>
                 {filteredBalances.map((balance) => (
-                  <Box key={balance.denom} fontSize="18px" minWidth="200px" display="flex" alignItems="center" justifyContent="center">
+                  <Box
+                    key={balance.denom}
+                    fontSize="18px"
+                    minWidth="200px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
                     {formatDenom(balance.denom)} :{" "}
                     {parseFloat((balance.amount / 1000000).toFixed(2))}
                   </Box>
@@ -195,7 +227,7 @@ export const Home = () => {
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
-                  color="#000000B2"
+                  color={inputColor}
                 >
                   WattPeak Distribution
                 </Heading>
@@ -216,7 +248,7 @@ export const Home = () => {
             <Heading
               textAlign="left"
               marginBottom="10px"
-              color="#000000B2"
+              color={inputColor}
               fontSize="20px"
               lineHeight="19.36px"
             >
@@ -260,7 +292,7 @@ export const Home = () => {
           fontSize="20px"
           textAlign="left"
           paddingLeft="15px"
-          color="#000000B2"
+          color={inputColor}
           marginBottom="5px"
           marginTop="20px"
         >
@@ -285,7 +317,16 @@ export const Home = () => {
               <Box mt={4}>
                 <h4>{project.name}</h4>
                 <Button
-                  onClick={() => openModal(project)}
+                  onClick={() =>
+                    openModal({
+                      name: project.name,
+                      projectId: project.projectId,
+                      minted_wattpeak_count: project.minted_wattpeak_count || 0, // Ensure default value
+                      max_wattpeak: project.max_wattpeak || 0, // Ensure default value
+                      description:
+                        project.description || "No description available.", // Ensure default description
+                    })
+                  }
                   className="projectButton"
                   color={inputColor}
                   borderColor={borderColor}

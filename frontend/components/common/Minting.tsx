@@ -18,10 +18,11 @@ import { queryNftConfig } from "@/utils/queryAndMintNft";
 import { responsive } from "@/styles/responsiveCarousel";
 import { handleMint } from "@/utils/handleMint";
 import { useMediaQuery } from "react-responsive";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const nftContractAddress =
-  process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS;
-const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
+  process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM || "";
 
 export const Minting = ({ chainName }: { chainName: string }) => {
   const wallet = useWallet();
@@ -30,7 +31,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   const borderColor = useColorModeValue("black", "white");
   interface Config {
     minting_price: {
-      amount: string;
+      amount: any;
       denom: string;
     };
     minting_fee_percentage: number;
@@ -38,10 +39,16 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }
 
   const [config, setConfig] = useState<Config | null>(null);
-  const [amount, setAmount] = useState(1);
-  const [balances, setBalances] = useState<string[]>([]);
+  const [amount, setAmount] = useState<number>(1);
+  interface Balance {
+    denom: string;
+    amount: number;
+  }
+
+  const [balances, setBalances] = useState<Balance[]>([]);
   const [price, setPrice] = useState("0");
-  const [signingClient, setSigningClient] = useState(null);
+  const [signingClient, setSigningClient] =
+    useState<SigningCosmWasmClient | null>(null);
   const [minting, setMinting] = useState(false);
   interface Project {
     projectId: number;
@@ -51,13 +58,17 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  // State for selected project ID
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null
+  );
+
   const [loading, setLoading] = useState(true);
-  const [cryptoAmount, setCryptoAmount] = useState("");
+  const [cryptoAmount, setCryptoAmount] = useState<number>(0);
   const [junoBalance, setJunoBalance] = useState(0);
   const [wattpeakBalance, setWattpeakBalance] = useState(0);
   const hasRunQuery = useRef(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
@@ -67,6 +78,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     chainName,
     walletName
   );
+  const addressValue = address ?? "";
 
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
@@ -90,7 +102,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     });
   };
 
-  const handleAmountChange = (e) => {
+  const handleAmountChange = (e: { target: { value: any } }) => {
     let newAmount = e.target.value;
 
     // Restrict to 6 decimal places
@@ -102,18 +114,17 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     }
 
     setAmount(newAmount);
-    if (!isNaN(newAmount) && newAmount !== "") {
-      setCryptoAmount(
-        (parseFloat(newAmount) * config.minting_price.amount)
-          .toFixed(6)
-          .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
-      );
+    if (!isNaN(parseFloat(newAmount)) && newAmount !== "") {
+      const calculatedAmount =
+        parseFloat(newAmount) *
+        parseFloat(config?.minting_price?.amount || "0");
+      setCryptoAmount(parseFloat(calculatedAmount.toFixed(6))); // Store as number
     } else {
-      setCryptoAmount("");
+      setCryptoAmount(0); // Set to 0 or another default value
     }
   };
 
-  const handleCryptoAmountChange = (e) => {
+  const handleCryptoAmountChange = (e: { target: { value: any } }) => {
     let newCryptoAmount = e.target.value;
 
     // Restrict to 6 decimal places
@@ -125,55 +136,65 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     }
 
     setCryptoAmount(newCryptoAmount);
-    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "") {
+    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "" && config) {
       setAmount(
-        (parseFloat(newCryptoAmount) / config.minting_price.amount)
-          .toFixed(6)
-          .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
+        parseFloat(
+          (
+            parseFloat(newCryptoAmount) /
+            parseFloat(config?.minting_price?.amount || "0")
+          ).toFixed(6)
+        )
       );
     } else {
-      setAmount("");
+      setAmount(0);
     }
   };
 
   const handleMaxClick = () => {
-    setCryptoAmount(
-      junoBalance.toFixed(6).replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
-    );
+    const numericAmount = Number(amount);
+    if (!isNaN(numericAmount)) {
+      setAmount(Number(numericAmount.toFixed(6)));
+    } else {
+      console.error("Invalid amount: Cannot convert to number");
+    }
     setAmount(
-      (junoBalance / config.minting_price.amount)
-        .toFixed(6)
-        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
-    );
+      parseFloat(
+        (junoBalance / (config?.minting_price?.amount || 0)).toFixed(6)
+      )
+    ); // Set as number
   };
 
   const handleBlurAmount = () => {
-    setAmount(
-      parseFloat(amount)
-        .toString()
-        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
-    );
+    // Convert amount to a number before calling toFixed
+    const numericAmount = Number(amount);
+
+    if (!isNaN(numericAmount)) {
+      setAmount(Number(numericAmount.toFixed(6)));
+    } else {
+      console.error("Invalid amount: Cannot convert to number");
+    }
   };
 
   const handleBlurCryptoAmount = () => {
-    setCryptoAmount(
-      parseFloat(cryptoAmount)
-        .toString()
-        .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")
-    );
+    const numericAmount = Number(amount);
+    if (!isNaN(numericAmount)) {
+      setAmount(Number(numericAmount.toFixed(6)));
+    } else {
+      console.error("Invalid amount: Cannot convert to number");
+    }
   };
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const result = await queryProjects();
-        const projectsWithId = result.map((project, index) => ({
+        const projectsWithId = result.map((project: any, index: number) => ({
           ...project,
           projectId: index + 1,
         }));
         setProjects(projectsWithId);
       } catch (err) {
-        setError(err);
+        setError(err as Error);
         console.error("Error querying the projects:", err);
       } finally {
         setLoading(false);
@@ -183,14 +204,15 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     fetchProjects();
   }, []);
 
-  function setCorrectBalances(balances: string[]) {
+  function setCorrectBalances(balances: any) {
     setJunoBalance(
-      balances?.find((balance) => balance.denom === "ujunox")?.amount /
-        1000000 || 0
+      balances?.find((balance: { denom: string }) => balance.denom === "ujunox")
+        ?.amount / 1000000 || 0
     );
     setWattpeakBalance(
-      balances?.find((balance) => balance.denom === wattPeakDenom)?.amount /
-        1000000 || 0
+      balances?.find(
+        (balance: { denom: string }) => balance.denom === wattPeakDenom
+      )?.amount / 1000000 || 0
     );
   }
 
@@ -199,7 +221,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       if (status === "Connected") {
         try {
           const client = await getSigningCosmWasmClient();
-          setSigningClient(client);
+          setSigningClient(client as unknown as SigningCosmWasmClient);
           if (!config) {
             await queryNftConfig().then((result) => {
               setConfig(result);
@@ -209,11 +231,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           }
           hasRunQuery.current = true;
           await getBalances(address).then((result) => {
-            setBalances(result);
+            setBalances(result as any[]);
           });
           setCorrectBalances(balances);
         } catch (err) {
-          setError(err);
+          setError(err as Error);
           console.error("Error querying the NFT contract:", err);
         } finally {
           setLoading(false);
@@ -239,7 +261,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   return (
     <Container>
       <Box>
-        <Box className="headerBox" display="flex" justifyContent={isMobile ? "center" : "space-between"}>
+        <Box
+          className="headerBox"
+          display="flex"
+          justifyContent={isMobile ? "center" : "space-between"}
+        >
           <Heading
             fontSize="20px"
             color={inputColor}
@@ -314,6 +340,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             onChange={handleCryptoAmountChange}
             onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
+            min="1"
             color={inputColor}
           />
         </Box>
@@ -341,12 +368,14 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             You will pay{" "}
             {parseFloat(
               (
-                parseFloat(cryptoAmount) +
-                cryptoAmount * config?.minting_fee_percentage
+                (Number(cryptoAmount) || 0) +
+                (Number(cryptoAmount) || 0) *
+                  (Number(config?.minting_fee_percentage) || 0)
               ).toFixed(6)
             ).toString()}{" "}
             uJunox for {amount} Wattpeak
           </h3>
+
           <p>
             Minting fee:{" "}
             {parseFloat(

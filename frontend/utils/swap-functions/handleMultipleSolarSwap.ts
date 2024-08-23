@@ -1,9 +1,9 @@
-import { SigningStargateClient } from "@cosmjs/stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
 import { toUtf8 } from "@cosmjs/encoding";
 
 interface HandleMultipleSolarSwapProps {
-  signingClient: SigningStargateClient | null;
+  signingClient: SigningCosmWasmClient | null;
   selectedMultipleNfts: string[];
   address: string | undefined;
   config: { price_per_nft: string; token_denom: string };

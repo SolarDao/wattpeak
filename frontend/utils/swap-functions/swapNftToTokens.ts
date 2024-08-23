@@ -1,8 +1,8 @@
-import { SigningStargateClient } from "@cosmjs/stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
 
 interface SwapNftToTokensParams {
-  signingClient: SigningStargateClient | null;
+  signingClient: SigningCosmWasmClient | null;
   selectedNft: string | null;
   address: string | undefined;
   config: {
@@ -59,8 +59,8 @@ export const swapNftToTokens = async ({
     };
 
     const result = await signingClient.execute(
-      address, // Sender address
-      HERO_CONTRACT_ADDRESS, // Swap Contract address
+      address as string, // Sender address
+      HERO_CONTRACT_ADDRESS as string, // Swap Contract address
       swapMsg, // Swap message
       {
         amount: [{ denom: "ustars", amount: "7500" }], // fee
