@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useChainWallet, useWallet } from "@cosmos-kit/react";
+import { useChain } from "@cosmos-kit/react";
 import {
   Tabs,
   TabList,
@@ -21,6 +21,7 @@ import Modal from "react-modal";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./Loading";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { WalletStatus } from "cosmos-kit";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -33,18 +34,13 @@ interface Config {
 }
 
 export const Staking = ({ chainName }: { chainName: string }) => {
-  const wallet = useWallet();
-  const walletName = wallet?.wallet?.name ?? "";
-  const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
-    chainName,
-    walletName
-  );
+  const { connect, status, address, getSigningCosmWasmClient, wallet } = useChain(chainName);
 
   const [amount, setAmount] = useState(0.0);
   const [staker, setStakers] = useState<{ wattpeak_staked: number, claimable_rewards: number }>({ wattpeak_staked: 0, claimable_rewards: 0 });
   const [balances, setBalances] = useState<any[]>([]);
   const [signingClient, setSigningClient] = useState<SigningCosmWasmClient | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | Error>(null);
   const [confetti, setConfetti] = useState(false);
   const [claimableRewards, setClaimableRewards] = useState(0);
@@ -56,7 +52,6 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         1000000
       : 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
-  console.log(stakedWattpeak);
   
   const inputColor = useColorModeValue("black", "white");
   const backgroundColor = useColorModeValue(
@@ -64,88 +59,92 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     "rgba(52, 52, 52, 1)"
   );
 
-  const fetchClient = async (retryCount = 0) => {
-    setLoading(true);
-    try {
-      if (status === "Connected") {
-        const client = await getSigningCosmWasmClient();
-        setSigningClient(client as any);
-
-        const balancesResult = await getBalances(address);
-        setBalances([...balancesResult] as any[]);
-
-        const stakersResult = await queryStakers(address || "");
-
-        // Check if the staker exists and has expected properties
-        if (
-          !stakersResult ||
-          typeof stakersResult.wattpeak_staked === "undefined" ||
-          typeof stakersResult.claimable_rewards === "undefined"
-        ) {
-          // Initialize staker data if it doesn't exist or is incomplete
-          setStakers({
-            wattpeak_staked: 0,
-            claimable_rewards: 0,
-          });
-        } else {
-          setStakers(stakersResult);
+  useEffect(() => {
+    const fetchClient = async () => {
+      if (status === WalletStatus.Connected && address) {
+        try {
+          setLoading(true);
+  
+          // Start all fetch operations simultaneously
+          const clientPromise = getSigningCosmWasmClient();
+          const balancesPromise = getBalances(address);
+          const stakersPromise = queryStakers(address);
+          const configPromise = queryStakingConfig();
+  
+          // Wait for all promises to resolve
+          const [client, balancesResult, stakersResult, configResult] = await Promise.all([
+            clientPromise,
+            balancesPromise,
+            stakersPromise,
+            configPromise,
+          ]);
+  
+          setSigningClient(client as any);
+          setBalances([...balancesResult] as any[]);
+          setStakers(stakersResult || { wattpeak_staked: 0, claimable_rewards: 0 });
+          setConfig(configResult);
+  
+          // Handle claimable rewards
           const claimable = stakersResult.claimable_rewards / 1000000;
           setClaimableRewards(claimable);
           if (claimable > 0) {
             setModalIsOpen(true);
           }
+        } catch (err) {
+          setError(err as Error);
+          toast.error("Error fetching staking data");
+          console.error("Error fetching data:", err);
+        } finally {
+          setLoading(false);
         }
-
-        const configResult = await queryStakingConfig();
-        setConfig(configResult);
-      } else if (retryCount < 3) {
-        await connect();
-        fetchClient(retryCount + 1);
       } else {
-        throw new Error("Failed to connect after multiple attempts");
+        // Reset state when wallet is not connected
+        setSigningClient(null);
+        setBalances([]);
+        setStakers({ wattpeak_staked: 0, claimable_rewards: 0 });
+        setConfig(null);
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err as Error);
-      toast.error("Error connecting to wallet");
-      console.error("Error getting signing client:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
+    };
+  
     fetchClient();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, getSigningCosmWasmClient, connect, address]);
+  }, [status, address, getSigningCosmWasmClient]);
+  
+  
 
   const handleStake = async () => {
     if (!signingClient) {
       console.error("Signing client not initialized");
       return;
     }
-
+  
     const stakeMsg = {
       stake: {},
     };
-
+  
     try {
       setLoading(true);
-      const result = await signingClient.execute(
-        address as string, // Sender address
-        STAKER_CONTRACT_ADDRESS as string, // Contract address
-        stakeMsg, // Execute message
+      await signingClient.execute(
+        address as string,
+        STAKER_CONTRACT_ADDRESS as string,
+        stakeMsg,
         {
-          amount: [{ denom: "ujunox", amount: "7500" }], // fee
-          gas: "3000000", // gas limit
+          amount: [{ denom: "ujunox", amount: "7500" }],
+          gas: "3000000",
         },
-        "", // Optional memo
-        [{ denom: wattPeakDenom, amount: (amount * 1000000).toString() }] // Funds sent with transaction
+        "",
+        [{ denom: wattPeakDenom, amount: (amount * 1000000).toString() }]
       );
-      const balancesResult = await getBalances(address);
-      setBalances(balancesResult as any[]);
-      const stakersResult = await queryStakers(address || "");
+  
+      // Fetch updated balances and staker info in parallel
+      const [balancesResult, stakersResult] = await Promise.all([
+        getBalances(address),
+        queryStakers(address || ""),
+      ]);
+  
+      setBalances([...balancesResult] as any[]);
       setStakers(stakersResult);
-      setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
+      setClaimableRewards(stakersResult.claimable_rewards / 1000000);
       setAmount(0);
       toast.success("Tokens staked successfully!");
     } catch (err) {
@@ -156,6 +155,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       setLoading(false);
     }
   };
+  
 
   const handleUnstake = async () => {
     if (!signingClient) {
@@ -251,9 +251,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     },
   };
 
-  if (loading || !signingClient || !config || !staker || !balances) {
+  if (loading || !config) {
     return <Loading />;
-  }
+  }  
 
   return (
     <Box

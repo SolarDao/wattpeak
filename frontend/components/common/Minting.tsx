@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useChainWallet, useWallet } from "@cosmos-kit/react";
+import { useChain } from "@cosmos-kit/react";
 import {
   Box,
   Container,
@@ -19,14 +19,13 @@ import { responsive } from "@/styles/responsiveCarousel";
 import { handleMint } from "@/utils/handleMint";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { toast } from "react-toastify";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
 const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM || "";
 
 export const Minting = ({ chainName }: { chainName: string }) => {
-  const wallet = useWallet();
-  const walletName = wallet?.wallet?.name ?? "";
   const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
   interface Config {
@@ -38,18 +37,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     // Add other properties as needed
   }
 
-  const [config, setConfig] = useState<Config | null>(null);
-  const [amount, setAmount] = useState<number>(1);
   interface Balance {
     denom: string;
     amount: number;
   }
 
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [price, setPrice] = useState("0");
-  const [signingClient, setSigningClient] =
-    useState<SigningCosmWasmClient | null>(null);
-  const [minting, setMinting] = useState(false);
   interface Project {
     projectId: number;
     name: string;
@@ -57,32 +49,37 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     minted_wattpeak_count: number;
   }
 
+  const { status, address, getSigningCosmWasmClient } =
+    useChain(chainName);
+  const [config, setConfig] = useState<Config | null>(null);
+  const [amount, setAmount] = useState<number>(1);
+  const [balances, setBalances] = useState<Balance[]>([]);
+  const [price, setPrice] = useState("0");
+  const [signingClient, setSigningClient] =
+    useState<SigningCosmWasmClient | null>(null);
+  const [minting, setMinting] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
-  // State for selected project ID
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     null
   );
-
   const [loading, setLoading] = useState(true);
   const [cryptoAmount, setCryptoAmount] = useState<number>(0);
   const [junoBalance, setJunoBalance] = useState(0);
   const [wattpeakBalance, setWattpeakBalance] = useState(0);
-  const hasRunQuery = useRef(false);
   const [error, setError] = useState<Error | null>(null);
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
-  );
-
-  const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
-    chainName,
-    walletName
-  );
-  const addressValue = address ?? "";
-
+  )
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const handleMintClick = async () => {
+    if (!signingClient || !address) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
+    // Proceed with handleMint function
     handleMint({
       signingClient,
       address,
@@ -152,6 +149,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   const handleMaxClick = () => {
     const numericAmount = Number(amount);
+  
     if (!isNaN(numericAmount)) {
       setAmount(Number(numericAmount.toFixed(6)));
     } else {
@@ -162,6 +160,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         (junoBalance / (config?.minting_price?.amount || 0)).toFixed(6)
       )
     ); // Set as number
+    setCryptoAmount(junoBalance);
   };
 
   const handleBlurAmount = () => {
@@ -217,44 +216,81 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      if (status === "Connected") {
-        try {
-          const client = await getSigningCosmWasmClient();
-          setSigningClient(client as unknown as SigningCosmWasmClient);
-          if (!config) {
-            await queryNftConfig().then((result) => {
-              setConfig(result);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-              setCryptoAmount(result.minting_price.amount);
-            });
-          }
-          hasRunQuery.current = true;
-          await getBalances(address).then((result) => {
-            setBalances(result as any[]);
-          });
-          setCorrectBalances(balances);
-        } catch (err) {
-          setError(err as Error);
-          console.error("Error querying the NFT contract:", err);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        await connect();
+        // Initiate all fetch operations
+        const [projectsResult, configResult] = await Promise.all([
+          queryProjects(),
+          queryNftConfig(),
+        ]);
+
+        // Process projects
+        const projectsWithId = projectsResult.map(
+          (project: any, index: number) => ({
+            ...project,
+            projectId: index + 1,
+          })
+        );
+        setProjects(projectsWithId);
+
+        // Set config
+        setConfig(configResult);
+
+        // Set crypto amount based on config
+        setCryptoAmount(parseFloat(configResult.minting_price.amount));
+      } catch (err) {
+        setError(err as Error);
+        console.error("Error fetching projects or config:", err);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchConfig();
-  }, [status, getSigningCosmWasmClient, connect, balances, address, config]);
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (status === "Connected" && address) {
+        try {
+          setLoading(true);
+
+          // Fetch signing client and balances in parallel
+          const [client, balancesResult] = await Promise.all([
+            getSigningCosmWasmClient(),
+            getBalances(address),
+          ]);
+
+          setSigningClient(client as unknown as SigningCosmWasmClient);
+          setBalances(balancesResult as unknown as Balance[]);
+          setCorrectBalances(balancesResult);
+        } catch (err) {
+          setError(err as Error);
+          console.error("Error fetching balances:", err);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Wallet is not connected
+        setSigningClient(null);
+        setBalances([]);
+        setJunoBalance(0);
+        setWattpeakBalance(0);
+        setLoading(false);
+      }
+    };
+
+    fetchBalances();
+  }, [status, address, getSigningCosmWasmClient]);
 
   useEffect(() => {
     let payable_amount = ((amount + amount * 0.05) * 5 * 1000000).toString();
     setPrice(payable_amount);
   }, [amount]);
 
-  if (loading || !config || !junoBalance || !projects || !wattpeakBalance) {
+  if (loading || !config || !projects.length) {
     return <Loading />;
   }
 
@@ -310,7 +346,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
                       ? "projectButtonSelected"
                       : "projectButton"
                   }
-                  color={inputColor}
+                  color={
+                    selectedProjectId === project.projectId
+                      ? "black"
+                      : inputColor
+                  }
                   borderColor={borderColor}
                   onClick={() => setSelectedProjectId(project.projectId)}
                 >
@@ -341,6 +381,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
             min="1"
+            max={junoBalance}
             color={inputColor}
           />
         </Box>
@@ -357,6 +398,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             onChange={handleAmountChange}
             onBlur={handleBlurAmount}
             min="1"
+            max={junoBalance / config?.minting_price.amount}
             placeholder="Wattpeak"
             color={inputColor}
           />
