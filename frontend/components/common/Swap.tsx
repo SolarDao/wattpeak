@@ -344,7 +344,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                       width={150}
                       height={150}
                     />
-                    <p>Name: {nft.name}</p>
+                    <p>{nft.name}</p>
                   </ListItem>
                 ))}
               </UnorderedList>
@@ -381,7 +381,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                       width={150}
                       height={150}
                     />
-                    <p>Name: {nft.name}</p>
+                    <p>{nft.name}</p>
                   </ListItem>
                 ))}
               </UnorderedList>
