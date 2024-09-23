@@ -86,7 +86,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
         <Image
           src={selectedNftDetails.image.replace(
             "ipfs://",
-            "https://ipfs.infura.io/ipfs/"
+            "https://ipfs.io/ipfs/"
           )}
           alt={selectedNftDetails.name}
           width={200}
