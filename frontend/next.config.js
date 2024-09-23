@@ -7,7 +7,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "ipfs.io",
+        hostname: "https://ipfs.infura.io/ipfs/",
         port: "",
         pathname: "/ipfs/**",
       },
