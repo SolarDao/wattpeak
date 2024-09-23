@@ -1,31 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Box, Stack, Icon } from "@interchain-ui/react";
+import { useEffect } from 'react';
+import { Box, Stack } from "@interchain-ui/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { useChain, useWallet } from "@cosmos-kit/react";
 import { ButtonConnect, ButtonConnected, ButtonConnecting, ButtonDisconnected, ButtonError, ButtonNotExist, ButtonRejected } from "./Connect";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 export type WalletProps = {
   chainName: string;
   onChainChange?: (chainName: string) => void;
+  onWalletStatusChange?: (status: WalletStatus, address?: string) => void; // New prop to send status to parent
 };
 
-export function Wallet({ chainName, onChainChange }: WalletProps) {
+export function Wallet({ chainName, onChainChange, onWalletStatusChange }: WalletProps) {
   const walletName = useWallet();
   
-  const { chain, status, wallet, message, connect, openView, address } = useChain(chainName, !!walletName);
+  const { chain, status, message, connect, openView, address } = useChain(chainName, !!walletName);
+
+  // Notify parent component of the wallet status and address
+  useEffect(() => {
+    if (onWalletStatusChange) {
+      onWalletStatusChange(status, address); // Send wallet status and address to parent
+    }
+  }, [status, address, onWalletStatusChange]);
 
   useEffect(() => {
     if (onChainChange && chain.chain_name !== chainName) {
       onChainChange(chain.chain_name);
     }
   }, [chain, chainName, onChainChange]);
-
-  useEffect(() => {
-    if (status === WalletStatus.Connected && address) {
-      // Do something with the address if needed
-    }
-  }, [status, address]);
 
   const handleErrorClick = () => {
     toast.error(message || "Unknown error");

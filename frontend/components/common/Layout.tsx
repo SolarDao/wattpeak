@@ -12,6 +12,7 @@ import { useWallet } from "@cosmos-kit/react";
 import { Flex } from "@chakra-ui/react";
 import { Wallet } from "../wallet";
 import { useMediaQuery } from "react-responsive";
+import { WalletStatus } from "@cosmos-kit/core";
 
 const JUNO_CHAIN_NAME = "junotestnet";
 const STARGAZE_CHAIN_NAME = "stargazetestnet";
@@ -21,7 +22,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentSection, setCurrentSection] = useState("home");
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [walletStatus, setWalletStatus] = useState<WalletStatus>(WalletStatus.Disconnected);
+  const [walletAddress, setWalletAddress] = useState<string | undefined>();
   const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -34,7 +37,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   const backgroundColor2 = useColorModeValue("$white", "rgba(35, 35, 35, 1)");
   const inputColor = useColorModeValue("$black", "$white");
 
-  const handleSectionChange: Dispatch<SetStateAction<string>> = (section: SetStateAction<string>) => {
+  // Function to handle wallet status changes from the Wallet component
+  const handleWalletStatusChange = (status: WalletStatus, address: string | undefined) => {
+    setWalletStatus(status);
+    setWalletAddress(address);
+    setInitialLoading(status !== WalletStatus.Connected);
+  };
+
+  const handleSectionChange: Dispatch<SetStateAction<string>> = (
+    section: SetStateAction<string>
+  ) => {
     setCurrentSection(section);
     const newChainName =
       section === "swapping" ? STARGAZE_CHAIN_NAME : JUNO_CHAIN_NAME;
@@ -47,20 +59,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
     if (storedChainName) {
       setChainName(storedChainName);
     }
-  
-    // Check for wallet connection
-    if (wallet?.status === "Connected") {
-      setInitialLoading(false); // Wallet connected, stop loading
-    } else {
-      setInitialLoading(true); // Still waiting for wallet connection
-    }
-  }, [wallet?.status]);
-  
+  }, []);
 
+  useEffect(() => {
+    setWalletStatus(wallet.status);
+    setWalletAddress(wallet.address);
+    setInitialLoading(wallet.status === WalletStatus.Connecting);
+  }, [wallet.status, wallet.address]);
+
+  // Render the correct section based on wallet status and section selected
   const renderSection = () => {
     switch (currentSection) {
       case "home":
-        return <Home />;
+        return (
+          <Home
+            initialLoading={initialLoading}
+            walletStatus={walletStatus}
+            walletAddress={walletAddress}
+            currentSection={currentSection}
+          />
+        );
       case "minting":
         return <Minting chainName={chainName} />;
       case "staking":
@@ -70,17 +88,25 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
       case "faq":
         return <Faq />;
       default:
-        return <Home />;
+        return (
+          <Home
+            initialLoading={initialLoading}
+            walletStatus={walletStatus}
+            walletAddress={walletAddress}
+            currentSection={currentSection}
+          />
+        );
     }
   };
 
-  if (initialLoading) {
+  // Render the Wallet component only when the wallet is not connected or still loading
+  if (
+    walletStatus === WalletStatus.Disconnected ||
+    walletStatus === WalletStatus.NotExist
+  ) {
     return (
       <>
-        <Container
-          maxWidth="80rem"
-          attributes={{ py: isMobile ? "$7" : "$14" }}
-        >
+        <Container maxWidth="80rem" py={isMobile ? "$7" : "$14"}>
           <Box
             className="box"
             backgroundImage={backgroundImage}
@@ -102,15 +128,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                 color="Black"
                 marginRight="$10"
                 maxWidth="93%"
-                attributes={{
-                  backgroundColor: backgroundColor2,
-                  color: inputColor,
-                }}
+                backgroundColor={backgroundColor2}
+                color={inputColor}
               >
+                {/* Render Wallet component if wallet is not connected */}
                 <Flex justifyContent="center" alignItems="center" height="100%">
-                  <Wallet chainName={chainName} />
+                <Wallet chainName={chainName} onWalletStatusChange={handleWalletStatusChange} />;
                 </Flex>
-                {children}
               </Box>
             </Box>
             <Footer />
@@ -119,7 +143,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
       </>
     );
   }
-
+  // 5. Render the correct section when the wallet is connected
   return (
     <>
       <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
@@ -149,6 +173,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                 color: inputColor,
               }}
             >
+              {/* Render the current section */}
               {renderSection()}
               {children}
             </Box>

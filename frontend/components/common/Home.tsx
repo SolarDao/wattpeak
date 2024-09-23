@@ -17,8 +17,22 @@ import { formatDenom } from "@/utils/formatDenoms";
 import DonutChart from "./walletStakedWattpeakDonutChart";
 import WattpeakPieChart from "./MintedWattpeakChart";
 import StakedWattpeakPieChart from "./stakedWattpeakChart";
+import { useChain } from "@cosmos-kit/react";
+import { WalletStatus } from "@cosmos-kit/core";
 
-export const Home = () => {
+interface HomeProps {
+  initialLoading: boolean;
+  walletStatus: WalletStatus;
+  walletAddress: string | undefined;
+  currentSection: string; // Add this
+}
+
+export const Home = ({
+  initialLoading,
+  walletStatus,
+  walletAddress,
+  currentSection,
+}: HomeProps) => {
   const [stakers, setStakers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | Error>(null);
@@ -57,74 +71,107 @@ export const Home = () => {
     "white",
     "rgba(35, 35, 35, 1)"
   );
-  const chains = useChains(["stargazetestnet", "junotestnet"]);
-  const stargazeAddress = chains.stargazetestnet.address;
-  const junoAddress = chains.junotestnet.address;
+  const stargazeChain = useChain("stargazetestnet");
+  const junoChain = useChain("junotestnet");
+
+  const stargazeAddress = stargazeChain.address;
+  const junoAddress = junoChain.address;
+
   const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM;
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      console.log("stargazeAddress", stargazeAddress);
+      console.log("junoAddress", junoAddress);
+
       try {
-        if (stargazeAddress && junoAddress) {
-          // Start loading
-          setLoading(true);
-  
-          const projectsResult = await queryProjects();
-          const projectsWithId = projectsResult.map((project: any, index: number) => ({
-            ...project,
-            projectId: index + 1,
-          }));
+        if (
+          walletStatus === WalletStatus.Connected &&
+          stargazeAddress &&
+          junoAddress
+        ) {
+          // Initiate all fetch operations in parallel
+          const [
+            projectsResult,
+            stakersResult,
+            balancesResult,
+            stargazeBalances,
+            stakedWattpeakResults,
+          ] = await Promise.all([
+            queryProjects(),
+            queryStakers(junoAddress),
+            getBalances(junoAddress),
+            getStargazeBalances(stargazeAddress),
+            queryTotalWattpeakStaked(),
+          ]);
+
+          // Process the fetched data
+          const projectsWithId = projectsResult.map(
+            (project: any, index: number) => ({
+              ...project,
+              projectId: index + 1,
+            })
+          );
           setProjects(projectsWithId);
-  
-          const stakersResult = await queryStakers(junoAddress);
+
           setStakers(stakersResult);
           setStakerStakedWattpeak(stakersResult.wattpeak_staked);
-  
-          const balancesResult = await getBalances(junoAddress);
-          const stargazeBalances = await getStargazeBalances(stargazeAddress);
-          const convertedBalances = [...balancesResult, ...stargazeBalances].map((balance) => ({
+
+          const convertedBalances = [
+            ...balancesResult,
+            ...stargazeBalances,
+          ].map((balance) => ({
             amount: Number(balance.amount),
             denom: balance.denom,
           }));
           setBalances(convertedBalances);
-  
-          const stakedWattpeakResults = await queryTotalWattpeakStaked();
+
           setTotalStakedWattpeak(stakedWattpeakResults);
-  
+
           const wattpeakBalance = balancesResult.find(
             (balance) => balance.denom === wattPeakDenom
           );
           if (wattpeakBalance) {
             setStakerMintedWattpeak(Number(wattpeakBalance.amount));
           }
-  
+
           const totalMinted = projectsWithId.reduce(
             (acc: number, project: { minted_wattpeak_count: number }) =>
               acc + project.minted_wattpeak_count,
             0
           );
           setTotalMintedWattpeak(totalMinted);
-  
-          const totalWattpeakResults = projectsWithId.map(
-            (project: { max_wattpeak: Number }) => project.max_wattpeak
+
+          const totalWattpeak = projectsWithId.reduce(
+            (acc: number, project: { max_wattpeak: number }) =>
+              acc + project.max_wattpeak,
+            0
           );
-          const totalWattpeak = totalWattpeakResults.reduce((acc: any, curr: any) => acc + curr, 0);
           setTotalWattpeak(totalWattpeak);
         }
       } catch (err) {
         console.error("Error fetching data:", err);
-        setLoading(false);
       } finally {
         // Stop loading once data is fetched
         setLoading(false);
       }
     };
-  
-    if (stargazeAddress && junoAddress) {
+
+    if (
+      walletStatus === WalletStatus.Connected &&
+      stargazeAddress &&
+      junoAddress
+    ) {
       fetchData();
     }
-  }, [stargazeAddress, junoAddress, wattPeakDenom]);
-  
+  }, [
+    stargazeAddress,
+    junoAddress,
+    walletStatus,
+    currentSection,
+    wattPeakDenom,
+  ]);
 
   const openModal = (
     project: {

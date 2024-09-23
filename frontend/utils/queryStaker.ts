@@ -10,7 +10,6 @@ export async function queryStakers(address: string) {
     };
     
     const queryResult = await client.queryContractSmart(WATTPEAK_STAKER_CONTRACT, queryMsg);
-    console.log("Query Result:", queryResult);
     
     // Check if the result contains the expected properties, otherwise return default values
     if (!queryResult || !queryResult.wattpeak_staked || !queryResult.claimable_rewards) {

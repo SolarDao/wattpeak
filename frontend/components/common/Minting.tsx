@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useChainWallet, useWallet } from "@cosmos-kit/react";
+import { useChain } from "@cosmos-kit/react";
 import {
   Box,
   Container,
@@ -19,14 +19,13 @@ import { responsive } from "@/styles/responsiveCarousel";
 import { handleMint } from "@/utils/handleMint";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { toast } from "react-toastify";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
 const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM || "";
 
 export const Minting = ({ chainName }: { chainName: string }) => {
-  const wallet = useWallet();
-  const walletName = wallet?.wallet?.name ?? "";
   const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
   interface Config {
@@ -74,15 +73,18 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     "rgba(52, 52, 52, 1)"
   );
 
-  const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
-    chainName,
-    walletName
-  );
-  const addressValue = address ?? "";
+  const { connect, status, address, getSigningCosmWasmClient, wallet } =
+    useChain(chainName);
 
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const handleMintClick = async () => {
+    if (!signingClient || !address) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
+    // Proceed with handleMint function
     handleMint({
       signingClient,
       address,
@@ -217,44 +219,83 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      if (status === "Connected") {
-        try {
-          const client = await getSigningCosmWasmClient();
-          setSigningClient(client as unknown as SigningCosmWasmClient);
-          if (!config) {
-            await queryNftConfig().then((result) => {
-              setConfig(result);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+  
+        // Initiate all fetch operations
+        const [projectsResult, configResult] = await Promise.all([
+          queryProjects(),
+          queryNftConfig(),
+        ]);
+  
+        // Process projects
+        const projectsWithId = projectsResult.map((project: any, index: number) => ({
+          ...project,
+          projectId: index + 1,
+        }));
+        setProjects(projectsWithId);
+  
+        // Set config
+        setConfig(configResult);
+  
+        // Set crypto amount based on config
+        setCryptoAmount(parseFloat(configResult.minting_price.amount));
+  
+      } catch (err) {
+        setError(err as Error);
+        console.error("Error fetching projects or config:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
-              setCryptoAmount(result.minting_price.amount);
-            });
-          }
-          hasRunQuery.current = true;
-          await getBalances(address).then((result) => {
-            setBalances(result as any[]);
-          });
-          setCorrectBalances(balances);
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (status === "Connected" && address) {
+        try {
+          setLoading(true);
+  
+          // Fetch signing client and balances in parallel
+          const [client, balancesResult] = await Promise.all([
+            getSigningCosmWasmClient(),
+            getBalances(address),
+          ]);
+  
+          setSigningClient(client as unknown as SigningCosmWasmClient);
+          setBalances(balancesResult as unknown as Balance[]);
+          setCorrectBalances(balancesResult);
+  
         } catch (err) {
           setError(err as Error);
-          console.error("Error querying the NFT contract:", err);
+          console.error("Error fetching balances:", err);
         } finally {
           setLoading(false);
         }
       } else {
-        await connect();
+        // Wallet is not connected
+        setSigningClient(null);
+        setBalances([]);
+        setJunoBalance(0);
+        setWattpeakBalance(0);
         setLoading(false);
       }
     };
-
-    fetchConfig();
-  }, [status, getSigningCosmWasmClient, connect, balances, address, config]);
+  
+    fetchBalances();
+  }, [status, address, getSigningCosmWasmClient]);
+  
+  
 
   useEffect(() => {
     let payable_amount = ((amount + amount * 0.05) * 5 * 1000000).toString();
     setPrice(payable_amount);
   }, [amount]);
 
-  if (loading || !config || !junoBalance || !projects || !wattpeakBalance) {
+  if (loading || !config || !projects.length) {
     return <Loading />;
   }
 

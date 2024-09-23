@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
-import { useChainWallet, useWallet } from "@cosmos-kit/react";
+import { useChain } from "@cosmos-kit/react";
 import {
   Center,
   Tabs,
@@ -36,13 +36,8 @@ const SWAP_CONTRACT_ADDRESS =
 Modal.setAppElement("#__next");
 
 export const Swap = ({ chainName }: { chainName: string }) => {
-  let wallet = useWallet();
-  let walletName = wallet?.wallet?.name ?? "";
-
-  const { connect, status, address, getSigningCosmWasmClient } = useChainWallet(
-    chainName,
-    walletName
-  );
+  const { connect, status, address, getSigningCosmWasmClient, wallet } =
+    useChain(chainName);
   interface Nft {
     name: string;
     image: any;
@@ -52,12 +47,12 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
   const [contractNfts, setContractNfts] = useState<Nft[]>([]);
   const [loading, setLoading] = useState(true);
+  const [swapping, setSwapping] = useState(false);  
   const [error, setError] = useState(null);
   const [signingClient, setSigningClient] =
-  useState<SigningCosmWasmClient | null>(null);
+    useState<SigningCosmWasmClient | null>(null);
   const [selectedNft, setSelectedNft] = useState<string | null>("");
   const [multipleSelect, setMultipleSelect] = useState(false);
-  const [swapping, setSwapping] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const inputColor = useColorModeValue("#000000B2", "white");
@@ -86,37 +81,46 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   useEffect(() => {
     const fetchNfts = async () => {
-      if (status === "Connected" && (address ?? "").startsWith("stars")) {
+      if (status === "Connected" && address && address.startsWith("stars")) {
         try {
+          setLoading(true);
           const client = await getSigningCosmWasmClient();
           setSigningClient(client as unknown as SigningCosmWasmClient);
-
+  
+          // Fetch wallet NFTs
           const walletNftsResult = await queryNftsByAddress(address);
-          setWalletNfts(walletNftsResult); // Adjust based on your query response structure
-
-          const contractNftsResult = await queryNftsByAddress(
-            SWAP_CONTRACT_ADDRESS
-          );
-          setContractNfts(contractNftsResult); // Adjust based on your query response structure
-
+          setWalletNfts(walletNftsResult);
+  
+          // Fetch contract NFTs
+          const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
+          setContractNfts(contractNftsResult);
+  
+          // Fetch configuration
           const configResult = await queryNftConfig();
           setConfig(configResult);
-
-          setLoading(false);
         } catch (err) {
           setError(err as React.SetStateAction<null>);
           console.error("Error fetching NFTs or configuration:", err);
+        } finally {
           setLoading(false);
         }
+      } else {
+        // Wallet is not connected or address is not available
+        setSigningClient(null);
+        setWalletNfts([]);
+        setContractNfts([]);
+        setConfig({ price_per_nft: "5", token_denom: "ustars" }); // Reset to default or null
+        setLoading(false);
       }
     };
-
+  
     fetchNfts();
   }, [status, address, getSigningCosmWasmClient]);
+  
 
   useEffect(() => {
     const fetchClient = async () => {
-      if (status === "Connected") {
+      if (status === "Connected" && address) {
         try {
           const client = await getSigningCosmWasmClient();
           setSigningClient(client as unknown as SigningCosmWasmClient);
@@ -125,12 +129,14 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           console.error("Error getting signing client:", err);
         }
       } else {
-        await connect();
+        // Wallet is not connected
+        setSigningClient(null);
       }
     };
-
+  
     fetchClient();
-  }, [status, getSigningCosmWasmClient, connect]);
+  }, [status, address, getSigningCosmWasmClient]);
+  
 
   const handleNftClick = (nft: { tokenId: string }) => {
     if (multipleSelect) {
@@ -201,7 +207,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   const handleMultipleSolarSwap = async () => {
     handleMultipleSolarSwapUtilFunction({
-      signingClient: signingClient  as unknown as SigningCosmWasmClient,
+      signingClient: signingClient as unknown as SigningCosmWasmClient,
       selectedMultipleNfts,
       address,
       config,
