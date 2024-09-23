@@ -18,13 +18,22 @@ export const queryNftsByAddress = async (address: string | undefined) => {
     // Replace ipfs:// with the IPFS gateway
     const ipfsUrl = token_uri.replace('ipfs://', ipfsGateway);
     
-    const response = await fetch(ipfsUrl);
-    const metadata = await response.json();
+    const response = await fetch(ipfsUrl, {
+      method: 'GET',
+      mode: 'no-cors', // Set the mode to no-cors
+    });
     
-    return {
-      tokenId,
-      ...metadata,
-    };
+    try {
+      // Response is opaque, so you can't access most details if using 'no-cors'
+      const metadata = await response.json();
+      return {
+        tokenId,
+        ...metadata,
+      };
+    } catch (error) {
+      console.error('Error fetching metadata:', error);
+      return { tokenId, error: 'Failed to fetch metadata' };
+    }
   });
 
   const nfts = await Promise.all(metadataPromises);
