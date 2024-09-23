@@ -53,7 +53,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
             .map((nft) => (
               <Box key={nft.tokenId} width={30} height={30} position="relative">
                 <Image
-                  src={nft.image.replace("ipfs://", "https://ipfs.io/ipfs/")}
+                  src={nft.image.replace("ipfs://", process.env.NEXT_PUBLIC_IPFS_GATEWAY || "")}
                   alt={nft.name}
                   width={50}
                   height={50}

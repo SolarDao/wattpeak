@@ -332,7 +332,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     <Image
                       src={nft.image.replace(
                         "ipfs://",
-                        "https://ipfs.infura.io/ipfs/"
+                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
                       )}
                       alt={nft.name}
                       className="nftImage"
@@ -369,7 +369,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     <Image
                       src={nft.image.replace(
                         "ipfs://",
-                        "https://ipfs.infura.io/ipfs/"
+                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
                       )}
                       alt={nft.name}
                       className="nftImage"
