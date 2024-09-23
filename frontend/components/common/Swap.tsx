@@ -78,25 +78,23 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     token_denom: "ustars",
   });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
-
   useEffect(() => {
-    const fetchNfts = async () => {
+    const fetchNftsAndConfig = async () => {
       if (status === "Connected" && address && address.startsWith("stars")) {
         try {
           setLoading(true);
-          const client = await getSigningCosmWasmClient();
+  
+          // Start all fetch operations simultaneously
+          const [client, walletNftsResult, contractNftsResult, configResult] = await Promise.all([
+            getSigningCosmWasmClient(),
+            queryNftsByAddress(address),
+            queryNftsByAddress(SWAP_CONTRACT_ADDRESS),
+            queryNftConfig(),
+          ]);
+  
           setSigningClient(client as unknown as SigningCosmWasmClient);
-  
-          // Fetch wallet NFTs
-          const walletNftsResult = await queryNftsByAddress(address);
           setWalletNfts(walletNftsResult);
-  
-          // Fetch contract NFTs
-          const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
           setContractNfts(contractNftsResult);
-  
-          // Fetch configuration
-          const configResult = await queryNftConfig();
           setConfig(configResult);
         } catch (err) {
           setError(err as React.SetStateAction<null>);
@@ -114,8 +112,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       }
     };
   
-    fetchNfts();
+    fetchNftsAndConfig();
   }, [status, address, getSigningCosmWasmClient]);
+  
   
 
   useEffect(() => {

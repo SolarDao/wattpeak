@@ -8,11 +8,11 @@ import { Faq } from "./Faq";
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { SideNavbar } from "./SideNavbar";
 import { Home } from "./Home";
-import { useWallet } from "@cosmos-kit/react";
 import { Flex } from "@chakra-ui/react";
-import { Wallet } from "../wallet";
+import { useChain } from "@cosmos-kit/react";
 import { useMediaQuery } from "react-responsive";
 import { WalletStatus } from "@cosmos-kit/core";
+import { Wallet } from "../wallet";
 
 const JUNO_CHAIN_NAME = "junotestnet";
 const STARGAZE_CHAIN_NAME = "stargazetestnet";
@@ -25,8 +25,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   const [initialLoading, setInitialLoading] = useState(false);
   const [walletStatus, setWalletStatus] = useState<WalletStatus>(WalletStatus.Disconnected);
   const [walletAddress, setWalletAddress] = useState<string | undefined>();
-  const wallet = useWallet();
   const [chainName, setChainName] = useState(JUNO_CHAIN_NAME);
+  const { status, address, wallet } = useChain(chainName);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const backgroundImage = useColorModeValue(
@@ -62,10 +62,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    setWalletStatus(wallet.status);
-    setWalletAddress(wallet.address);
-    setInitialLoading(wallet.status === WalletStatus.Connecting);
-  }, [wallet.status, wallet.address]);
+    setWalletStatus(status);
+    setWalletAddress(address);
+    setInitialLoading(status === WalletStatus.Connecting);
+  }, [status, address]);
 
   // Render the correct section based on wallet status and section selected
   const renderSection = () => {
@@ -106,7 +106,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
   ) {
     return (
       <>
-        <Container maxWidth="80rem" py={isMobile ? "$7" : "$14"}>
+        <Container maxWidth="80rem" attributes={{ py: isMobile ? "$7" : "$14" }}>
           <Box
             className="box"
             backgroundImage={backgroundImage}
@@ -129,11 +129,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                 marginRight="$10"
                 maxWidth="93%"
                 backgroundColor={backgroundColor2}
-                color={inputColor}
               >
                 {/* Render Wallet component if wallet is not connected */}
                 <Flex justifyContent="center" alignItems="center" height="100%">
-                <Wallet chainName={chainName} onWalletStatusChange={handleWalletStatusChange} />;
+                <Wallet chainName={chainName} onWalletStatusChange={handleWalletStatusChange} />
                 </Flex>
               </Box>
             </Box>

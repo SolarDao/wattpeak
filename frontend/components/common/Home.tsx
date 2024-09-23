@@ -1,8 +1,7 @@
-import React, { ReactNode, SetStateAction, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { queryStakers } from "../../utils/queryStaker";
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
-import { useChains } from "@cosmos-kit/react";
 import { getStargazeBalances } from "@/utils/balances/stargazeBalances";
 import { Flex, Button, Heading, Center } from "@chakra-ui/react";
 import Carousel from "react-multi-carousel";
@@ -28,9 +27,7 @@ interface HomeProps {
 }
 
 export const Home = ({
-  initialLoading,
   walletStatus,
-  walletAddress,
   currentSection,
 }: HomeProps) => {
   const [stakers, setStakers] = useState([]);
