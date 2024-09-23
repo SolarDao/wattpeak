@@ -3,7 +3,7 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 const rpcEndpoint = process.env.NEXT_PUBLIC_STARGAZE_RPC_ENDPOINT || '';
 const nftContractAddress = process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS || '';
 const swapContractAddress = process.env.NEXT_PUBLIC_NFT_SWAPPER_CONTRACT_ADDRESS || ''; 
-const ipfsGateway = 'https://ipfs.io/ipfs/'; 
+const ipfsGateway = 'https://ipfs.infura.io/ipfs/'; 
 
 export const queryNftsByAddress = async (address: string | undefined) => {
   const client = await CosmWasmClient.connect(rpcEndpoint);
