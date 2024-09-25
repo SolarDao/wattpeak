@@ -155,7 +155,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     handleApproveAndSwap({
       signingClient,
       selectedNft: selectedNft || "",
-      SWAP_CONTRACT_ADDRESS: HERO_CONTRACT_ADDRESS || "",
+      SWAP_CONTRACT_ADDRESS: SWAP_CONTRACT_ADDRESS || "",
       HERO_CONTRACT_ADDRESS: HERO_CONTRACT_ADDRESS || "",
       address: address || "",
       config,
