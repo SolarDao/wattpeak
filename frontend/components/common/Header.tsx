@@ -148,7 +148,11 @@ export const Header: React.FC<HeaderProps> = ({
                   {item.name}
                 </a>
               ))}
-              <div>
+              <div
+                onClick={() => {
+                  setMenuOpen(false);
+                }}
+              >
                 <Wallet
                   chainName={chainName}
                   onChainChange={handleChainChange}
@@ -170,7 +174,6 @@ export const Header: React.FC<HeaderProps> = ({
             marginRight="$10"
           >
             <Box
-            
               as="a"
               // @ts-ignore
               onClick={() => handleItemClick("home")}
@@ -203,8 +206,6 @@ export const Header: React.FC<HeaderProps> = ({
                     cursor: "pointer",
                     textDecoration: "none",
                     color: "white",
-                    
-                    
                   }}
                 >
                   {item.name}
