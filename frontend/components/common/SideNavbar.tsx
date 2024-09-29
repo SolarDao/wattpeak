@@ -24,7 +24,7 @@ export const SideNavbar = ({ setCurrentSection }: { setCurrentSection: (id: stri
       marginRight="$6"
       marginTop="$14"
     >
-      {sideNavItems.map((item) => (
+     {/*  {sideNavItems.map((item) => (
         <Box
           key={item.id}
           as="a"
@@ -39,7 +39,7 @@ export const SideNavbar = ({ setCurrentSection }: { setCurrentSection: (id: stri
         >
           <Image src={item.icon} alt={item.id} width={25} height={22} />
         </Box>
-      ))}
+      ))} */}
     </Box>
   );
 };

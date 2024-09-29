@@ -12,13 +12,15 @@ type HeaderProps = {
 };
 
 const navItemsDesktop = [
-  { name: "Minting", id: "minting" },
-  { name: "Staking", id: "staking" },
+  { name: "Mint", id: "minting" },
+  { name: "Stake", id: "staking" },
+  { name: "Swap", id: "swapping" },
+  { name: "FAQ", id: "faq" },
 ];
 const navItemsMobile = [
-  { name: "Minting", id: "minting" },
-  { name: "Staking", id: "staking" },
-  { name: "Swapping", id: "swapping" },
+  { name: "Mint", id: "minting" },
+  { name: "Stake", id: "staking" },
+  { name: "Swap", id: "swapping" },
   { name: "FAQ", id: "faq" },
 ];
 
@@ -193,12 +195,12 @@ export const Header: React.FC<HeaderProps> = ({
                 height={25}
               />
             </Box>
-            <Box display="flex" alignItems="center" gap="$15" marginLeft="20px">
+            <Box display="flex" alignItems="center" gap="$13" marginLeft="20px">
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}
                   as="a"
-                  // @ts-ignore
+                  // @ts-ignor3
                   onClick={() => handleItemClick(item.id)}
                   attributes={{
                     fontWeight: "$medium",
