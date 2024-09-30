@@ -195,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
                 height={25}
               />
             </Box>
-            <Box display="flex" alignItems="center" gap="$13" marginLeft="20px">
+            <Box display="flex" alignItems="center" gap="$13" marginLeft="-40px">
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}

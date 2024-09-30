@@ -246,7 +246,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               Cyber Solar Heroes
             </Heading>
           )}
-          <TabList>
+          <TabList marginLeft="42px">
             <Tab
               className="swapTabs"
               borderColor={borderColor}
