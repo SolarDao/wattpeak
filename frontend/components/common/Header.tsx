@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction, useState } from "react";
-import SolarDaoImage from "../../public/Group 121.png";
+import SolarDaoImage from "../../public/solarDAO.png";
 import Image from "next/image";
 import { slide as Menu } from "react-burger-menu";
 import { useMediaQuery } from "react-responsive";
@@ -195,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
                 height={25}
               />
             </Box>
-            <Box display="flex" alignItems="center" gap="$13" marginLeft="-40px">
+            <Box display="flex" alignItems="center" gap="$13" marginLeft="-22px">
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}
