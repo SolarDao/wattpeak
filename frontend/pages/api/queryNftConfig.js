@@ -1,8 +1,7 @@
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
-const rpcEndpoint = process.env.NEXT_PUBLIC_STARGAZE_RPC_ENDPOINT || '';
-const swapContractAddress = process.env.NEXT_PUBLIC_NFT_SWAPPER_CONTRACT_ADDRESS || ''; 
-
+const rpcEndpoint = "https://rpc.elgafar-1.stargaze-apis.com/"
+const swapContractAddress = "stars1p3vxvjs4gu3z6avp090sp4fg2pk45e5ds2dc5r9tpfudqdzqs4gslxfgww"
 export default async function handler(req, res) {
   try {
     const client = await CosmWasmClient.connect(rpcEndpoint);
