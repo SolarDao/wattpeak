@@ -343,6 +343,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                       className="nftImage"
                       width={150}
                       height={150}
+                      unoptimized
                     />
                     <p>{nft.name}</p>
                   </ListItem>
@@ -380,6 +381,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                       className="nftImage"
                       width={150}
                       height={150}
+                      unoptimized
                     />
                     <p>{nft.name}</p>
                   </ListItem>

@@ -290,7 +290,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     setPrice(payable_amount);
   }, [amount]);
 
-  if (loading || !config || !projects.length) {
+  if (loading || !config || !projects.length || minting) {
     return <Loading />;
   }
 
@@ -431,7 +431,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           disabled={minting}
           className="mintBtn"
         >
-          {minting ? <Spinner size="sm" color="black" /> : "MINT"}
+          MINT
         </button>
       </Box>
     </Container>
