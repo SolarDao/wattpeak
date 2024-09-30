@@ -200,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Box
                   key={item.id}
                   as="a"
-                  // @ts-ignor3
+                  // @ts-ignore
                   onClick={() => handleItemClick(item.id)}
                   attributes={{
                     fontWeight: "$medium",
