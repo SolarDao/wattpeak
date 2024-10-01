@@ -210,7 +210,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Price for NFT: {config.price_per_nft} {config.token_denom}
+              Amount to receive: {config.price_per_nft} {config.token_denom}
             </Center>
           </Box>
           <Center>
@@ -238,7 +238,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Amount to receive: {config.price_per_nft} {config.token_denom}
+              Price for NFT: {config.price_per_nft} {config.token_denom}
             </Center>
           </Box>
           <Center>

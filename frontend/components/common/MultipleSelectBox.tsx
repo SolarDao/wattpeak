@@ -1,10 +1,7 @@
 import React from "react";
 import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
-import {
-    Button,
-    Box,
-  } from "@chakra-ui/react";
+import { Button, Box } from "@chakra-ui/react";
 
 interface MultipleSelectBoxProps {
   tabIndex: number;
@@ -53,7 +50,10 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
             .map((nft) => (
               <Box key={nft.tokenId} width={30} height={30} position="relative">
                 <Image
-                  src={nft.image.replace("ipfs://", process.env.NEXT_PUBLIC_IPFS_GATEWAY || "")}
+                  src={nft.image.replace(
+                    "ipfs://",
+                    process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
+                  )}
                   alt={nft.name}
                   width={50}
                   height={50}
@@ -194,7 +194,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
           >
             <Box>Amount of NFTs: {selectedMultipleNfts.length}</Box>
             <Box>
-              Total Price:{" "}
+              {tabIndex === 0 ? <> Amount to receive: </> : <>Total Price: </>}
               {parseFloat(
                 (
                   Number(config.price_per_nft) * selectedMultipleNfts.length
@@ -206,7 +206,9 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
         </Box>
         <Button
           onClick={() => {
-            tabIndex === 0 ? handleMultipleNftSwap() : handleMultipleSolarSwap();
+            tabIndex === 0
+              ? handleMultipleNftSwap()
+              : handleMultipleSolarSwap();
           }}
           background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
           color="black"

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
 import { useChain } from "@cosmos-kit/react";
 import {
-  Center,
   Tabs,
   TabList,
   TabPanels,
@@ -13,8 +12,10 @@ import {
   ListItem,
   UnorderedList,
   Heading,
+  Link,
+  Flex,
 } from "@chakra-ui/react";
-import { Spinner, useColorModeValue } from "@interchain-ui/react";
+import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import Modal from "react-modal";
 import { handleApproveAndSwap } from "@/utils/swap-functions/handleApproveAndSwap";
@@ -26,6 +27,7 @@ import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/hand
 import { Loading } from "./Loading";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -46,6 +48,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
   const [contractNfts, setContractNfts] = useState<Nft[]>([]);
+  const [ustarsBalance, setUstarsBalance] = useState<string>("0");
   const [loading, setLoading] = useState(true);
   const [swapping, setSwapping] = useState(false);
   const [error, setError] = useState(null);
@@ -88,6 +91,10 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           const client = await getSigningCosmWasmClient();
           setSigningClient(client as unknown as SigningCosmWasmClient);
 
+          // Fetch balance of ustars
+          const balanceResult = await client.getBalance(address, "ustars");
+          setUstarsBalance(balanceResult.amount);
+
           // Start fetch operations simultaneously after client is ready
           const [walletNftsResult, contractNftsResult, configResult] =
             await Promise.all([
@@ -117,6 +124,29 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
     fetchNftsAndConfig();
   }, [status, address, getSigningCosmWasmClient]);
+
+  const fetchUstarsBalance = async () => {
+    if (signingClient && address) {
+      try {
+        const balanceResult = await signingClient.getBalance(address, "ustars");
+        setUstarsBalance(balanceResult.amount);
+      } catch (error) {
+        console.error("Error fetching ustars balance:", error);
+      }
+    }
+  };
+
+  const formatUstars = (amount: string): string => {
+    const amountNum = parseInt(amount, 10);
+    return (amountNum / 1_000_000).toFixed(6); // Adjust decimals as needed
+  };
+
+  useEffect(() => {
+    if (!swapping && status === "Connected" && address) {
+      fetchUstarsBalance();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swapping]);
 
   const handleNftClick = (nft: { tokenId: string }) => {
     if (multipleSelect) {
@@ -217,15 +247,26 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           {!isMobile && (
-            <Heading
-              fontSize="20px"
-              textAlign="left"
-              paddingLeft="15px"
-              color={inputColor}
-              marginBottom="5px"
-            >
-              Cyber Solar Heroes
-            </Heading>
+            <Box>
+              <Heading
+                fontSize="20px"
+                textAlign="left"
+                paddingLeft="15px"
+                color={inputColor}
+                marginBottom="5px"
+              >
+                Cyber Solar Heroes
+              </Heading>
+              <Box>
+                {address && (
+                  <Box fontSize="12px" textAlign="center">
+                    <Box color={inputColor}>
+                      Solar balance: {formatUstars(ustarsBalance)}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           )}
           <TabList marginLeft="42px">
             <Tab
@@ -296,10 +337,58 @@ export const Swap = ({ chainName }: { chainName: string }) => {
         <TabPanels className="swapPanels" background={backgroundColor}>
           <TabPanel>
             {walletNfts.length === 0 ? (
-              <Center height={500} fontSize={30}>
-                {" "}
-                No NFTs found in your wallet
-              </Center>
+              <Box
+                display="flex"
+                flexDirection="column"
+                gap="10px"
+                height={500}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Box fontSize={30} marginBottom="30px" textAlign="center">
+                  {" "}
+                  No NFTs found in Wallet
+                </Box>
+                <Box textAlign="center" fontSize="20px">
+                  Swap Solar Tokens for Cyber Solar Heroes{" "}
+                  <Link
+                    onClick={() => setTabIndex(1)}
+                    color="blue.500"
+                    textDecoration="underline"
+                    cursor="pointer"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    here
+                  </Link>{" "}
+                  <br />
+                  or trade on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Stargaze <ExternalLinkIcon mx="2px" />
+                  </Link>
+                  <Box textAlign="center" marginTop="20px">
+                    Trade Solar tokens on{" "}
+                    <Link
+                      isExternal
+                      textDecoration="underline"
+                      href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
+                      _hover={{
+                        color: "purple",
+                      }}
+                    >
+                      Osmosis <ExternalLinkIcon mx="2px" />
+                    </Link>
+                  </Box>
+                </Box>
+              </Box>
             ) : (
               <UnorderedList className="nftList">
                 {walletNfts.map((nft, index) => (
@@ -333,10 +422,44 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           </TabPanel>
           <TabPanel>
             {contractNfts.length === 0 ? (
-              <Center height={500} fontSize={30}>
-                {" "}
-                No NFTs available in contract
-              </Center>
+              <Box
+                display="flex"
+                flexDirection="column"
+                gap="10px"
+                height={500}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Box fontSize={30} marginBottom="30px" textAlign="center">
+                  {" "}
+                  No NFTs available in contract
+                </Box>
+                <Box textAlign="center" fontSize="20px">
+                  Trade Cyber Solar Heroes on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Stargaze <ExternalLinkIcon mx="2px" />
+                  </Link>
+                  <br />
+                  or Solar tokens on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Osmosis <ExternalLinkIcon mx="2px" />
+                  </Link>
+                </Box>
+              </Box>
             ) : (
               <UnorderedList className="nftList">
                 {contractNfts.map((nft, index) => (
