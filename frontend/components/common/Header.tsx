@@ -172,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
             px="$4"
             maxHeight="$18"
             marginBottom="$0"
-            marginLeft="$6"
+            marginLeft="$10"
             marginRight="$10"
           >
             <Box
