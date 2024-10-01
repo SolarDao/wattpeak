@@ -210,7 +210,7 @@ export const Home = ({
   );
 
   return (
-    <Box color={inputColor} fontFamily="inter">
+    <Box color={inputColor}>
       <Flex
         gap="40px"
         justifyContent="center"

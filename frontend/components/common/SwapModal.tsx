@@ -1,13 +1,9 @@
 import React from "react";
 import Modal from "react-modal";
-import {useColorModeValue } from "@interchain-ui/react";
+import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import { CloseIcon } from "@chakra-ui/icons";
-import {
-    Center,
-    Button,
-    Box,
-  } from "@chakra-ui/react";
+import { Center, Button, Box } from "@chakra-ui/react";
 import { useMediaQuery } from "react-responsive";
 
 interface NftDetailsModalProps {
@@ -42,7 +38,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
   if (!selectedNftDetails) {
     return null;
   }
-  
+
   const customStyles = {
     content: {
       top: "52%",
@@ -61,7 +57,6 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       zIndex: 1000,
     },
   };
-  
 
   return (
     <Modal
@@ -84,10 +79,9 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       </button>
       <Center>
         <Image
-          src={selectedNftDetails.image.replace(
-            "ipfs://",
-            process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-          )}
+          src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+            selectedNftDetails.image.replace("ipfs://", "")
+          )}`}
           alt={selectedNftDetails.name}
           width={200}
           height={200}

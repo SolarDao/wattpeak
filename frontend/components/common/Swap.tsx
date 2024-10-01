@@ -145,7 +145,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     if (!swapping && status === "Connected" && address) {
       fetchUstarsBalance();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [swapping]);
 
   const handleNftClick = (nft: { tokenId: string }) => {
@@ -405,10 +405,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     onClick={() => handleNftClick(nft)}
                   >
                     <Image
-                      src={nft.image.replace(
-                        "ipfs://",
-                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-                      )}
+                      src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+                        nft.image.replace("ipfs://", "")
+                      )}`}
                       alt={nft.name}
                       className="nftImage"
                       width={150}
@@ -476,10 +475,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     onClick={() => handleNftClick(nft)}
                   >
                     <Image
-                      src={nft.image.replace(
-                        "ipfs://",
-                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-                      )}
+                      src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+                        nft.image.replace("ipfs://", "")
+                      )}`}
                       alt={nft.name}
                       className="nftImage"
                       width={150}
