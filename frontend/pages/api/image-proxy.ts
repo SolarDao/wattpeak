@@ -5,6 +5,8 @@ import axios from 'axios';
 
 export default async function imageProxy(req: NextApiRequest, res: NextApiResponse) {
 const { ipfsPath } = req.query;
+console.log('ipfsPath:', ipfsPath);
+
 
 if (!ipfsPath || typeof ipfsPath !== 'string') {
   return res.status(400).json({ error: 'ipfsPath query parameter is required' });
@@ -17,7 +19,7 @@ try {
   console.log('Received ipfsPath:', ipfsPath);
 
   // Construct the IPFS gateway URL
-  const ipfsGatewayUrl = `https://ipfs.io/ipfs/${sanitizedIpfsPath}`;
+  const ipfsGatewayUrl = `https://gateway.pinata.cloud/ipfs/${sanitizedIpfsPath}`;
 
   console.log('Fetching image from:', ipfsGatewayUrl);
 
