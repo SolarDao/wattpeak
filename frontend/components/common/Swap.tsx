@@ -282,7 +282,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 zIndex: 2,
               }}
             >
-              Swap NFTs
+              Sell NFTs
             </Tab>
             <Tab
               className="swapTabs"
@@ -297,7 +297,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 zIndex: 2,
               }}
             >
-              Swap Solar
+              Buy NFTs
             </Tab>
           </TabList>
           {!isMobile && (
