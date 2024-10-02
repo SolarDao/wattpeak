@@ -26,10 +26,7 @@ interface HomeProps {
   currentSection: string; // Add this
 }
 
-export const Home = ({
-  walletStatus,
-  currentSection,
-}: HomeProps) => {
+export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   const [stakers, setStakers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | Error>(null);
@@ -251,19 +248,23 @@ export const Home = ({
                 >
                   My Wallet
                 </Heading>
-                {filteredBalances.map((balance) => (
-                  <Box
-                    key={balance.denom}
-                    fontSize="18px"
-                    minWidth="200px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    {formatDenom(balance.denom)} :{" "}
-                    {parseFloat((balance.amount / 1000000).toFixed(2))}
-                  </Box>
-                ))}
+                {filteredBalances.length === 0 ? (
+                  <Center height="200px" width="200px">No balances in Wallet</Center>
+                ) : (
+                  filteredBalances.map((balance) => (
+                    <Box
+                      key={balance.denom}
+                      fontSize="18px"
+                      minWidth="200px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      {formatDenom(balance.denom)} :{" "}
+                      {parseFloat((balance.amount / 1000000).toFixed(2))}
+                    </Box>
+                  ))
+                )}
               </Flex>
 
               <Box padding="20px">
@@ -275,14 +276,18 @@ export const Home = ({
                 >
                   WattPeak Distribution
                 </Heading>
-                <DonutChart
-                  totalMinted={parseFloat(
-                    (stakerMintedWattpeak / 1000000).toFixed(2)
-                  )}
-                  totalStaked={parseFloat(
-                    (stakerStakedWattpeak / 1000000).toFixed(2)
-                  )}
-                />
+                {stakerMintedWattpeak === 0 && stakerStakedWattpeak === 0 ? (
+                  <Center height="200px" width="200px">No WattPeak in Wallet</Center>
+                ) : (
+                  <DonutChart
+                    totalMinted={parseFloat(
+                      (stakerMintedWattpeak / 1000000).toFixed(2)
+                    )}
+                    totalStaked={parseFloat(
+                      (stakerStakedWattpeak / 1000000).toFixed(2)
+                    )}
+                  />
+                )}
               </Box>
             </Flex>
           </Flex>

@@ -1,7 +1,7 @@
 import React from "react";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Box, useColorModeValue } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -18,7 +18,7 @@ const WattpeakPieChart: React.FC<WattpeakPieChartProps> = ({
     labels: ["Minted", "Available"],
     datasets: [
       {
-        data: [totalMinted, totalWattpeak],
+        data: [totalMinted, totalWattpeak-totalMinted],
         backgroundColor: ["#ff5b1a", "#009886"],
       },
     ],

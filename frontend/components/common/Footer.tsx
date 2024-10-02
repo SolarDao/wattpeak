@@ -7,9 +7,11 @@ import {
   useTheme,
 } from "@interchain-ui/react";
 import Image from "next/image";
+import { useMediaQuery } from "react-responsive";
 
 export const Footer = () => {
   const { theme, setTheme } = useTheme();
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const toggleColorMode = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -39,9 +41,11 @@ export const Footer = () => {
         >
           <Icon name={useColorModeValue("moonLine", "sunLine")} />
         </Button>
+        {!isMobile && (
         <Box flex="1" textAlign="center">
           &copy; 2024 Solar DAO. All rights reserved.
         </Box>
+        )}
         <Box display="flex" gap="10px">
           <Link
             isExternal
