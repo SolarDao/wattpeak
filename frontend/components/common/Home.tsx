@@ -197,19 +197,44 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
     return <Loading />;
   }
 
-  const filteredBalances = balances.filter(
-    (balance) =>
-      balance.denom === wattPeakDenom ||
-      balance.denom === "ujunox" ||
-      balance.denom === "ustars" ||
-      balance.denom ===
-        "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
-  );
+  const formatBalance = (amount: number) => {
+    let num = amount / 1000000;
+  
+    // Determine suffix and adjust number accordingly
+    let suffix = "";
+    if (num >= 1000000) {
+      num = num / 1000000;
+      suffix = "m";
+    } else if (num >= 1000) {
+      num = num / 1000;
+      suffix = "k";
+    }
+  
+    // Format to 2 decimal places, and remove trailing zeroes
+    let formattedNum = num.toFixed(2).replace(/\.?0+$/, "");
+  
+    return `${formattedNum}${suffix}`;
+  };
+  
+
+  const filteredBalances = balances
+    .filter(
+      (balance) =>
+        balance.denom === wattPeakDenom ||
+        balance.denom === "ujunox" ||
+        balance.denom === "ustars" ||
+        balance.denom ===
+          "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
+    )
+    .map((balance) => ({
+      ...balance,
+      formattedAmount: formatBalance(balance.amount),
+    }));
 
   return (
     <Box color={inputColor}>
       <Flex
-        gap="60px"
+        gap="75px"
         justifyContent="center"
         alignItems="center"
         flexWrap="wrap"
@@ -246,13 +271,14 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               flexWrap="wrap"
               justifyContent="center"
             >
-              <Flex flexDirection="column" gap="10px" padding="20px">
+              <Flex flexDirection="column" gap="25px" padding="20px">
                 <Heading
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
                   color={inputColor}
-                  marginBottom="2px"
+                  marginBottom="0"
+                  marginLeft="7px"
                 >
                   Balances
                 </Heading>
@@ -265,13 +291,16 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                     <Box
                       key={balance.denom}
                       fontSize="18px"
-                      minWidth="200px"
                       display="flex"
                       alignItems="center"
-                      justifyContent="center"
+                      justifyContent="space-between"
+                      minWidth="180px"
+                      paddingLeft="15px"
                     >
-                      {formatDenom(balance.denom)} :{" "}
-                      {parseFloat((balance.amount / 1000000).toFixed(2))}
+                      <Box fontWeight="semibold">
+                        {formatDenom(balance.denom)}
+                      </Box>
+                      <Box fontWeight="bold">{balance.formattedAmount}</Box>
                     </Box>
                   ))
                 )}
@@ -405,7 +434,13 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                 src={require("../../images/panel.png")}
                 alt={project.name}
               />
-              <Box mt={4} display="flex" justifyContent="center" flexDirection="column" alignItems="center">
+              <Box
+                mt={4}
+                display="flex"
+                justifyContent="center"
+                flexDirection="column"
+                alignItems="center"
+              >
                 <h4>{project.name}</h4>
                 <Button
                   onClick={() =>

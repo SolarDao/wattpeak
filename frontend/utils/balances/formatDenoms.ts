@@ -13,12 +13,12 @@ export const formatDenom = (denom: string) => {
       formattedDenom = formattedDenom.toUpperCase();
     }
   
-    if (formattedDenom === "wattpeaka") {
+    if (formattedDenom === "wattpeakb") {
       formattedDenom = "WattPeak";
     }
   
     if (formattedDenom === "som") {
-      formattedDenom = "SoM";
+      formattedDenom = "SOLAR";
     }
     return formattedDenom;
   };
