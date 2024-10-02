@@ -2,7 +2,7 @@ import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const rpcEndpoint = "https://rpc.elgafar-1.stargaze-apis.com/"
 const nftContractAddress = "stars1t0zz2rp7nshlhrsjlrj9cd8n09hxy5stvt5nlvcv0zjlhf5efdfsqh9wk5"
-const ipfsGateway = "https://ipfs.io/ipfs/";
+const ipfsGateway = "https://gateway.pinata.cloud/ipfs/";
 
 export default async function handler(req, res) {
   try {
@@ -27,6 +27,7 @@ export default async function handler(req, res) {
       
       const response = await fetch(ipfsUrl);
       const metadata = await response.json();
+      console.log(metadata);
       
       return {
         tokenId,
