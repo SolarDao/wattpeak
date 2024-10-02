@@ -42,11 +42,11 @@ export const Footer = () => {
           <Icon name={useColorModeValue("moonLine", "sunLine")} />
         </Button>
         {!isMobile && (
-        <Box flex="1" textAlign="center">
-          &copy; 2024 Solar DAO. All rights reserved.
-        </Box>
+          <Box flex="1" textAlign="center">
+            &copy; 2024 Solar DAO. All rights reserved.
+          </Box>
         )}
-        <Box display="flex" gap="10px">
+        <Box display="flex" gap="12px">
           <Link
             isExternal
             textDecoration="underline"
@@ -56,10 +56,10 @@ export const Footer = () => {
             <Tooltip
               label="Cyber Solar Heroes on Stargaze"
               aria-label="Stargaze Tooltip"
-              placement="right"
+              placement="left-start"
             >
               <Image
-                src={require("../../public/Stargaze.png")}
+                src={require("../../images/Stargaze.png")}
                 alt={""}
                 width={30}
               />
@@ -68,11 +68,49 @@ export const Footer = () => {
           <Link
             isExternal
             textDecoration="underline"
+            href="https://daodao.zone/dao/juno1nwh5nnd7nlccn08wjv2zrenfxeudvc883z9sjthtzygahwmep6pqjezuh2/home"
+          >
+            <Tooltip
+              label="SolarDAO on DaoDao"
+              aria-label="DaoDao Tooltip"
+              placement="bottom"
+            >
+              <Image
+                src={require("../../images/yin_yang.png")}
+                alt={""}
+                width={30}
+              />
+            </Tooltip>
+          </Link>
+          <Link
+            isExternal
+            textDecoration="underline"
+            href="https://solardao.carrd.co/"
+          >
+            <Tooltip
+              label="SolarDAO website"
+              aria-label="DaoDao Tooltip"
+              placement="bottom"
+            >
+              <Image
+                src={require("../../images/solar.png")}
+                alt={""}
+                height={30}
+              />
+            </Tooltip>
+          </Link>
+          <Link
+            isExternal
+            textDecoration="underline"
             href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
           >
-            <Tooltip label="Solar on Osmosis" aria-label="Osmosis Tooltip" placement="right">
+            <Tooltip
+              label="Solar on Osmosis"
+              aria-label="Osmosis Tooltip"
+              placement="right-start"
+            >
               <Image
-                src={require("../../public/osmosis-osmo-logo.png")}
+                src={require("../../images/osmosis-osmo-logo.png")}
                 alt={""}
                 width={30}
               />

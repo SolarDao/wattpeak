@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction, useState } from "react";
-import SolarDaoImage from "../../public/solarDAO.png";
+import SolarDaoImage from "../../images/solarDAO.png";
 import Image from "next/image";
 import { slide as Menu } from "react-burger-menu";
 import { useMediaQuery } from "react-responsive";

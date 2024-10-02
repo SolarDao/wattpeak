@@ -7,16 +7,16 @@ import {
   useColorModeValue,
 } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
-import { queryProjects } from "../../utils/queryProjects";
+import { queryProjects } from "../../utils/queries/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
 import { Button, Heading, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
-import { Loading } from "./Loading";
-import { queryNftConfig } from "@/utils/queryAndMintNft";
+import { Loading } from "./helpers/Loading";
+import { queryNftConfig } from "@/utils/queries/queryAndMintNft";
 import { responsive } from "@/styles/responsiveCarousel";
-import { handleMint } from "@/utils/handleMint";
+import { handleMint } from "@/utils/swap-functions/handleMint";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
@@ -49,8 +49,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     minted_wattpeak_count: number;
   }
 
-  const { status, address, getSigningCosmWasmClient } =
-    useChain(chainName);
+  const { status, address, getSigningCosmWasmClient } = useChain(chainName);
   const [config, setConfig] = useState<Config | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -70,7 +69,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
-  )
+  );
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const handleMintClick = async () => {
@@ -149,7 +148,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   const handleMaxClick = () => {
     const numericAmount = Number(amount);
-  
+
     if (!isNaN(numericAmount)) {
       setAmount(Number(numericAmount.toFixed(6)));
     } else {
@@ -296,73 +295,79 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   return (
     <Container>
-      <Box>
-        <Box
-          className="headerBox"
-          display="flex"
-          justifyContent={isMobile ? "center" : "space-between"}
-        >
-          <Heading
-            fontSize="20px"
-            color={inputColor}
-            marginBottom="5px"
-            marginTop="20px"
-            paddingLeft={isMobile ? "0px" : "15px"}
+        <Box mt={10} width="100%" margin="auto">
+          <Box
+            className="headerBox"
+            display="flex"
+            justifyContent={isMobile ? "center" : "space-between"}
+            marginBottom="10px"
           >
-            Available Projects to Mint
-          </Heading>
-          {!isMobile && (
             <Heading
               fontSize="20px"
               color={inputColor}
               marginBottom="5px"
               marginTop="20px"
-              paddingRight="15px"
+              paddingLeft={isMobile ? "0px" : "15px"}
             >
-              Price per wattpeak: {config?.minting_price.amount}{" "}
-              {config?.minting_price.denom}
+              Available Projects to Mint
             </Heading>
-          )}
+            {!isMobile && (
+              <Heading
+                fontSize="20px"
+                color={inputColor}
+                marginBottom="5px"
+                marginTop="20px"
+                paddingRight="15px"
+              >
+                Price per wattpeak: {config?.minting_price.amount}{" "}
+                {config?.minting_price.denom}
+              </Heading>
+            )}
+          </Box>
+          <Carousel
+            responsive={responsive}
+            infinite={true}
+            arrows={true}
+            containerClass="carousel-container"
+          >
+            {!projects.length && <p>No projects available to mint</p>}
+            {projects.map((project) => (
+              <Box
+                key={project.projectId}
+                className="project-card"
+                backgroundColor={backgroundColor}
+              >
+                <Image src={require("../../images/panel.png")} alt={"Hallo"} />
+                <div className="project-details">
+                  <p>{project.name}</p>
+                  <p>
+                    Available WattPeak:{" "}
+                    {(project.max_wattpeak - project.minted_wattpeak_count) /
+                      1000000}
+                  </p>
+                  <Button
+                    className={
+                      selectedProjectId === project.projectId
+                        ? "projectButtonSelected"
+                        : "projectButton"
+                    }
+                    color={
+                      selectedProjectId === project.projectId
+                        ? "black"
+                        : inputColor
+                    }
+                    borderColor={borderColor}
+                    onClick={() => setSelectedProjectId(project.projectId)}
+                  >
+                    {selectedProjectId === project.projectId
+                      ? "Selected"
+                      : "Select"}
+                  </Button>
+                </div>
+              </Box>
+            ))}
+          </Carousel>
         </Box>
-        <Carousel responsive={responsive} infinite={false} arrows={true}>
-          {!projects.length && <p>No projects available to mint</p>}
-          {projects.map((project) => (
-            <Box
-              key={project.projectId}
-              className="project-card"
-              backgroundColor={backgroundColor}
-            >
-              <Image src={require("../../images/panel.png")} alt={"Hallo"} />
-              <div className="project-details">
-                <p>{project.name}</p>
-                <p>
-                  Available WattPeak:{" "}
-                  {(project.max_wattpeak - project.minted_wattpeak_count) /
-                    1000000}
-                </p>
-                <Button
-                  className={
-                    selectedProjectId === project.projectId
-                      ? "projectButtonSelected"
-                      : "projectButton"
-                  }
-                  color={
-                    selectedProjectId === project.projectId
-                      ? "black"
-                      : inputColor
-                  }
-                  borderColor={borderColor}
-                  onClick={() => setSelectedProjectId(project.projectId)}
-                >
-                  {selectedProjectId === project.projectId
-                    ? "Selected"
-                    : "Select"}
-                </Button>
-              </div>
-            </Box>
-          ))}
-        </Carousel>
-      </Box>
       <Box className="mintBox">
         <Box className="inputWrapper" backgroundColor={backgroundColor}>
           <div className="balanceWrapper">

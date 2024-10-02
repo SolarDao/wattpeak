@@ -89,7 +89,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
                 borderRadius={15}
               >
                 <Image
-                  src={require("../../images/solarheroes.png")}
+                  src={require("../../../images/solarheroes.png")}
                   alt={"Solar"}
                   width={30}
                   height={30}
@@ -100,7 +100,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
               </Box>
               <Box display="flex" justifyContent="center" alignItems="center">
                 <Image
-                  src={require("../../images/yellowarrow.png")}
+                  src={require("../../../images/yellowarrow.png")}
                   alt={"arrow"}
                   width={15}
                   height={15}
@@ -117,7 +117,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
                 borderRadius={15}
               >
                 <Image
-                  src={require("../../images/solartoken.png")}
+                  src={require("../../../images/solartoken.png")}
                   alt={"Solar"}
                   width={30}
                   height={30}
@@ -140,7 +140,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
                 borderRadius={15}
               >
                 <Image
-                  src={require("../../images/solartoken.png")}
+                  src={require("../../../images/solartoken.png")}
                   alt={"Solar"}
                   width={30}
                   height={30}
@@ -151,7 +151,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
               </Box>
               <Box display="flex" justifyContent="center" alignItems="center">
                 <Image
-                  src={require("../../images/yellowarrow.png")}
+                  src={require("../../../images/yellowarrow.png")}
                   alt={"arrow"}
                   width={15}
                   height={15}
@@ -167,7 +167,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
                 borderRadius={15}
               >
                 <Image
-                  src={require("../../images/solarheroes.png")}
+                  src={require("../../../images/solarheroes.png")}
                   alt={"Solar"}
                   width={30}
                   height={30}

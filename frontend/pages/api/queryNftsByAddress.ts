@@ -4,7 +4,7 @@ const rpcEndpoint = "https://rpc.elgafar-1.stargaze-apis.com/"
 const nftContractAddress = "stars1t0zz2rp7nshlhrsjlrj9cd8n09hxy5stvt5nlvcv0zjlhf5efdfsqh9wk5"
 const ipfsGateway = "https://gateway.pinata.cloud/ipfs/";
 
-export default async function handler(req, res) {
+export default async function handler(req: { query: { address: string; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { error?: string; nfts?: any[]; }): void; new(): any; }; }; }) {
   try {
     const { address } = req.query;
 
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const tokensQuery = { tokens: { owner: address } };
     const { tokens } = await client.queryContractSmart(nftContractAddress, tokensQuery);
 
-    const metadataPromises = tokens.map(async (tokenId) => {
+    const metadataPromises = tokens.map(async (tokenId: string) => {
       const tokenUriQuery = { nft_info: { token_id: tokenId } };
       const { token_uri } = await client.queryContractSmart(nftContractAddress, tokenUriQuery);
       
@@ -27,8 +27,6 @@ export default async function handler(req, res) {
       
       const response = await fetch(ipfsUrl);
       const metadata = await response.json();
-      console.log(metadata);
-      
       return {
         tokenId,
         ...metadata,

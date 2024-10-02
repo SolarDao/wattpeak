@@ -1,4 +1,4 @@
-import { getCosmWasmClient } from "./junoSetup";
+import { getCosmWasmClient } from "../setup/junoSetup";
 
 const WATTPEAK_STAKER_CONTRACT = process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS ?? "";
 

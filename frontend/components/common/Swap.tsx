@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
+import { queryNftsByAddress, queryNftConfig } from "../../utils/queries/queryNfts";
 import { useChain } from "@cosmos-kit/react";
 import {
   Tabs,
@@ -19,12 +19,12 @@ import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import Modal from "react-modal";
 import { handleApproveAndSwap } from "@/utils/swap-functions/handleApproveAndSwap";
-import NftDetailsModal from "./SwapModal";
-import MultipleSelectBox from "./MultipleSelectBox";
+import NftDetailsModal from "./helpers/SwapModal";
+import MultipleSelectBox from "./helpers/MultipleSelectBox";
 import { swapNftToTokens } from "@/utils/swap-functions/swapNftToTokens";
 import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handleMultipleNftSwap";
 import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
-import { Loading } from "./Loading";
+import { Loading } from "./helpers/Loading";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { ExternalLinkIcon } from "@chakra-ui/icons";

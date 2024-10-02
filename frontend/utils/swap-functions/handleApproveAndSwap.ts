@@ -1,7 +1,7 @@
 // src/utils/swapUtils.js
 import { toUtf8 } from "@cosmjs/encoding";
 import { toast } from "react-toastify";
-import { queryNftsByAddress } from "@/utils/queryNfts";
+import { queryNftsByAddress } from "@/utils/queries/queryNfts";
 
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 

@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import Image from 'next/image';
-import swap from '../../public/swap.png';
-import faq from '../../images/faq.png';
+import swap from '../../../images/swap.png';
+import faq from '../../../images/faq.png';
 
 const sideNavItems = [
   { icon: swap, id: "swapping" },

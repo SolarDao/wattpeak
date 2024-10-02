@@ -13,13 +13,13 @@ import {
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/balances/junoBalances";
-import { queryStakers } from "@/utils/queryStaker";
-import { queryStakingConfig } from "@/utils/queryStakingConfig";
+import { queryStakers } from "@/utils/queries/queryStaker";
+import { queryStakingConfig } from "@/utils/queries/queryStakingConfig";
 import Confetti from "react-confetti";
 import { toast } from "react-toastify";
 import Modal from "react-modal";
 import { CloseIcon } from "@chakra-ui/icons";
-import { Loading } from "./Loading";
+import { Loading } from "./helpers/Loading";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { WalletStatus } from "cosmos-kit";
 

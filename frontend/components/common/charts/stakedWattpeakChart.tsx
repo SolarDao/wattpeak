@@ -6,6 +6,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { color } from '@chakra-ui/react';
 
 // Register necessary chart components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -13,9 +14,10 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 type StakedWattpeakPieChartProps = {
   totalStaked: number;
   totalMinted: number;
+  inputColor: string;
 };
 
-const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalStaked, totalMinted }) => {
+const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalStaked, totalMinted, inputColor }) => {
   const data = {
     labels: ['Staked', 'Unstaked'],
     datasets: [
@@ -27,10 +29,17 @@ const StakedWattpeakPieChart: React.FC<StakedWattpeakPieChartProps> = ({ totalSt
   };
 
   const options = {
+    responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'bottom' as const,
+        labels: {
+          boxWidth: 10, // Width of the legend box (smaller square)
+          boxHeight: 10, // Optional: Set to make it a square
+          padding: 10, // Optional: Spacing between legend items
+          color: inputColor,
+        },
       },
     },
   };

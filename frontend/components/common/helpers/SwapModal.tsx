@@ -106,7 +106,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solarheroes.png")}
+              src={require("../../../images/solarheroes.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -117,7 +117,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
           </Box>
           <Box display="flex" justifyContent="center" alignItems="center">
             <Image
-              src={require("../../images/yellowarrow.png")}
+              src={require("../../../images/yellowarrow.png")}
               alt={"arrow"}
               width={20}
               height={20}
@@ -134,7 +134,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solartoken.png")}
+              src={require("../../../images/solartoken.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -156,7 +156,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solartoken.png")}
+              src={require("../../../images/solartoken.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -167,7 +167,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
           </Box>
           <Box display="flex" justifyContent="center" alignItems="center">
             <Image
-              src={require("../../images/yellowarrow.png")}
+              src={require("../../../images/yellowarrow.png")}
               alt={"arrow"}
               width={20}
               height={20}
@@ -184,7 +184,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solarheroes.png")}
+              src={require("../../../images/solarheroes.png")}
               alt={"Solar"}
               width={40}
               height={40}

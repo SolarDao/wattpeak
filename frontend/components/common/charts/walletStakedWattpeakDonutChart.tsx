@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -7,17 +7,19 @@ import {
   Legend,
   Title,
 } from 'chart.js';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
 // Register required components
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
+
 type DonutChartProps = {
   totalMinted: number;
   totalStaked: number;
+  inputColor: string;
 };
 
-const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => {
+const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked, inputColor }) => {
   const data = {
     labels: ['Staked', 'Unstaked'],
     datasets: [
@@ -34,6 +36,12 @@ const DonutChart: React.FC<DonutChartProps> = ({ totalMinted, totalStaked }) => 
     plugins: {
       legend: {
         position: 'bottom' as const,
+        labels: {
+          boxWidth: 10, // Width of the legend box (smaller square)
+          boxHeight: 10, // Optional: Set to make it a square
+          padding: 10, // Optional: Spacing between legend items
+          color: inputColor,
+        },
       },
     },
   };

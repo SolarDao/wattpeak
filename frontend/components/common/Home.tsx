@@ -1,21 +1,21 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { queryStakers } from "../../utils/queryStaker";
+import { queryStakers } from "../../utils/queries/queryStaker";
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
 import { getStargazeBalances } from "@/utils/balances/stargazeBalances";
 import { Flex, Button, Heading, Center } from "@chakra-ui/react";
 import Carousel from "react-multi-carousel";
 import Modal from "react-modal";
-import { queryProjects } from "@/utils/queryProjects";
+import { queryProjects } from "@/utils/queries/queryProjects";
 import Image from "next/image";
-import { queryTotalWattpeakStaked } from "@/utils/queryTotalWattpeakStaked";
+import { queryTotalWattpeakStaked } from "@/utils/queries/queryTotalWattpeakStaked";
 import { CloseIcon } from "@chakra-ui/icons";
-import { Loading } from "./Loading";
+import { Loading } from "./helpers/Loading";
 import { responsive } from "@/styles/responsiveCarousel";
-import { formatDenom } from "@/utils/formatDenoms";
-import DonutChart from "./walletStakedWattpeakDonutChart";
-import WattpeakPieChart from "./MintedWattpeakChart";
-import StakedWattpeakPieChart from "./stakedWattpeakChart";
+import { formatDenom } from "@/utils/balances/formatDenoms";
+import DonutChart from "./charts/walletStakedWattpeakDonutChart";
+import WattpeakPieChart from "./charts/MintedWattpeakChart";
+import StakedWattpeakPieChart from "./charts/stakedWattpeakChart";
 import { useChain } from "@cosmos-kit/react";
 import { WalletStatus } from "@cosmos-kit/core";
 
@@ -209,7 +209,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   return (
     <Box color={inputColor}>
       <Flex
-        gap="40px"
+        gap="60px"
         justifyContent="center"
         alignItems="center"
         flexWrap="wrap"
@@ -221,18 +221,26 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             alignItems="center" // Center the content horizontally
           >
             <Heading
+              display={"flex"}
+              gap={"5px"}
+              textAlign="left"
               marginBottom="10px"
+              marginLeft="15px"
               color={inputColor}
-              fontSize="20px"
+              fontSize="22px"
               lineHeight="19.36px"
             >
-              Portfolio
+              <Box>Portfolio</Box>
+              <Image
+                src={require("../../images/crypto-wallet.png")}
+                width={22}
+                alt={"Hallo"}
+              />
             </Heading>{" "}
             <Flex
               flexDirection="row"
               width="100%" // Ensure it takes full width of the container
               gap="10px"
-              paddingBottom="20px"
               borderRadius="23px"
               backgroundColor={backgroundColor}
               flexWrap="wrap"
@@ -246,10 +254,12 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   color={inputColor}
                   marginBottom="2px"
                 >
-                  My Wallet
+                  Balances
                 </Heading>
                 {filteredBalances.length === 0 ? (
-                  <Center height="200px" width="200px">No balances in Wallet</Center>
+                  <Center height="200px" width="200px">
+                    No balances in Wallet
+                  </Center>
                 ) : (
                   filteredBalances.map((balance) => (
                     <Box
@@ -274,10 +284,12 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   marginTop="0px"
                   color={inputColor}
                 >
-                  WattPeak Distribution
+                  Staked WattPeak
                 </Heading>
                 {stakerMintedWattpeak === 0 && stakerStakedWattpeak === 0 ? (
-                  <Center height="200px" width="200px">No WattPeak in Wallet</Center>
+                  <Center height="200px" width="200px">
+                    No WattPeak in Wallet
+                  </Center>
                 ) : (
                   <DonutChart
                     totalMinted={parseFloat(
@@ -286,6 +298,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                     totalStaked={parseFloat(
                       (stakerStakedWattpeak / 1000000).toFixed(2)
                     )}
+                    inputColor={inputColor}
                   />
                 )}
               </Box>
@@ -295,27 +308,40 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         <Center>
           <Flex height="auto" flexDirection="column" alignItems="center">
             <Heading
+              display={"flex"}
+              gap={"5px"}
               textAlign="left"
               marginBottom="10px"
               color={inputColor}
-              fontSize="20px"
+              fontSize="22px"
               lineHeight="19.36px"
             >
-              Tokens Global
+              <Box>Tokens Global</Box>
+              <Image
+                src={require("../../images/pngegg.png")}
+                width={22}
+                alt={"Hallo"}
+              />
             </Heading>{" "}
             <Flex
               flexDirection="row"
               width="100%"
               gap="5px"
               minWidth="200px"
-              paddingBottom="20px"
               borderRadius="23px"
               justifyContent="center"
               backgroundColor={backgroundColor}
               flexWrap="wrap"
             >
               <Box mt={10} padding="20px">
-                <h3 className="headingsHomePage">Minted Wattpeak</h3>
+                <Heading
+                  fontSize="20px"
+                  textAlign="center"
+                  marginTop="0px"
+                  color={inputColor}
+                >
+                  Minted Wattpeak
+                </Heading>
                 <WattpeakPieChart
                   totalMinted={parseFloat(
                     (totalMintedWattpeak / 1000000).toFixed(2)
@@ -323,13 +349,22 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   totalWattpeak={parseFloat(
                     (totalWattpeak / 1000000).toFixed(2)
                   )}
+                  inputColor={inputColor}
                 />
               </Box>
               <Box mt={10} padding="20px">
-                <h3 className="headingsHomePage">Staked WattPeaks</h3>
+                <Heading
+                  fontSize="20px"
+                  textAlign="center"
+                  marginTop="0px"
+                  color={inputColor}
+                >
+                  Staked WattPeak
+                </Heading>
                 <StakedWattpeakPieChart
                   totalStaked={totalStakedWattpeak / 1000000}
                   totalMinted={totalMintedWattpeak / 1000000}
+                  inputColor={inputColor}
                 />
               </Box>
             </Flex>
@@ -338,15 +373,22 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
       </Flex>
       <Box mt={10} width="90%" margin="auto">
         <Heading
-          fontSize="20px"
+          display={"flex"}
+          gap={"5px"}
           textAlign="left"
-          paddingLeft="15px"
+          marginBottom="10px"
+          marginLeft="15px"
           color={inputColor}
-          marginBottom="5px"
-          marginTop="20px"
+          fontSize="22px"
+          lineHeight="19.36px"
         >
-          Projects
-        </Heading>
+          <Box>Projects</Box>
+          <Image
+            src={require("../../images/solar-panel.png")}
+            width={24}
+            alt={"Hallo"}
+          />
+        </Heading>{" "}
         <Carousel
           responsive={responsive}
           infinite={false}
@@ -363,19 +405,20 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                 src={require("../../images/panel.png")}
                 alt={project.name}
               />
-              <Box mt={4}>
+              <Box mt={4} display="flex" justifyContent="center" flexDirection="column" alignItems="center">
                 <h4>{project.name}</h4>
                 <Button
                   onClick={() =>
                     openModal({
                       name: project.name,
                       projectId: project.projectId,
-                      minted_wattpeak_count: project.minted_wattpeak_count || 0, // Ensure default value
-                      max_wattpeak: project.max_wattpeak || 0, // Ensure default value
+                      minted_wattpeak_count: project.minted_wattpeak_count || 0,
+                      max_wattpeak: project.max_wattpeak || 0,
                       description:
-                        project.description || "No description available.", // Ensure default description
+                        project.description || "No description available.",
                     })
                   }
+                  width="130px"
                   className="projectButton"
                   color={inputColor}
                   borderColor={borderColor}
@@ -438,7 +481,9 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             <Flex
               flexDirection="column"
               alignItems="center"
-              marginTop="20px"
+              justifyContent="center"
+              gap="20px"
+              marginTop="10px"
               padding="0"
             >
               <Image
@@ -446,20 +491,27 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                 alt={selectedProject.name}
               />
 
-              <h2>{selectedProject.name}</h2>
-              <p>{selectedProject.description}</p>
-              <p>
+              <Heading
+                marginTop="5px"
+                marginBottom="0px"
+                textAlign="center"
+                fontSize="20px"
+              >
+                {selectedProject.name}
+              </Heading>
+              <Box textAlign="center">{selectedProject.description}</Box>
+              <Box>
                 Max WattPeak:{" "}
                 {parseFloat(
                   (selectedProject.max_wattpeak / 1000000).toFixed(2)
                 )}
-              </p>
-              <p>
+              </Box>
+              <Box>
                 Minted WattPeak:{" "}
                 {parseFloat(
                   (selectedProject.minted_wattpeak_count / 1000000).toFixed(2)
                 )}
-              </p>
+              </Box>
             </Flex>
           </Box>
         )}

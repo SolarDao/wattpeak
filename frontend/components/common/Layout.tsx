@@ -6,7 +6,7 @@ import { Staking } from "./Staking";
 import { Swap } from "./Swap";
 import { Faq } from "./Faq";
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
-import { SideNavbar } from "./SideNavbar";
+import { SideNavbar } from "./helpers/SideNavbar";
 import { Home } from "./Home";
 import { Flex } from "@chakra-ui/react";
 import { useChain } from "@cosmos-kit/react";
