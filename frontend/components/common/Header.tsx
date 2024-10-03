@@ -14,13 +14,13 @@ type HeaderProps = {
 const navItemsDesktop = [
   { name: "Mint", id: "minting" },
   { name: "Stake", id: "staking" },
-  { name: "Swap", id: "swapping" },
+  { name: "NFT Swap", id: "swapping" },
   { name: "FAQ", id: "faq" },
 ];
 const navItemsMobile = [
   { name: "Mint", id: "minting" },
   { name: "Stake", id: "staking" },
-  { name: "Swap", id: "swapping" },
+  { name: "NFT Swap", id: "swapping" },
   { name: "FAQ", id: "faq" },
 ];
 

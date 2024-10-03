@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Center, Button, Box } from "@chakra-ui/react";
 import { useMediaQuery } from "react-responsive";
+import { formatBalanceNoConversion } from "@/utils/balances/formatBalances";
 
 interface NftDetailsModalProps {
   isOpen: boolean;
@@ -204,7 +205,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Amount to receive: {config.price_per_nft} {config.token_denom}
+              {tabIndex === 0 ? "Amount to receive:" : "Total Price: "}
+              {formatBalanceNoConversion(Number(config.price_per_nft))} $SOLAR
             </Center>
           </Box>
           <Center>
@@ -232,7 +234,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Price for NFT: {config.price_per_nft} {config.token_denom}
+              {tabIndex === 0 ? "Amount to receive: " : "Total Price: "}
+              {formatBalanceNoConversion(Number(config.price_per_nft))} $SOLAR
             </Center>
           </Box>
           <Center>

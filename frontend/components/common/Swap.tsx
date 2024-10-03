@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { queryNftsByAddress, queryNftConfig } from "../../utils/queries/queryNfts";
+import {
+  queryNftsByAddress,
+  queryNftConfig,
+} from "../../utils/queries/queryNfts";
 import { useChain } from "@cosmos-kit/react";
 import {
   Tabs,
@@ -28,6 +31,10 @@ import { Loading } from "./helpers/Loading";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
+import {
+  formatBalance,
+  formatBalanceNoConversion,
+} from "@/utils/balances/formatBalances";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -136,11 +143,6 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     }
   };
 
-  const formatUstars = (amount: string): string => {
-    const amountNum = parseInt(amount, 10);
-    return (amountNum / 1_000_000).toFixed(6); // Adjust decimals as needed
-  };
-
   useEffect(() => {
     if (!swapping && status === "Connected" && address) {
       fetchUstarsBalance();
@@ -247,11 +249,10 @@ export const Swap = ({ chainName }: { chainName: string }) => {
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           {!isMobile && (
-            <Box>
+            <Box paddingLeft="15px">
               <Heading
                 fontSize="20px"
                 textAlign="left"
-                paddingLeft="15px"
                 color={inputColor}
                 marginBottom="5px"
               >
@@ -259,12 +260,18 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               </Heading>
               <Box>
                 {address && (
-                  <Box fontSize="12px" textAlign="center">
+                  <Box fontSize="12px" textAlign="center" marginBottom="3px">
                     <Box color={inputColor}>
-                      Solar balance: {formatUstars(ustarsBalance)}
+                      Wallet balance: {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
+
                     </Box>
                   </Box>
                 )}
+                <Box fontSize="12px" textAlign="center" color={inputColor}>
+                   Price per NFT:{" "}
+                  {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
+                  $SOLAR
+                </Box>
               </Box>
             </Box>
           )}
@@ -350,7 +357,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                   No NFTs found in Wallet
                 </Box>
                 <Box textAlign="center" fontSize="20px">
-                  Swap Solar Tokens for Cyber Solar Heroes{" "}
+                  Swap $SOLAR for Cyber Solar Heroes{" "}
                   <Link
                     onClick={() => setTabIndex(1)}
                     color="blue.500"
@@ -375,7 +382,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     Stargaze <ExternalLinkIcon mx="2px" />
                   </Link>
                   <Box textAlign="center" marginTop="20px">
-                    Trade Solar tokens on{" "}
+                    Trade $SOLAR on{" "}
                     <Link
                       isExternal
                       textDecoration="underline"
@@ -446,7 +453,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     Stargaze <ExternalLinkIcon mx="2px" />
                   </Link>
                   <br />
-                  or Solar tokens on{" "}
+                  or $SOLAR on{" "}
                   <Link
                     isExternal
                     textDecoration="underline"

@@ -51,7 +51,7 @@ export const Footer = () => {
             isExternal
             textDecoration="underline"
             title="Trade Solar on Osmosois"
-            href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
+            href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
           >
             <Tooltip
               label="Cyber Solar Heroes on Stargaze"
@@ -102,10 +102,10 @@ export const Footer = () => {
           <Link
             isExternal
             textDecoration="underline"
-            href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
+            href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
           >
             <Tooltip
-              label="Solar on Osmosis"
+              label="$SOLAR on Osmosis"
               aria-label="Osmosis Tooltip"
               placement="right-start"
             >

@@ -2,6 +2,7 @@ import React from "react";
 import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import { Button, Box } from "@chakra-ui/react";
+import { formatBalanceNoConversion } from "@/utils/balances/formatBalances";
 
 interface MultipleSelectBoxProps {
   tabIndex: number;
@@ -32,6 +33,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
     "rgba(0, 0, 0, 0.07)",
     "rgba(35, 35, 35, 1)"
   );
+  const inputColor = useColorModeValue("black", "white");
 
   return (
     <Box
@@ -43,12 +45,15 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
       alignItems="center"
       gap={10}
     >
-      <Box display="flex" flexDirection="column" alignItems="center" gap={10}>
-        <Box display="flex" gap={25} alignItems="center">
+      <Box display="flex" flexDirection="column" alignItems="center" gap={5}>
+        <Box display="flex" gap={5} alignItems="center">
           {(tabIndex === 0 ? walletNfts : contractNfts)
             .filter((nft) => selectedMultipleNfts.includes(nft.tokenId))
+            .slice(0, 5) // Limit to first 5 images
             .map((nft) => (
-              <Box key={nft.tokenId} width={30} height={30} position="relative">
+              <Box key={nft.tokenId} width={50} height={50}>
+                {" "}
+                {/* Match image box size */}
                 <Image
                   src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
                     nft.image.replace("ipfs://", "")
@@ -60,7 +65,23 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
                 />
               </Box>
             ))}
+          {selectedMultipleNfts.length > 5 && (
+            <Box
+              width={40} // Match the image box width
+              height={40} // Match the image box height
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              background={modalBackgroundColor}
+              borderRadius="10px"
+              fontSize="14px"
+              color={inputColor}
+            >
+              +{selectedMultipleNfts.length - 5}
+            </Box>
+          )}
         </Box>
+
         <Button
           onClick={() => setSelectedMultipleNfts([])}
           background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
@@ -74,6 +95,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
           Clear
         </Button>
       </Box>
+
       <>
         <Box display="flex" justifyContent="Center" gap={20} marginBottom={10}>
           {tabIndex === 0 ? (
@@ -193,13 +215,11 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
           >
             <Box>Amount of NFTs: {selectedMultipleNfts.length}</Box>
             <Box>
-              {tabIndex === 0 ? <> Amount to receive: </> : <>Total Price: </>}
-              {parseFloat(
-                (
-                  Number(config.price_per_nft) * selectedMultipleNfts.length
-                ).toString()
+              {tabIndex === 0 ? "Amount to receive:" : "Total Price: "}
+              {formatBalanceNoConversion(
+                Number(config.price_per_nft) * selectedMultipleNfts.length
               )}{" "}
-              {config.token_denom}
+              $SOLAR
             </Box>
           </Box>
         </Box>

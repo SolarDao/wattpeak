@@ -18,6 +18,7 @@ import WattpeakPieChart from "./charts/MintedWattpeakChart";
 import StakedWattpeakPieChart from "./charts/stakedWattpeakChart";
 import { useChain } from "@cosmos-kit/react";
 import { WalletStatus } from "@cosmos-kit/core";
+import { formatBalance } from "../../utils/balances/formatBalances";
 
 interface HomeProps {
   initialLoading: boolean;
@@ -196,26 +197,6 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   if (loading) {
     return <Loading />;
   }
-
-  const formatBalance = (amount: number) => {
-    let num = amount / 1000000;
-  
-    // Determine suffix and adjust number accordingly
-    let suffix = "";
-    if (num >= 1000000) {
-      num = num / 1000000;
-      suffix = "m";
-    } else if (num >= 1000) {
-      num = num / 1000;
-      suffix = "k";
-    }
-  
-    // Format to 2 decimal places, and remove trailing zeroes
-    let formattedNum = num.toFixed(2).replace(/\.?0+$/, "");
-  
-    return `${formattedNum}${suffix}`;
-  };
-  
 
   const filteredBalances = balances
     .filter(
