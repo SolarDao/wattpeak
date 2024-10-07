@@ -7,7 +7,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "ipfs.io",
+        hostname: "gateway.pinata.cloud/",
         port: "",
         pathname: "/ipfs/**",
       },
