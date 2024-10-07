@@ -19,7 +19,7 @@ try {
   console.log('Received ipfsPath:', ipfsPath);
 
   // Construct the IPFS gateway URL
-  const ipfsGatewayUrl = `https://gateway.pinata.cloud/ipfs/${sanitizedIpfsPath}`;
+  const ipfsGatewayUrl = `https://ipfs.io/ipfs/${sanitizedIpfsPath}`;
 
   console.log('Fetching image from:', ipfsGatewayUrl);
 

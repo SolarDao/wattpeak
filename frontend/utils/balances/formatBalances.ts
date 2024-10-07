@@ -5,10 +5,10 @@ export const formatBalance = (amount: number) => {
     let suffix = "";
     if (num >= 1000000) {
       num = num / 1000000;
-      suffix = "m";
+      suffix = "M";
     } else if (num >= 1000) {
       num = num / 1000;
-      suffix = "k";
+      suffix = "K";
     }
   
     // Format to 2 decimal places, and remove trailing zeroes

@@ -35,6 +35,7 @@ import {
   formatBalance,
   formatBalanceNoConversion,
 } from "@/utils/balances/formatBalances";
+import { formatDenom } from "@/utils/balances/formatDenoms";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -86,6 +87,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const [config, setConfig] = useState({
     price_per_nft: "5",
     token_denom: "ustars",
+    swap_fee: "",
+    swap_fee_denom: "",
+    swap_fee_address: "",
   });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
@@ -124,7 +128,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
         setSigningClient(null);
         setWalletNfts([]);
         setContractNfts([]);
-        setConfig({ price_per_nft: "5", token_denom: "ustars" }); // Reset to default or null
+        setConfig({ price_per_nft: "5", token_denom: "ustars", swap_fee:"200", swap_fee_denom: "ustars", swap_fee_address: "" }); // Reset to default or null
         setLoading(false);
       }
     };
@@ -241,6 +245,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     setSelectedMultipleNfts([]);
   };
 
+  console.log(config);
+  
+
   if (loading || swapping) {
     return <Loading />;
   }
@@ -263,15 +270,17 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                   <Box fontSize="12px" textAlign="center" marginBottom="3px">
                     <Box color={inputColor}>
                       Wallet balance: {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
-
                     </Box>
                   </Box>
                 )}
-                <Box fontSize="12px" textAlign="center" color={inputColor}>
+                <Box fontSize="12px" textAlign="center" color={inputColor} marginBottom="3px">
                    Price per NFT:{" "}
                   {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
                   $SOLAR
                 </Box>
+                  <Box fontSize="12px" textAlign="center" color={inputColor}>
+                    Swap fee: {formatBalance(Number(config.swap_fee))} {formatDenom(config.swap_fee_denom)}
+                  </Box>
               </Box>
             </Box>
           )}

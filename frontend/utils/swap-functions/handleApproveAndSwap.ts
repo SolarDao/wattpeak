@@ -51,10 +51,16 @@ export const handleApproveAndSwap = async ({
       },
     };
 
-    const approvalQueryResult = await signingClient.queryContractSmart(
-      HERO_CONTRACT_ADDRESS,
-      approvalQueryMsg
-    );
+    let approvalQueryResult;
+    try {
+      approvalQueryResult = await signingClient.queryContractSmart(
+        HERO_CONTRACT_ADDRESS,
+        approvalQueryMsg
+      );
+    } catch (error) {
+      // If the query fails, assume approval is not granted
+      approvalQueryResult = null;
+    }
 
     // If approval is not granted or expired, add approval message
     if (!approvalQueryResult || !approvalQueryResult.approval) {
@@ -62,7 +68,9 @@ export const handleApproveAndSwap = async ({
         approve: {
           spender: SWAP_CONTRACT_ADDRESS,
           token_id: selectedNft,
-          expires: { at_time: Math.floor(Date.now() / 1000) + 60 }, // Expires in 1 hour
+          expires: {
+            at_time: ((Math.floor(Date.now() / 1000) + 3600) * 1e9).toString(), // Expires in 1 hour (nanoseconds)
+          },
         },
       };
 
@@ -94,9 +102,21 @@ export const handleApproveAndSwap = async ({
       },
     });
 
+    // Add swap fee transaction
+    const swapFeeMsg = {
+      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
+      value: {
+        fromAddress: address,
+        toAddress: SWAP_CONTRACT_ADDRESS,
+        amount: [{ denom: config.swap_fee_denom, amount: config.swap_fee }],
+      },
+    };
+
+    msgs.push(swapFeeMsg);
+
     const fee = {
       amount: [{ denom: "ustars", amount: "7500" }],
-      gas: (200000 + 300000).toString(),
+      gas: (200000 + 300000 + 80000).toString(), // Adjusted gas to include the extra message
     };
 
     // Sign and broadcast the transaction
