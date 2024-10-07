@@ -123,6 +123,7 @@ export const Faq = () => {
       mx="auto"
       py={8}
       px={4}
+      color={inputColor}
     >
       <Heading as="h1" size="xl" mb={6} textAlign="center">
         Frequently Asked Questions

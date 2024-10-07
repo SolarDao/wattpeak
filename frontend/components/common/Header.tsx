@@ -207,7 +207,6 @@ export const Header: React.FC<HeaderProps> = ({
               display="flex"
               alignItems="center"
               gap="$13"
-              marginLeft="-70px"
             >
               {navItemsDesktop.map((item) => (
                 <Box
@@ -227,7 +226,12 @@ export const Header: React.FC<HeaderProps> = ({
                 </Box>
               ))}
             </Box>
-            <Wallet chainName={chainName} onChainChange={handleChainChange} />
+            <Box width="200px" display="flex" justifyContent="end"> 
+                <Wallet
+                  chainName={chainName}
+                  onChainChange={handleChainChange}
+                />
+            </Box>
           </Box>
         )}
       </Box>
