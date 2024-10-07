@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction, useState } from "react";
-import SolarDaoImage from "../../images/solarDAO.png";
+import SolarDaoImage from "../../images/solar.png";
 import Image from "next/image";
 import { slide as Menu } from "react-burger-menu";
 import { useMediaQuery } from "react-responsive";
@@ -120,20 +120,24 @@ export const Header: React.FC<HeaderProps> = ({
               // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
-                fontWeight: "$medium",
-                fontSize: { mobile: "$xl", tablet: "$2xl" },
                 cursor: "pointer",
-                textDecoration: "none",
                 marginTop: "15px",
                 marginBottom: "15px",
               }}
+              display="flex"
+              gap="8px"
+              justifyContent="center"
+              alignItems="center"
             >
               <Image
                 src={SolarDaoImage}
                 alt={"SolarDaoImage"}
-                width={200}
-                height={25}
+                width={20}
+                height={30}
               />
+              <Box fontSize="19px" fontWeight="bold" letterSpacing="0.4em">
+                olarDAO
+              </Box>
             </Box>
             <Menu
               right
@@ -172,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
             px="$4"
             maxHeight="$18"
             marginBottom="$0"
-            marginLeft="$10"
+            marginLeft="$11"
             marginRight="$10"
           >
             <Box
@@ -180,22 +184,31 @@ export const Header: React.FC<HeaderProps> = ({
               // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
-                fontWeight: "$medium",
-                fontSize: { mobile: "$xl", tablet: "$2xl" },
                 cursor: "pointer",
-                textDecoration: "none",
                 marginTop: "15px",
                 marginBottom: "15px",
               }}
+              display="flex"
+              gap="5px"
+              alignItems="center"
+              width="200px"
             >
               <Image
                 src={SolarDaoImage}
                 alt={"SolarDaoImage"}
-                width={200}
-                height={25}
+                width={22}
+                height={35}
               />
+              <Box fontSize="22px" fontWeight="bold" letterSpacing="0.4em">
+                olarDAO
+              </Box>
             </Box>
-            <Box display="flex" alignItems="center" gap="$13" marginLeft="-22px">
+            <Box
+              display="flex"
+              alignItems="center"
+              gap="$13"
+              marginLeft="-70px"
+            >
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}

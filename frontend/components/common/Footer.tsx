@@ -42,7 +42,7 @@ export const Footer = () => {
           <Icon name={useColorModeValue("moonLine", "sunLine")} />
         </Button>
         {!isMobile && (
-          <Box flex="1" textAlign="center">
+          <Box flex="1" textAlign="center" marginLeft="85px">
             &copy; 2024 Solar DAO. All rights reserved.
           </Box>
         )}
