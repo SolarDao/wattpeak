@@ -103,7 +103,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
         );
     }
   };
-  console.log(currentSection);
 
   if (currentSection === "faq") {
     return (
