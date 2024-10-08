@@ -251,8 +251,6 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     setSelectedMultipleNfts([]);
   };
 
-  console.log(config);
-
   if (loading || swapping) {
     return <Loading />;
   }

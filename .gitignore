@@ -1,4 +1,5 @@
 .idea
+.env
 
 # CosmWasm and rust related
 /Cargo.lock

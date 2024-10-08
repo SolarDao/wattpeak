@@ -77,9 +77,6 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      console.log("stargazeAddress", stargazeAddress);
-      console.log("junoAddress", junoAddress);
-
       try {
         if (
           walletStatus === WalletStatus.Connected &&
