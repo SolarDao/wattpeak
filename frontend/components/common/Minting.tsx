@@ -20,6 +20,8 @@ import { handleMint } from "@/utils/swap-functions/handleMint";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
+import { formatDenom } from "@/utils/balances/formatDenoms";
+import { formatBalance } from "@/utils/balances/formatBalances";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
@@ -295,79 +297,97 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   return (
     <Container>
-        <Box mt={10} width="100%" margin="auto">
+      <Box mt={10} width="100%" margin="auto">
+        <Heading
+          fontSize="25px"
+          color={inputColor}
+          marginBottom="0px"
+          marginTop="22px"
+          textAlign="center"
+          paddingLeft={isMobile ? "0px" : "15px"}
+        >
+          WattPeak Minter
+        </Heading>
+        <Box
+          className="headerBox"
+          display="flex"
+          justifyContent={isMobile ? "center" : "space-between"}
+          marginBottom="5px"
+          marginRight="25px"
+          marginLeft="10px"
+        >
           <Box
-            className="headerBox"
-            display="flex"
-            justifyContent={isMobile ? "center" : "space-between"}
-            marginBottom="10px"
+            fontSize="20px"
+            fontWeight={700}
+            color={inputColor}
+            marginTop="10px"
+            paddingLeft={isMobile ? "0px" : "15px"}
           >
-            <Heading
-              fontSize="20px"
-              color={inputColor}
-              marginBottom="5px"
-              marginTop="20px"
-              paddingLeft={isMobile ? "0px" : "15px"}
-            >
-              Available Projects to Mint
-            </Heading>
-            {!isMobile && (
-              <Heading
-                fontSize="20px"
-                color={inputColor}
-                marginBottom="5px"
-                marginTop="20px"
-                paddingRight="15px"
-              >
-                Price per wattpeak: {config?.minting_price.amount}{" "}
-                {config?.minting_price.denom}
-              </Heading>
-            )}
+            Projects
           </Box>
-          <Carousel
-            responsive={responsive}
-            infinite={true}
-            arrows={true}
-            containerClass="carousel-container"
-          >
-            {!projects.length && <p>No projects available to mint</p>}
-            {projects.map((project) => (
-              <Box
-                key={project.projectId}
-                className="project-card"
-                backgroundColor={backgroundColor}
-              >
-                <Image src={require("../../images/panel.png")} alt={"Hallo"} />
-                <div className="project-details">
-                  <p>{project.name}</p>
-                  <p>
-                    Available WattPeak:{" "}
-                    {(project.max_wattpeak - project.minted_wattpeak_count) /
-                      1000000}
-                  </p>
-                  <Button
-                    className={
-                      selectedProjectId === project.projectId
-                        ? "projectButtonSelected"
-                        : "projectButton"
-                    }
-                    color={
-                      selectedProjectId === project.projectId
-                        ? "black"
-                        : inputColor
-                    }
-                    borderColor={borderColor}
-                    onClick={() => setSelectedProjectId(project.projectId)}
-                  >
-                    {selectedProjectId === project.projectId
-                      ? "Selected"
-                      : "Select"}
-                  </Button>
-                </div>
+          {!isMobile && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              gap={10}
+            >
+              <Box fontSize="12px" textAlign="center" marginBottom="3px">
+                Price per WP: {formatBalance(config?.minting_price.amount)}{" "}
+                {formatDenom(config?.minting_price.denom)}
               </Box>
-            ))}
-          </Carousel>
+
+              <Box fontSize="12px" textAlign="center" marginBottom="3px">
+                Minting Fee: {config?.minting_fee_percentage * 100}%
+              </Box>
+            </Box>
+          )}
         </Box>
+        <Carousel
+          responsive={responsive}
+          infinite={true}
+          arrows={true}
+          containerClass="carousel-container"
+        >
+          {!projects.length && <p>No projects available to mint</p>}
+          {projects.map((project) => (
+            <Box
+              key={project.projectId}
+              className="project-card"
+              backgroundColor={backgroundColor}
+            >
+              <Image src={require("../../images/panel.png")} alt={"Hallo"} />
+              <div className="project-details">
+                <p>{project.name}</p>
+                <p>
+                  Available WattPeak:{" "}
+                  {(project.max_wattpeak - project.minted_wattpeak_count) /
+                    1000000}
+                </p>
+                <Button
+                  className={
+                    selectedProjectId === project.projectId
+                      ? "projectButtonSelected"
+                      : "projectButton"
+                  }
+                  color={
+                    selectedProjectId === project.projectId
+                      ? "black"
+                      : inputColor
+                  }
+                  borderColor={borderColor}
+                  onClick={() => setSelectedProjectId(project.projectId)}
+                >
+                  {selectedProjectId === project.projectId
+                    ? "Selected"
+                    : "Select"}
+                </Button>
+              </div>
+            </Box>
+          ))}
+        </Carousel>
+      </Box>
       <Box className="mintBox">
         <Box className="inputWrapper" backgroundColor={backgroundColor}>
           <div className="balanceWrapper">

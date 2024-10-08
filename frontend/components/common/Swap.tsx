@@ -128,7 +128,13 @@ export const Swap = ({ chainName }: { chainName: string }) => {
         setSigningClient(null);
         setWalletNfts([]);
         setContractNfts([]);
-        setConfig({ price_per_nft: "5", token_denom: "ustars", swap_fee:"200", swap_fee_denom: "ustars", swap_fee_address: "" }); // Reset to default or null
+        setConfig({
+          price_per_nft: "5",
+          token_denom: "ustars",
+          swap_fee: "200",
+          swap_fee_denom: "ustars",
+          swap_fee_address: "",
+        }); // Reset to default or null
         setLoading(false);
       }
     };
@@ -246,22 +252,22 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   };
 
   console.log(config);
-  
 
   if (loading || swapping) {
     return <Loading />;
   }
   return (
-    <div>
+    <Box>
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           {!isMobile && (
             <Box paddingLeft="15px">
               <Heading
                 fontSize="20px"
-                textAlign="left"
+                textAlign="center"
                 color={inputColor}
                 marginBottom="5px"
+                marginTop="0"
               >
                 Cyber Solar Heroes
               </Heading>
@@ -269,18 +275,25 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 {address && (
                   <Box fontSize="12px" textAlign="center" marginBottom="3px">
                     <Box color={inputColor}>
-                      Wallet balance: {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
+                      Wallet Balance:{" "}
+                      {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
                     </Box>
                   </Box>
                 )}
-                <Box fontSize="12px" textAlign="center" color={inputColor} marginBottom="3px">
-                   Price per NFT:{" "}
+                <Box
+                  fontSize="12px"
+                  textAlign="center"
+                  color={inputColor}
+                  marginBottom="3px"
+                >
+                  Price per NFT:{" "}
                   {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
                   $SOLAR
                 </Box>
-                  <Box fontSize="12px" textAlign="center" color={inputColor}>
-                    Swap fee: {formatBalance(Number(config.swap_fee))} {formatDenom(config.swap_fee_denom)}
-                  </Box>
+                <Box fontSize="12px" textAlign="center" color={inputColor}>
+                  Swap Fee: {formatBalance(Number(config.swap_fee))}{" "}
+                  {formatDenom(config.swap_fee_denom)}
+                </Box>
               </Box>
             </Box>
           )}
@@ -536,7 +549,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           color={""}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

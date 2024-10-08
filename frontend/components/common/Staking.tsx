@@ -10,6 +10,7 @@ import {
   Button,
   Input,
   Center,
+  Heading,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/balances/junoBalances";
@@ -26,7 +27,7 @@ import { WalletStatus } from "cosmos-kit";
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
 
-const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM ||  "";
+const wattPeakDenom = process.env.NEXT_PUBLIC_WATTPEAK_DENOM || "";
 
 interface Config {
   rewards_percentage: number;
@@ -34,12 +35,17 @@ interface Config {
 }
 
 export const Staking = ({ chainName }: { chainName: string }) => {
-  const { connect, status, address, getSigningCosmWasmClient, wallet } = useChain(chainName);
+  const { connect, status, address, getSigningCosmWasmClient, wallet } =
+    useChain(chainName);
 
   const [amount, setAmount] = useState(0.0);
-  const [staker, setStakers] = useState<{ wattpeak_staked: number, claimable_rewards: number }>({ wattpeak_staked: 0, claimable_rewards: 0 });
+  const [staker, setStakers] = useState<{
+    wattpeak_staked: number;
+    claimable_rewards: number;
+  }>({ wattpeak_staked: 0, claimable_rewards: 0 });
   const [balances, setBalances] = useState<any[]>([]);
-  const [signingClient, setSigningClient] = useState<SigningCosmWasmClient | null>(null);
+  const [signingClient, setSigningClient] =
+    useState<SigningCosmWasmClient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | Error>(null);
   const [confetti, setConfetti] = useState(false);
@@ -48,12 +54,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const wattpeakBalance =
     balances.length > 0 && wattPeakDenom
-      ? balances.find((balance: any) => balance.denom === wattPeakDenom)?.amount /
-        1000000
+      ? balances.find((balance: any) => balance.denom === wattPeakDenom)
+          ?.amount / 1000000
       : 0;
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
-  
-  const inputColor = useColorModeValue("black", "white");
+
+  const inputColor = useColorModeValue("#000000B2", "white");
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
@@ -64,26 +70,29 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       if (status === WalletStatus.Connected && address) {
         try {
           setLoading(true);
-  
+
           // Start all fetch operations simultaneously
           const clientPromise = getSigningCosmWasmClient();
           const balancesPromise = getBalances(address);
           const stakersPromise = queryStakers(address);
           const configPromise = queryStakingConfig();
-  
+
           // Wait for all promises to resolve
-          const [client, balancesResult, stakersResult, configResult] = await Promise.all([
-            clientPromise,
-            balancesPromise,
-            stakersPromise,
-            configPromise,
-          ]);
-  
+          const [client, balancesResult, stakersResult, configResult] =
+            await Promise.all([
+              clientPromise,
+              balancesPromise,
+              stakersPromise,
+              configPromise,
+            ]);
+
           setSigningClient(client as any);
           setBalances([...balancesResult] as any[]);
-          setStakers(stakersResult || { wattpeak_staked: 0, claimable_rewards: 0 });
+          setStakers(
+            stakersResult || { wattpeak_staked: 0, claimable_rewards: 0 }
+          );
           setConfig(configResult);
-  
+
           // Handle claimable rewards
           const claimable = stakersResult.claimable_rewards / 1000000;
           setClaimableRewards(claimable);
@@ -106,22 +115,20 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         setLoading(false);
       }
     };
-  
+
     fetchClient();
   }, [status, address, getSigningCosmWasmClient]);
-  
-  
 
   const handleStake = async () => {
     if (!signingClient) {
       console.error("Signing client not initialized");
       return;
     }
-  
+
     const stakeMsg = {
       stake: {},
     };
-  
+
     try {
       setLoading(true);
       await signingClient.execute(
@@ -135,13 +142,13 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         "",
         [{ denom: wattPeakDenom, amount: (amount * 1000000).toString() }]
       );
-  
+
       // Fetch updated balances and staker info in parallel
       const [balancesResult, stakersResult] = await Promise.all([
         getBalances(address),
         queryStakers(address || ""),
       ]);
-  
+
       setBalances([...balancesResult] as any[]);
       setStakers(stakersResult);
       setClaimableRewards(stakersResult.claimable_rewards / 1000000);
@@ -155,7 +162,6 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       setLoading(false);
     }
   };
-  
 
   const handleUnstake = async () => {
     if (!signingClient) {
@@ -253,18 +259,26 @@ export const Staking = ({ chainName }: { chainName: string }) => {
 
   if (loading || !config) {
     return <Loading />;
-  }  
+  }
 
   return (
     <Box
       width="100%"
       maxW="500px"
       mx="auto"
-      mt="50px"
+      mt="25px"
       p="20px"
       borderRadius="10px"
       borderWidth="1px"
     >
+      <Heading
+        fontSize="25px"
+        color={inputColor}
+        marginBottom="40px"
+        textAlign="center"
+      >
+        WattPeak Staker
+      </Heading>
       {claimableRewards > 0 && (
         <Modal
           isOpen={modalIsOpen}
@@ -427,7 +441,10 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 color={inputColor}
                 onChange={(e) =>
                   setAmount(
-                    Math.min(parseFloat(e.target.value), staker.wattpeak_staked / 1000000)
+                    Math.min(
+                      parseFloat(e.target.value),
+                      staker.wattpeak_staked / 1000000
+                    )
                   )
                 }
                 min="1"
