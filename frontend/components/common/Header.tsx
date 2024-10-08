@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { Wallet } from "../wallet/Wallet"; // Adjust the import path if necessary
 import { Dispatch, SetStateAction, useState } from "react";
-import SolarDaoImage from "../../public/Group 121.png";
+import SolarDaoImage from "../../images/solar.png";
 import Image from "next/image";
 import { slide as Menu } from "react-burger-menu";
 import { useMediaQuery } from "react-responsive";
@@ -12,13 +12,15 @@ type HeaderProps = {
 };
 
 const navItemsDesktop = [
-  { name: "Minting", id: "minting" },
-  { name: "Staking", id: "staking" },
+  { name: "Mint", id: "minting" },
+  { name: "Stake", id: "staking" },
+  { name: "NFT Swap", id: "swapping" },
+  { name: "FAQ", id: "faq" },
 ];
 const navItemsMobile = [
-  { name: "Minting", id: "minting" },
-  { name: "Staking", id: "staking" },
-  { name: "Swapping", id: "swapping" },
+  { name: "Mint", id: "minting" },
+  { name: "Stake", id: "staking" },
+  { name: "NFT Swap", id: "swapping" },
   { name: "FAQ", id: "faq" },
 ];
 
@@ -118,20 +120,24 @@ export const Header: React.FC<HeaderProps> = ({
               // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
-                fontWeight: "$medium",
-                fontSize: { mobile: "$xl", tablet: "$2xl" },
                 cursor: "pointer",
-                textDecoration: "none",
                 marginTop: "15px",
                 marginBottom: "15px",
               }}
+              display="flex"
+              gap="8px"
+              justifyContent="center"
+              alignItems="center"
             >
               <Image
                 src={SolarDaoImage}
                 alt={"SolarDaoImage"}
-                width={200}
-                height={25}
+                width={20}
+                height={30}
               />
+              <Box fontSize="19px" fontWeight="bold" letterSpacing="0.4em">
+                olarDAO
+              </Box>
             </Box>
             <Menu
               right
@@ -148,7 +154,11 @@ export const Header: React.FC<HeaderProps> = ({
                   {item.name}
                 </a>
               ))}
-              <div>
+              <div
+                onClick={() => {
+                  setMenuOpen(false);
+                }}
+              >
                 <Wallet
                   chainName={chainName}
                   onChainChange={handleChainChange}
@@ -166,31 +176,38 @@ export const Header: React.FC<HeaderProps> = ({
             px="$4"
             maxHeight="$18"
             marginBottom="$0"
-            marginLeft="$6"
+            marginLeft="$11"
             marginRight="$10"
           >
             <Box
-            
               as="a"
               // @ts-ignore
               onClick={() => handleItemClick("home")}
               attributes={{
-                fontWeight: "$medium",
-                fontSize: { mobile: "$xl", tablet: "$2xl" },
                 cursor: "pointer",
-                textDecoration: "none",
                 marginTop: "15px",
                 marginBottom: "15px",
               }}
+              display="flex"
+              gap="5px"
+              alignItems="center"
+              width="200px"
             >
               <Image
                 src={SolarDaoImage}
                 alt={"SolarDaoImage"}
-                width={200}
-                height={25}
+                width={22}
+                height={35}
               />
+              <Box fontSize="22px" fontWeight="bold" letterSpacing="0.4em">
+                olarDAO
+              </Box>
             </Box>
-            <Box display="flex" alignItems="center" gap="$15" marginLeft="20px">
+            <Box
+              display="flex"
+              alignItems="center"
+              gap="$13"
+            >
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}
@@ -203,15 +220,18 @@ export const Header: React.FC<HeaderProps> = ({
                     cursor: "pointer",
                     textDecoration: "none",
                     color: "white",
-                    
-                    
                   }}
                 >
                   {item.name}
                 </Box>
               ))}
             </Box>
-            <Wallet chainName={chainName} onChainChange={handleChainChange} />
+            <Box width="200px" display="flex" justifyContent="end"> 
+                <Wallet
+                  chainName={chainName}
+                  onChainChange={handleChainChange}
+                />
+            </Box>
           </Box>
         )}
       </Box>

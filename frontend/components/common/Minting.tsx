@@ -7,19 +7,21 @@ import {
   useColorModeValue,
 } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
-import { queryProjects } from "../../utils/queryProjects";
+import { queryProjects } from "../../utils/queries/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
 import { Button, Heading, Input } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
-import { Loading } from "./Loading";
-import { queryNftConfig } from "@/utils/queryAndMintNft";
+import { Loading } from "./helpers/Loading";
+import { queryNftConfig } from "@/utils/queries/queryAndMintNft";
 import { responsive } from "@/styles/responsiveCarousel";
-import { handleMint } from "@/utils/handleMint";
+import { handleMint } from "@/utils/swap-functions/handleMint";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { toast } from "react-toastify";
+import { formatDenom } from "@/utils/balances/formatDenoms";
+import { formatBalance } from "@/utils/balances/formatBalances";
 
 const nftContractAddress =
   process.env.NEXT_PUBLIC_WATTPEAK_MINTER_CONTRACT_ADDRESS || "";
@@ -49,8 +51,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     minted_wattpeak_count: number;
   }
 
-  const { status, address, getSigningCosmWasmClient } =
-    useChain(chainName);
+  const { status, address, getSigningCosmWasmClient } = useChain(chainName);
   const [config, setConfig] = useState<Config | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -70,7 +71,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
-  )
+  );
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   const handleMintClick = async () => {
@@ -149,7 +150,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   const handleMaxClick = () => {
     const numericAmount = Number(amount);
-  
+
     if (!isNaN(numericAmount)) {
       setAmount(Number(numericAmount.toFixed(6)));
     } else {
@@ -290,41 +291,65 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     setPrice(payable_amount);
   }, [amount]);
 
-  if (loading || !config || !projects.length) {
+  if (loading || !config || !projects.length || minting) {
     return <Loading />;
   }
 
   return (
     <Container>
-      <Box>
+      <Box mt={10} width="100%" margin="auto">
+        <Heading
+          fontSize="25px"
+          color={inputColor}
+          marginBottom="0px"
+          marginTop="22px"
+          textAlign="center"
+          paddingLeft={isMobile ? "0px" : "15px"}
+        >
+          WattPeak Minter
+        </Heading>
         <Box
           className="headerBox"
           display="flex"
           justifyContent={isMobile ? "center" : "space-between"}
+          marginBottom="5px"
+          marginRight="25px"
+          marginLeft="10px"
         >
-          <Heading
+          <Box
             fontSize="20px"
+            fontWeight={700}
             color={inputColor}
-            marginBottom="5px"
-            marginTop="20px"
+            marginTop="10px"
             paddingLeft={isMobile ? "0px" : "15px"}
           >
-            Available Projects to Mint
-          </Heading>
+            Projects
+          </Box>
           {!isMobile && (
-            <Heading
-              fontSize="20px"
-              color={inputColor}
-              marginBottom="5px"
-              marginTop="20px"
-              paddingRight="15px"
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              gap={10}
             >
-              Price per wattpeak: {config?.minting_price.amount}{" "}
-              {config?.minting_price.denom}
-            </Heading>
+              <Box fontSize="12px" textAlign="center" marginBottom="3px">
+                Price per WP: {formatBalance(config?.minting_price.amount)}{" "}
+                {formatDenom(config?.minting_price.denom)}
+              </Box>
+
+              <Box fontSize="12px" textAlign="center" marginBottom="3px">
+                Minting Fee: {config?.minting_fee_percentage * 100}%
+              </Box>
+            </Box>
           )}
         </Box>
-        <Carousel responsive={responsive} infinite={false} arrows={true}>
+        <Carousel
+          responsive={responsive}
+          infinite={true}
+          arrows={true}
+          containerClass="carousel-container"
+        >
           {!projects.length && <p>No projects available to mint</p>}
           {projects.map((project) => (
             <Box
@@ -431,7 +456,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           disabled={minting}
           className="mintBtn"
         >
-          {minting ? <Spinner size="sm" color="black" /> : "MINT"}
+          MINT
         </button>
       </Box>
     </Container>

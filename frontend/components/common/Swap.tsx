@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { queryNftsByAddress, queryNftConfig } from "../../utils/queryNfts";
+import {
+  queryNftsByAddress,
+  queryNftConfig,
+} from "../../utils/queries/queryNfts";
 import { useChain } from "@cosmos-kit/react";
 import {
-  Center,
   Tabs,
   TabList,
   TabPanels,
@@ -13,19 +15,27 @@ import {
   ListItem,
   UnorderedList,
   Heading,
+  Link,
+  Flex,
 } from "@chakra-ui/react";
-import { Spinner, useColorModeValue } from "@interchain-ui/react";
+import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import Modal from "react-modal";
 import { handleApproveAndSwap } from "@/utils/swap-functions/handleApproveAndSwap";
-import NftDetailsModal from "./SwapModal";
-import MultipleSelectBox from "./MultipleSelectBox";
+import NftDetailsModal from "./helpers/SwapModal";
+import MultipleSelectBox from "./helpers/MultipleSelectBox";
 import { swapNftToTokens } from "@/utils/swap-functions/swapNftToTokens";
 import { handleMultipleNftSwapFunctionUtil } from "@/utils/swap-functions/handleMultipleNftSwap";
 import { handleMultipleSolarSwapUtilFunction } from "@/utils/swap-functions/handleMultipleSolarSwap";
-import { Loading } from "./Loading";
+import { Loading } from "./helpers/Loading";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import {
+  formatBalance,
+  formatBalanceNoConversion,
+} from "@/utils/balances/formatBalances";
+import { formatDenom } from "@/utils/balances/formatDenoms";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -46,8 +56,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
   const [contractNfts, setContractNfts] = useState<Nft[]>([]);
+  const [ustarsBalance, setUstarsBalance] = useState<string>("0");
   const [loading, setLoading] = useState(true);
-  const [swapping, setSwapping] = useState(false);  
+  const [swapping, setSwapping] = useState(false);
   const [error, setError] = useState(null);
   const [signingClient, setSigningClient] =
     useState<SigningCosmWasmClient | null>(null);
@@ -76,23 +87,33 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const [config, setConfig] = useState({
     price_per_nft: "5",
     token_denom: "ustars",
+    swap_fee: "",
+    swap_fee_denom: "",
+    swap_fee_address: "",
   });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+
   useEffect(() => {
     const fetchNftsAndConfig = async () => {
       if (status === "Connected" && address && address.startsWith("stars")) {
         try {
           setLoading(true);
-  
-          // Start all fetch operations simultaneously
-          const [client, walletNftsResult, contractNftsResult, configResult] = await Promise.all([
-            getSigningCosmWasmClient(),
-            queryNftsByAddress(address),
-            queryNftsByAddress(SWAP_CONTRACT_ADDRESS),
-            queryNftConfig(),
-          ]);
-  
+
+          const client = await getSigningCosmWasmClient();
           setSigningClient(client as unknown as SigningCosmWasmClient);
+
+          // Fetch balance of ustars
+          const balanceResult = await client.getBalance(address, "ustars");
+          setUstarsBalance(balanceResult.amount);
+
+          // Start fetch operations simultaneously after client is ready
+          const [walletNftsResult, contractNftsResult, configResult] =
+            await Promise.all([
+              queryNftsByAddress(address),
+              queryNftsByAddress(SWAP_CONTRACT_ADDRESS),
+              queryNftConfig(),
+            ]);
+
           setWalletNfts(walletNftsResult);
           setContractNfts(contractNftsResult);
           setConfig(configResult);
@@ -107,35 +128,37 @@ export const Swap = ({ chainName }: { chainName: string }) => {
         setSigningClient(null);
         setWalletNfts([]);
         setContractNfts([]);
-        setConfig({ price_per_nft: "5", token_denom: "ustars" }); // Reset to default or null
+        setConfig({
+          price_per_nft: "5",
+          token_denom: "ustars",
+          swap_fee: "200",
+          swap_fee_denom: "ustars",
+          swap_fee_address: "",
+        }); // Reset to default or null
         setLoading(false);
       }
     };
-  
+
     fetchNftsAndConfig();
   }, [status, address, getSigningCosmWasmClient]);
-  
-  
+
+  const fetchUstarsBalance = async () => {
+    if (signingClient && address) {
+      try {
+        const balanceResult = await signingClient.getBalance(address, "ustars");
+        setUstarsBalance(balanceResult.amount);
+      } catch (error) {
+        console.error("Error fetching ustars balance:", error);
+      }
+    }
+  };
 
   useEffect(() => {
-    const fetchClient = async () => {
-      if (status === "Connected" && address) {
-        try {
-          const client = await getSigningCosmWasmClient();
-          setSigningClient(client as unknown as SigningCosmWasmClient);
-        } catch (err) {
-          setError(err as React.SetStateAction<null>);
-          console.error("Error getting signing client:", err);
-        }
-      } else {
-        // Wallet is not connected
-        setSigningClient(null);
-      }
-    };
-  
-    fetchClient();
-  }, [status, address, getSigningCosmWasmClient]);
-  
+    if (!swapping && status === "Connected" && address) {
+      fetchUstarsBalance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swapping]);
 
   const handleNftClick = (nft: { tokenId: string }) => {
     if (multipleSelect) {
@@ -228,25 +251,53 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     setSelectedMultipleNfts([]);
   };
 
+  console.log(config);
+
   if (loading || swapping) {
     return <Loading />;
   }
   return (
-    <div>
+    <Box>
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           {!isMobile && (
-            <Heading
-              fontSize="20px"
-              textAlign="left"
-              paddingLeft="15px"
-              color={inputColor}
-              marginBottom="5px"
-            >
-              Cyber Solar Heroes
-            </Heading>
+            <Box paddingLeft="15px">
+              <Heading
+                fontSize="20px"
+                textAlign="center"
+                color={inputColor}
+                marginBottom="5px"
+                marginTop="0"
+              >
+                Cyber Solar Heroes
+              </Heading>
+              <Box>
+                {address && (
+                  <Box fontSize="12px" textAlign="center" marginBottom="3px">
+                    <Box color={inputColor}>
+                      Wallet Balance:{" "}
+                      {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
+                    </Box>
+                  </Box>
+                )}
+                <Box
+                  fontSize="12px"
+                  textAlign="center"
+                  color={inputColor}
+                  marginBottom="3px"
+                >
+                  Price per NFT:{" "}
+                  {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
+                  $SOLAR
+                </Box>
+                <Box fontSize="12px" textAlign="center" color={inputColor}>
+                  Swap Fee: {formatBalance(Number(config.swap_fee))}{" "}
+                  {formatDenom(config.swap_fee_denom)}
+                </Box>
+              </Box>
+            </Box>
           )}
-          <TabList>
+          <TabList marginLeft="42px">
             <Tab
               className="swapTabs"
               borderColor={borderColor}
@@ -260,7 +311,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 zIndex: 2,
               }}
             >
-              Swap NFTs
+              Sell NFTs
             </Tab>
             <Tab
               className="swapTabs"
@@ -275,7 +326,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 zIndex: 2,
               }}
             >
-              Swap Solar
+              Buy NFTs
             </Tab>
           </TabList>
           {!isMobile && (
@@ -315,10 +366,58 @@ export const Swap = ({ chainName }: { chainName: string }) => {
         <TabPanels className="swapPanels" background={backgroundColor}>
           <TabPanel>
             {walletNfts.length === 0 ? (
-              <Center height={500} fontSize={30}>
-                {" "}
-                No NFTs found in your wallet
-              </Center>
+              <Box
+                display="flex"
+                flexDirection="column"
+                gap="10px"
+                height={500}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Box fontSize={30} marginBottom="30px" textAlign="center">
+                  {" "}
+                  No NFTs found in Wallet
+                </Box>
+                <Box textAlign="center" fontSize="20px">
+                  Swap $SOLAR for Cyber Solar Heroes{" "}
+                  <Link
+                    onClick={() => setTabIndex(1)}
+                    color="blue.500"
+                    textDecoration="underline"
+                    cursor="pointer"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    here
+                  </Link>{" "}
+                  <br />
+                  or trade on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Stargaze <ExternalLinkIcon mx="2px" />
+                  </Link>
+                  <Box textAlign="center" marginTop="20px">
+                    Trade $SOLAR on{" "}
+                    <Link
+                      isExternal
+                      textDecoration="underline"
+                      href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
+                      _hover={{
+                        color: "purple",
+                      }}
+                    >
+                      Osmosis <ExternalLinkIcon mx="2px" />
+                    </Link>
+                  </Box>
+                </Box>
+              </Box>
             ) : (
               <UnorderedList className="nftList">
                 {walletNfts.map((nft, index) => (
@@ -335,10 +434,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     onClick={() => handleNftClick(nft)}
                   >
                     <Image
-                      src={nft.image.replace(
-                        "ipfs://",
-                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-                      )}
+                      src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+                        nft.image.replace("ipfs://", "")
+                      )}`}
                       alt={nft.name}
                       className="nftImage"
                       width={150}
@@ -352,10 +450,44 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           </TabPanel>
           <TabPanel>
             {contractNfts.length === 0 ? (
-              <Center height={500} fontSize={30}>
-                {" "}
-                No NFTs available in contract
-              </Center>
+              <Box
+                display="flex"
+                flexDirection="column"
+                gap="10px"
+                height={500}
+                justifyContent="center"
+                alignItems="center"
+              >
+                <Box fontSize={30} marginBottom="30px" textAlign="center">
+                  {" "}
+                  No NFTs available in contract
+                </Box>
+                <Box textAlign="center" fontSize="20px">
+                  Trade Cyber Solar Heroes on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://www.stargaze.zone/m/stars1jxdssrjmuqxhrrajw4rlcdsmhf0drjf5kl4mdp339vng6lesd62s4uqy9q/tokens"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Stargaze <ExternalLinkIcon mx="2px" />
+                  </Link>
+                  <br />
+                  or $SOLAR on{" "}
+                  <Link
+                    isExternal
+                    textDecoration="underline"
+                    href="https://app.osmosis.zone/?from=USDT&sellOpen=false&buyOpen=false&to=SOLAR"
+                    _hover={{
+                      color: "purple",
+                    }}
+                  >
+                    Osmosis <ExternalLinkIcon mx="2px" />
+                  </Link>
+                </Box>
+              </Box>
             ) : (
               <UnorderedList className="nftList">
                 {contractNfts.map((nft, index) => (
@@ -372,10 +504,9 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                     onClick={() => handleNftClick(nft)}
                   >
                     <Image
-                      src={nft.image.replace(
-                        "ipfs://",
-                        process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-                      )}
+                      src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+                        nft.image.replace("ipfs://", "")
+                      )}`}
                       alt={nft.name}
                       className="nftImage"
                       width={150}
@@ -418,7 +549,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           color={""}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

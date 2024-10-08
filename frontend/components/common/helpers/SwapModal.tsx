@@ -1,14 +1,11 @@
 import React from "react";
 import Modal from "react-modal";
-import {useColorModeValue } from "@interchain-ui/react";
+import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import { CloseIcon } from "@chakra-ui/icons";
-import {
-    Center,
-    Button,
-    Box,
-  } from "@chakra-ui/react";
+import { Center, Button, Box } from "@chakra-ui/react";
 import { useMediaQuery } from "react-responsive";
+import { formatBalanceNoConversion } from "@/utils/balances/formatBalances";
 
 interface NftDetailsModalProps {
   isOpen: boolean;
@@ -42,7 +39,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
   if (!selectedNftDetails) {
     return null;
   }
-  
+
   const customStyles = {
     content: {
       top: "52%",
@@ -61,7 +58,6 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       zIndex: 1000,
     },
   };
-  
 
   return (
     <Modal
@@ -84,10 +80,9 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       </button>
       <Center>
         <Image
-          src={selectedNftDetails.image.replace(
-            "ipfs://",
-            process.env.NEXT_PUBLIC_IPFS_GATEWAY || ""
-          )}
+          src={`/api/image-proxy?ipfsPath=${encodeURIComponent(
+            selectedNftDetails.image.replace("ipfs://", "")
+          )}`}
           alt={selectedNftDetails.name}
           width={200}
           height={200}
@@ -112,7 +107,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solarheroes.png")}
+              src={require("../../../images/solarheroes.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -123,7 +118,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
           </Box>
           <Box display="flex" justifyContent="center" alignItems="center">
             <Image
-              src={require("../../images/yellowarrow.png")}
+              src={require("../../../images/yellowarrow.png")}
               alt={"arrow"}
               width={20}
               height={20}
@@ -140,7 +135,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solartoken.png")}
+              src={require("../../../images/solartoken.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -162,7 +157,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solartoken.png")}
+              src={require("../../../images/solartoken.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -173,7 +168,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
           </Box>
           <Box display="flex" justifyContent="center" alignItems="center">
             <Image
-              src={require("../../images/yellowarrow.png")}
+              src={require("../../../images/yellowarrow.png")}
               alt={"arrow"}
               width={20}
               height={20}
@@ -190,7 +185,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius={15}
           >
             <Image
-              src={require("../../images/solarheroes.png")}
+              src={require("../../../images/solarheroes.png")}
               alt={"Solar"}
               width={40}
               height={40}
@@ -210,7 +205,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Price for NFT: {config.price_per_nft} {config.token_denom}
+              {tabIndex === 0 ? "Amount to receive:" : "Total Price: "}
+              {formatBalanceNoConversion(Number(config.price_per_nft))} $SOLAR
             </Center>
           </Box>
           <Center>
@@ -238,7 +234,8 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             fontSize={14}
           >
             <Center>
-              Amount to receive: {config.price_per_nft} {config.token_denom}
+              {tabIndex === 0 ? "Amount to receive: " : "Total Price: "}
+              {formatBalanceNoConversion(Number(config.price_per_nft))} $SOLAR
             </Center>
           </Box>
           <Center>

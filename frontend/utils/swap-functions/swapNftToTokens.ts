@@ -1,4 +1,5 @@
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { SigningCosmWasmClient, MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
+import { coins, MsgSendEncodeObject, Coin } from "@cosmjs/stargate";
 import { toast } from "react-toastify";
 
 interface SwapNftToTokensParams {
@@ -8,6 +9,9 @@ interface SwapNftToTokensParams {
   config: {
     price_per_nft: string;
     token_denom: string;
+    swap_fee_denom: string;
+    swap_fee: string;
+    swap_fee_address: string;
   };
   HERO_CONTRACT_ADDRESS: string | undefined;
   SWAP_CONTRACT_ADDRESS: string | undefined;
@@ -37,20 +41,22 @@ export const swapNftToTokens = async ({
   setSwapping,
   walletNfts,
 }: SwapNftToTokensParams) => {
-  if (!signingClient || !selectedNft) {
-    console.error("Signing client or selected NFT not initialized");
+  if (!signingClient || !selectedNft || !address) {
+    console.error("Signing client, selected NFT, or address not initialized");
     return;
   }
 
   try {
     setSwapping(true);
 
+    // Prepare the send_nft message to transfer the NFT to the swap contract
     const msgDetails = JSON.stringify({
       amount: config.price_per_nft,
       denom: config.token_denom,
     });
-    const msgBase64 = btoa(msgDetails);
-    const swapMsg = {
+
+    const msgBase64 = Buffer.from(msgDetails).toString("base64");
+    const sendNftMsg = {
       send_nft: {
         contract: SWAP_CONTRACT_ADDRESS,
         token_id: selectedNft,
@@ -58,24 +64,55 @@ export const swapNftToTokens = async ({
       },
     };
 
-    const result = await signingClient.execute(
-      address as string, // Sender address
-      HERO_CONTRACT_ADDRESS as string, // Swap Contract address
-      swapMsg, // Swap message
-      {
-        amount: [{ denom: "ustars", amount: "7500" }], // fee
-        gas: "300000", // gas limit
-      }
-    );
+    // Create the execute contract message for send_nft
+    const executeContractMsg: MsgExecuteContractEncodeObject = {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: {
+        sender: address,
+        contract: HERO_CONTRACT_ADDRESS,
+        msg: Buffer.from(JSON.stringify(sendNftMsg)),
+        funds: [], // No funds are sent to the NFT contract
+      },
+    };
 
+    // Create the bank send message to send swap_fee to the swap contract
+    const swapFeeCoin: Coin = {
+      denom: config.swap_fee_denom,
+      amount: config.swap_fee,
+    };
+
+    const sendSwapFeeMsg: MsgSendEncodeObject = {
+      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
+      value: {
+        fromAddress: address,
+        toAddress: SWAP_CONTRACT_ADDRESS,
+        amount: [swapFeeCoin],
+      },
+    };
+
+    // Combine the messages
+    const messages = [executeContractMsg, sendSwapFeeMsg];
+
+    // Estimate fee
+    const fee = {
+      amount: coins(7500, "ustars"), // Adjust fee as needed
+      gas: "300000",
+    };
+
+    // Broadcast the transaction
+    const result = await signingClient.signAndBroadcast(address, messages, fee);
+
+    if (result.code !== 0) {
+      throw new Error(`Transaction failed with code ${result.code}: ${result.rawLog}`);
+    }
+
+    // Update UI and state
     setWalletNfts(walletNfts.filter((nft) => nft.tokenId !== selectedNft));
-    const walletNftsResult = await queryNftsByAddress(address ?? "");
-    setWalletNfts(walletNftsResult); // Adjust based on your query response structure
+    const walletNftsResult = await queryNftsByAddress(address);
+    setWalletNfts(walletNftsResult);
 
-    const contractNftsResult = await queryNftsByAddress(
-      SWAP_CONTRACT_ADDRESS
-    );
-    setContractNfts(contractNftsResult); // Adjust based on your query response structure
+    const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
+    setContractNfts(contractNftsResult);
 
     setSelectedNft(null);
     setModalIsOpen(false);
