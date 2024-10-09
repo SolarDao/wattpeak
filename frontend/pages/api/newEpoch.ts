@@ -62,8 +62,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         fee,
         'Executing new_epoch' // Optional memo
       );
-
-    console.log('Transaction result:');
     // Return success response
     res.status(200).json({ message: 'new_epoch executed successfully.' });
   } catch (error) {

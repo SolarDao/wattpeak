@@ -59,6 +59,25 @@ a {
     margin-left: 10px;
     border-radius: 23px;
   }
+
+  .project-card-home {
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin-bottom: 20%;
+    margin: auto;
+    border-radius: 23px;
+    border: 1px solid #ccc;
+  }
+
+  .project-card-home img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
   
   .project-card img {
     width: 100%;

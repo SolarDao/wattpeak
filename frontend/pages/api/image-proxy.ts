@@ -5,8 +5,6 @@ import axios from 'axios';
 
 export default async function imageProxy(req: NextApiRequest, res: NextApiResponse) {
 const { ipfsPath } = req.query;
-console.log('ipfsPath:', ipfsPath);
-
 
 if (!ipfsPath || typeof ipfsPath !== 'string') {
   return res.status(400).json({ error: 'ipfsPath query parameter is required' });
@@ -16,12 +14,8 @@ try {
   // Sanitize ipfsPath if necessary
   const sanitizedIpfsPath = ipfsPath.replace(/[^a-zA-Z0-9/._-]/g, '');
 
-  console.log('Received ipfsPath:', ipfsPath);
-
   // Construct the IPFS gateway URL
   const ipfsGatewayUrl = `https://ipfs.io/ipfs/${sanitizedIpfsPath}`;
-
-  console.log('Fetching image from:', ipfsGatewayUrl);
 
   // Increase timeout and implement retries if necessary
   // axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
