@@ -10,7 +10,7 @@ import { getBalances } from "@/utils/balances/junoBalances";
 import { queryProjects } from "../../utils/queries/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
-import { Button, Heading, Input } from "@chakra-ui/react";
+import { Button, Heading, Input, Text } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
 import { Loading } from "./helpers/Loading";
@@ -73,6 +73,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     "rgba(52, 52, 52, 1)"
   );
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+
+  const boxShadow = useColorModeValue(
+    "0px 4px 4px rgba(0, 0, 0, 0.25)",
+    "0px 2px 2px rgba(255, 255, 255, 0.726)"
+  );
 
   const handleMintClick = async () => {
     if (!signingClient || !address) {
@@ -323,7 +328,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             marginTop="10px"
             paddingLeft={isMobile ? "0px" : "15px"}
           >
-            Projects
+            Solar Parks
           </Box>
           {!isMobile && (
             <Box
@@ -358,13 +363,13 @@ export const Minting = ({ chainName }: { chainName: string }) => {
               backgroundColor={backgroundColor}
             >
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
-              <div className="project-details">
-                <p>{project.name}</p>
-                <p>
+              <Box className="project-details">
+                <Text>{project.name}</Text>
+                <Text>
                   Available WattPeak:{" "}
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
-                </p>
+                </Text>
                 <Button
                   className={
                     selectedProjectId === project.projectId
@@ -376,6 +381,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
                       ? "black"
                       : inputColor
                   }
+                  //boxShadow={boxShadow}
                   borderColor={borderColor}
                   onClick={() => setSelectedProjectId(project.projectId)}
                 >
@@ -383,21 +389,33 @@ export const Minting = ({ chainName }: { chainName: string }) => {
                     ? "Selected"
                     : "Select"}
                 </Button>
-              </div>
+              </Box>
             </Box>
           ))}
         </Carousel>
       </Box>
       <Box className="mintBox">
-        <Box className="inputWrapper" backgroundColor={backgroundColor}>
-          <div className="balanceWrapper">
-            <span>Juno</span>
+        <Box
+          className="inputWrapper"
+          backgroundColor={backgroundColor}
+          boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+        >
+          <Box className="balanceWrapper">
+            <Text as="span">Juno</Text>
             <br />
-            <span className="balance">Balance: {junoBalance}</span>
-          </div>
-          <button onClick={handleMaxClick} className="maxButtonMinting">
+            <Text as="span" className="balance">
+              Balance: {junoBalance}
+            </Text>
+          </Box>
+          <Button
+            onClick={handleMaxClick}
+            className="maxButtonMinting"
+            color={inputColor}
+            borderColor={borderColor}
+            backgroundColor={backgroundColor}
+          >
             Max
-          </button>
+          </Button>
           <Input
             type="number"
             value={cryptoAmount}
@@ -411,11 +429,18 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           />
         </Box>
         <ArrowForwardIcon className="arrowIcon" boxSize={30} />
-        <Box className="inputWrapper" backgroundColor={backgroundColor}>
-          <div className="balanceWrapper">
-            <span>Wattpeak</span> <br />
-            <span className="balance">Balance: {wattpeakBalance}</span>
-          </div>
+        <Box
+          className="inputWrapper"
+          backgroundColor={backgroundColor}
+          boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+        >
+          <Box className="balanceWrapper">
+            <Text as="span">WattPeak</Text>
+            <br />
+            <Text as="span" className="balance">
+              Balance: {wattpeakBalance}
+            </Text>
+          </Box>
           <Input
             type="number"
             value={amount}
@@ -430,8 +455,12 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         </Box>
       </Box>
       <Box className="mintButtonDetailsBox">
-        <Box className="priceDetails" backgroundColor={backgroundColor}>
-          <h3>
+        <Box
+          className="priceDetails"
+          backgroundColor={backgroundColor}
+          boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+        >
+          <Text fontSize="20px" fontWeight={700}>
             You will pay{" "}
             {parseFloat(
               (
@@ -441,7 +470,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
               ).toFixed(6)
             ).toString()}{" "}
             uJunox for {amount} Wattpeak
-          </h3>
+          </Text>
 
           <p>
             Minting fee:{" "}
@@ -451,13 +480,15 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             uJunox
           </p>
         </Box>
-        <button
+        <Button
           onClick={handleMintClick}
-          disabled={minting}
           className="mintBtn"
+          color={inputColor}
+          borderColor={borderColor}
+          backgroundColor={backgroundColor}
         >
           MINT
-        </button>
+        </Button>
       </Box>
     </Container>
   );

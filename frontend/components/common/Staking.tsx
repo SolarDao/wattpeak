@@ -6,11 +6,14 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  Text,
   Box,
   Button,
   Input,
   Center,
   Heading,
+  Tooltip,
+  border,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/balances/junoBalances";
@@ -59,6 +62,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       : 0;
 
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
+  const borderColor = useColorModeValue("black", "white");
 
   const inputColor = useColorModeValue("#000000B2", "white");
   const backgroundColor = useColorModeValue(
@@ -329,49 +333,69 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       {confetti && <Confetti numberOfPieces={3000} recycle={false} />}
       <Tabs variant="enclosed" onChange={() => setAmount(0)}>
         <TabList className="tabListStaking">
-          <Tab
-            className="stakeTab"
-            borderColor={inputColor}
+          <Tooltip
             color={inputColor}
-            background={backgroundColor}
-            _selected={{
-              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-              color: "black",
-              transform: "translateX(0px)",
-              transition: "transform 0.3s ease",
-              zIndex: 2,
-            }}
+            label="Stake $WP to Earn Rewards"
+            aria-label="Osmosis Tooltip"
+            placement="top"
           >
-            Stake
-          </Tab>
-          <Tab
-            className="stakeTab"
-            borderColor={inputColor}
+            <Tab
+              className="stakeTab"
+              borderColor={inputColor}
+              color={inputColor}
+              background={backgroundColor}
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+              _selected={{
+                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                color: "black",
+                transform: "translateX(0px)",
+                transition: "transform 0.3s ease",
+                zIndex: 2,
+              }}
+            >
+              Stake
+            </Tab>
+          </Tooltip>
+          <Tooltip
             color={inputColor}
-            background={backgroundColor}
-            _selected={{
-              background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-              color: "black",
-              transform: "translateX(0px)",
-              transition: "transform 0.3s ease",
-              zIndex: 2,
-            }}
+            label="Unstake Your Staked $WP"
+            aria-label="Osmosis Tooltip"
+            placement="top"
           >
-            Unstake
-          </Tab>
+            <Tab
+              className="stakeTab"
+              boxShadow="0px 2px 4px rgba(0, 0, 0, 0.5)"
+              borderColor={inputColor}
+              color={inputColor}
+              background={backgroundColor}
+              _selected={{
+                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                color: "black",
+                transform: "translateX(0px)",
+                transition: "transform 0.3s ease",
+                zIndex: 2,
+              }}
+            >
+              Unstake
+            </Tab>
+          </Tooltip>
         </TabList>
         <TabPanels className="tabPanelsStaking">
           <TabPanel>
             <Box
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box className="stakingBalanceWrapper">
-                <p>Balance: {wattpeakBalance}</p>
+                <Text>Balance: {wattpeakBalance}</Text>
                 <Button
                   onClick={() => setAmount(wattpeakBalance)}
                   mb="10px"
                   className="maxButtonStaking"
+                  color={inputColor}
+                  backgroundColor={backgroundColor}
+                  borderColor={borderColor}
                 >
                   Max
                 </Button>
@@ -395,7 +419,11 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Box>
             {amount > 0 && (
               <>
-                <Box className="stakeDetails" backgroundColor={backgroundColor}>
+                <Box
+                  className="stakeDetails"
+                  backgroundColor={backgroundColor}
+                  boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+                >
                   <h3>You will stake {amount} WattPeak</h3>
                   <p>
                     Current ROI: {config.rewards_percentage * 100} % per year
@@ -412,7 +440,11 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                   <Button
                     onClick={handleStake}
                     disabled={loading}
-                    className="stakeBtn"
+                    className="mintBtn"
+                    width="50%"
+                    borderColor={borderColor}
+                    backgroundColor={backgroundColor}
+                    color={inputColor}
                   >
                     {loading ? <Spinner /> : "STAKE"}
                   </Button>
@@ -424,6 +456,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             <Box
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box className="stakingBalanceWrapper">
                 <p>Staked: {staker.wattpeak_staked / 1000000}</p>
@@ -431,6 +464,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                   onClick={() => setAmount(staker.wattpeak_staked / 1000000)}
                   mb="10px"
                   className="maxButtonStaking"
+                  color={inputColor}
+                  backgroundColor={backgroundColor}
+                  borderColor={borderColor}
                 >
                   Max
                 </Button>
@@ -456,14 +492,22 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Box>
             {amount > 0 && (
               <>
-                <Box className="stakeDetails" backgroundColor={backgroundColor}>
+                <Box
+                  className="stakeDetails"
+                  backgroundColor={backgroundColor}
+                  boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+                >
                   <h3>You will unstake {amount} WattPeak</h3>
                 </Box>
                 <Center>
                   <Button
                     onClick={handleUnstake}
                     disabled={loading}
-                    className="stakeBtn"
+                    className="mintBtn"
+                    width="50%"
+                    borderColor={borderColor}
+                    backgroundColor={backgroundColor}
+                    color={inputColor}
                   >
                     {loading ? <Spinner /> : "UNSTAKE"}
                   </Button>

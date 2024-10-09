@@ -15,8 +15,10 @@ try {
   const sanitizedIpfsPath = ipfsPath.replace(/[^a-zA-Z0-9/._-]/g, '');
 
   // Construct the IPFS gateway URL
-  const ipfsGatewayUrl = `https://ipfs.io/ipfs/${sanitizedIpfsPath}`;
+  const ipfsGatewayUrl = `https://solar.mypinata.cloud/ipfs/${sanitizedIpfsPath}`;
 
+  console.log('Fetching image from IPFS:', ipfsGatewayUrl);
+  
   // Increase timeout and implement retries if necessary
   // axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
 

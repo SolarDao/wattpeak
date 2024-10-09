@@ -176,22 +176,15 @@ export const Header: React.FC<HeaderProps> = ({
             px="$4"
             maxHeight="$18"
             marginBottom="$0"
-            marginLeft="$11"
+            marginLeft="$12"
             marginRight="$10"
           >
             <Box
               as="a"
+              class="logoText"
               // @ts-ignore
               onClick={() => handleItemClick("home")}
-              attributes={{
-                cursor: "pointer",
-                marginTop: "15px",
-                marginBottom: "15px",
-              }}
-              display="flex"
-              gap="5px"
-              alignItems="center"
-              width="200px"
+              
             >
               <Image
                 src={SolarDaoImage}
@@ -199,38 +192,27 @@ export const Header: React.FC<HeaderProps> = ({
                 width={22}
                 height={35}
               />
-              <Box fontSize="22px" fontWeight="bold" letterSpacing="0.4em">
+              <Box>
                 olarDAO
               </Box>
             </Box>
-            <Box
-              display="flex"
-              alignItems="center"
-              gap="$13"
-            >
+            <Box display="flex" alignItems="center" gap="$13">
               {navItemsDesktop.map((item) => (
                 <Box
                   key={item.id}
+                  class="nav-item"
                   as="a"
                   // @ts-ignore
                   onClick={() => handleItemClick(item.id)}
-                  attributes={{
-                    fontWeight: "$medium",
-                    fontSize: { mobile: "$xl", tablet: "$2xl" },
-                    cursor: "pointer",
-                    textDecoration: "none",
-                    color: "white",
-                  }}
+                  fontSize="23px"
+                  cursor="pointer"
                 >
                   {item.name}
                 </Box>
               ))}
             </Box>
-            <Box width="200px" display="flex" justifyContent="end"> 
-                <Wallet
-                  chainName={chainName}
-                  onChainChange={handleChainChange}
-                />
+            <Box width="200px" display="flex" justifyContent="end">
+              <Wallet chainName={chainName} onChainChange={handleChainChange} />
             </Box>
           </Box>
         )}

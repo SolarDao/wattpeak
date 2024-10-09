@@ -82,6 +82,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
     marginRight: "auto",
     borderRadius: "23px",
     border: "2px solid #ccc",
+    boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.5)",
   };
 
   const defaultCenter = {
@@ -275,6 +276,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               backgroundColor={backgroundColor}
               flexWrap="wrap"
               justifyContent="center"
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Flex flexDirection="column" gap="25px" padding="20px">
                 <Heading
@@ -340,7 +342,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           </Flex>
         </Center>
         <Center>
-          <Flex height="auto" flexDirection="column" alignItems="center">
+          <Flex height="auto" flexDirection="column" alignItems="center" >
             <Heading
               display={"flex"}
               gap={"5px"}
@@ -366,6 +368,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               justifyContent="center"
               backgroundColor={backgroundColor}
               flexWrap="wrap"
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box mt={10} padding="20px">
                 <Heading
@@ -405,7 +408,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           </Flex>
         </Center>
       </Flex>
-      <Box mt={10} width="90%" margin="auto">
+      <Box mt={10} width="90%" margin="auto" > 
         <Heading
           display={"flex"}
           gap={"5px"}
@@ -417,7 +420,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           fontSize="22px"
           lineHeight="19.36px"
         >
-          <Box>Projects</Box>
+          <Box>Solar Parks</Box>
           <Image
             src={require("../../images/solar-panel.png")}
             width={24}
@@ -431,6 +434,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           paddingBottom="18px"
           paddingTop="18px"
           marginBottom="5%"
+          boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
         >
           <LoadScript googleMapsApiKey={apiKey}>
             <GoogleMap
@@ -470,6 +474,8 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               <Box
                 key={project.projectId}
                 backgroundColor={backgroundColorProjects}
+                boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+                marginBottom="20px"
                 className="project-card-home"
               >
                 <Image
