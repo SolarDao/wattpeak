@@ -1,8 +1,7 @@
 import React from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import { Loading } from "./Loading";
 
-const GoogleMapComponent = (projects) => {
+const GoogleMapComponent = (projects: { projects: any[]; }) => {
   const mapStyles = {
     height: "400px",
     width: "97%",
