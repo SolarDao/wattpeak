@@ -27,6 +27,7 @@
     "@emotion/styled": "^11.10.6",
     "@interchain-ui/react": "1.23.22",
     "@interchain-ui/react-no-ssr": "^0.1.6",
+    "@react-google-maps/api": "^2.19.3",
     "add": "^2.0.6",
     "chain-registry": "1.25.4",
     "chart.js": "^4.4.3",

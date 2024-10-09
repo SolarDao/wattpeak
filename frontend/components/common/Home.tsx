@@ -19,7 +19,14 @@ import StakedWattpeakPieChart from "./charts/stakedWattpeakChart";
 import { useChain } from "@cosmos-kit/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { formatBalance } from "../../utils/balances/formatBalances";
+import dynamic from "next/dynamic";
 
+const GoogleMapComponent = dynamic(
+  () => import("./helpers/GoogleMapComponent"),
+  {
+    ssr: false,
+  }
+);
 interface HomeProps {
   initialLoading: boolean;
   walletStatus: WalletStatus;
@@ -384,6 +391,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           gap={"5px"}
           textAlign="left"
           marginBottom="10px"
+          marginTop="30px"
           marginLeft="15px"
           color={inputColor}
           fontSize="22px"
@@ -396,6 +404,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             alt={"Hallo"}
           />
         </Heading>{" "}
+        <GoogleMapComponent projects={projects} />
         <Carousel
           responsive={responsive}
           infinite={false}
