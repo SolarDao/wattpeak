@@ -54,9 +54,10 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const wattpeakBalance =
     balances.length > 0 && wattPeakDenom
-      ? balances.find((balance: any) => balance.denom === wattPeakDenom)
-          ?.amount / 1000000
+      ? (balances.find((balance: any) => balance.denom === wattPeakDenom)
+          ?.amount || 0) / 1000000
       : 0;
+
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
 
   const inputColor = useColorModeValue("#000000B2", "white");
@@ -359,14 +360,13 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             Unstake
           </Tab>
         </TabList>
-
         <TabPanels className="tabPanelsStaking">
           <TabPanel>
             <Box
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
             >
-              <div className="stakingBalanceWrapper">
+              <Box className="stakingBalanceWrapper">
                 <p>Balance: {wattpeakBalance}</p>
                 <Button
                   onClick={() => setAmount(wattpeakBalance)}
@@ -375,17 +375,18 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 >
                   Max
                 </Button>
-              </div>
+              </Box>
               <Input
                 type="number"
                 value={amount}
                 className="inputStaking"
                 color={inputColor}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const inputValue = parseFloat(e.target.value);
                   setAmount(
-                    Math.min(parseFloat(e.target.value), wattpeakBalance)
-                  )
-                }
+                    Math.min(Math.max(inputValue, 0), wattpeakBalance) // Ensure inputValue is not less than zero
+                  );
+                }}
                 max={wattpeakBalance}
                 min="1"
                 step="1"
@@ -424,7 +425,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               className="inputWrapperStaker"
               backgroundColor={backgroundColor}
             >
-              <div className="stakingBalanceWrapper">
+              <Box className="stakingBalanceWrapper">
                 <p>Staked: {staker.wattpeak_staked / 1000000}</p>
                 <Button
                   onClick={() => setAmount(staker.wattpeak_staked / 1000000)}
@@ -433,7 +434,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                 >
                   Max
                 </Button>
-              </div>
+              </Box>
               <Input
                 className="inputStaking"
                 type="number"
