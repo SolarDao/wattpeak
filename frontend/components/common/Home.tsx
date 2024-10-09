@@ -19,15 +19,8 @@ import StakedWattpeakPieChart from "./charts/stakedWattpeakChart";
 import { useChain } from "@cosmos-kit/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { formatBalance } from "../../utils/balances/formatBalances";
-import dynamic from "next/dynamic";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
-const GoogleMapComponent = dynamic(
-  () => import("./helpers/GoogleMapComponent"),
-  {
-    ssr: false,
-  }
-);
 interface HomeProps {
   initialLoading: boolean;
   walletStatus: WalletStatus;
@@ -452,6 +445,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                     lat: Number(project.location.latitude),
                     lng: Number(project.location.longitude),
                   }}
+                  title={project.name} 
                   onClick={() => {
                     openModal({
                       name: project.name,

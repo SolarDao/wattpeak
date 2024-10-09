@@ -58,6 +58,7 @@ a {
     margin-right: 10px;
     margin-left: 10px;
     border-radius: 23px;
+    border: 1px solid #ccc;
   }
 
   .project-card-home {
