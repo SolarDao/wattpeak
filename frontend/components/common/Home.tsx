@@ -19,6 +19,7 @@ import StakedWattpeakPieChart from "./charts/stakedWattpeakChart";
 import { useChain } from "@cosmos-kit/react";
 import { WalletStatus } from "@cosmos-kit/core";
 import { formatBalance } from "../../utils/balances/formatBalances";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
 interface HomeProps {
   initialLoading: boolean;
@@ -36,6 +37,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   );
   const [projects, setProjects] = useState<
     {
+      location: any;
       description: string;
       max_wattpeak: number;
       minted_wattpeak_count: number;
@@ -55,6 +57,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   const [stakerMintedWattpeak, setStakerMintedWattpeak] = useState(0);
   const [stakerStakedWattpeak, setStakerStakedWattpeak] = useState(0);
   const [totalWattpeak, setTotalWattpeak] = useState(0);
+  const [apiKey, setApiKey] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const inputColor = useColorModeValue("#000000B2", "white");
   const borderColor = useColorModeValue("black", "white");
@@ -66,6 +69,27 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
     "white",
     "rgba(35, 35, 35, 1)"
   );
+  const backgroundColorProjects = useColorModeValue(
+    "rgba(0, 0, 0, 0.04)",
+    "rgba(48, 50, 54, 1)"
+  );
+
+  const mapStyles = {
+    height: "400px",
+    width: "98%",
+    marginBottom: "10px",
+    marginLeft: "auto",
+    marginRight: "auto",
+    borderRadius: "23px",
+    border: "2px solid #ccc",
+    boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.5)",
+  };
+
+  const defaultCenter = {
+    lat: 30.7128,
+    lng: 13.006,
+  };
+
   const stargazeChain = useChain("stargazetestnet");
   const junoChain = useChain("junotestnet");
 
@@ -141,6 +165,10 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             0
           );
           setTotalWattpeak(totalWattpeak);
+
+          const res = await fetch("/api/getGoogleMapsApiKey");
+          const data = await res.json();
+          setApiKey(data.apiKey);
         }
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -202,7 +230,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         balance.denom === "ujunox" ||
         balance.denom === "ustars" ||
         balance.denom ===
-          "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
+          "solar"
     )
     .map((balance) => ({
       ...balance,
@@ -248,6 +276,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               backgroundColor={backgroundColor}
               flexWrap="wrap"
               justifyContent="center"
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Flex flexDirection="column" gap="25px" padding="20px">
                 <Heading
@@ -313,7 +342,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           </Flex>
         </Center>
         <Center>
-          <Flex height="auto" flexDirection="column" alignItems="center">
+          <Flex height="auto" flexDirection="column" alignItems="center" >
             <Heading
               display={"flex"}
               gap={"5px"}
@@ -339,6 +368,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               justifyContent="center"
               backgroundColor={backgroundColor}
               flexWrap="wrap"
+              boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box mt={10} padding="20px">
                 <Heading
@@ -378,50 +408,49 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
           </Flex>
         </Center>
       </Flex>
-      <Box mt={10} width="90%" margin="auto">
+      <Box mt={10} width="90%" margin="auto" > 
         <Heading
           display={"flex"}
           gap={"5px"}
           textAlign="left"
           marginBottom="10px"
+          marginTop="30px"
           marginLeft="15px"
           color={inputColor}
           fontSize="22px"
           lineHeight="19.36px"
         >
-          <Box>Projects</Box>
+          <Box>Solar Parks</Box>
           <Image
             src={require("../../images/solar-panel.png")}
             width={24}
             alt={"Hallo"}
           />
         </Heading>{" "}
-        <Carousel
-          responsive={responsive}
-          infinite={false}
-          arrows={true}
-          containerClass="carousel-container"
+        <Box
+          backgroundColor={backgroundColor}
+          borderRadius="23px"
+          padding="10px"
+          paddingBottom="18px"
+          paddingTop="18px"
+          marginBottom="5%"
+          boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
         >
-          {projects.map((project) => (
-            <Box
-              key={project.projectId}
-              className="project-card"
-              backgroundColor={backgroundColor}
+          <LoadScript googleMapsApiKey={apiKey}>
+            <GoogleMap
+              mapContainerStyle={mapStyles}
+              zoom={2}
+              center={defaultCenter}
             >
-              <Image
-                src={require("../../images/panel.png")}
-                alt={project.name}
-              />
-              <Box
-                mt={4}
-                display="flex"
-                justifyContent="center"
-                flexDirection="column"
-                alignItems="center"
-              >
-                <h4>{project.name}</h4>
-                <Button
-                  onClick={() =>
+              {projects.map((project, index) => (
+                <Marker
+                  key={index}
+                  position={{
+                    lat: Number(project.location.latitude),
+                    lng: Number(project.location.longitude),
+                  }}
+                  title={project.name} 
+                  onClick={() => {
                     openModal({
                       name: project.name,
                       projectId: project.projectId,
@@ -429,24 +458,67 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                       max_wattpeak: project.max_wattpeak || 0,
                       description:
                         project.description || "No description available.",
-                    })
-                  }
-                  width="130px"
-                  className="projectButton"
-                  color={inputColor}
-                  borderColor={borderColor}
-                  _hover={{
-                    background:
-                      "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-                    color: "black",
+                    });
                   }}
+                />
+              ))}
+            </GoogleMap>
+          </LoadScript>
+          <Carousel
+            responsive={responsive}
+            infinite={false}
+            arrows={true}
+            containerClass="carousel-container"
+          >
+            {projects.map((project) => (
+              <Box
+                key={project.projectId}
+                backgroundColor={backgroundColorProjects}
+                boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+                marginBottom="20px"
+                className="project-card-home"
+              >
+                <Image
+                  src={require("../../images/panel.png")}
+                  alt={project.name}
+                />
+                <Box
+                  mt={4}
+                  display="flex"
+                  justifyContent="center"
+                  flexDirection="column"
+                  alignItems="center"
                 >
-                  View Details
-                </Button>
+                  <h4>{project.name}</h4>
+                  <Button
+                    onClick={() =>
+                      openModal({
+                        name: project.name,
+                        projectId: project.projectId,
+                        minted_wattpeak_count:
+                          project.minted_wattpeak_count || 0,
+                        max_wattpeak: project.max_wattpeak || 0,
+                        description:
+                          project.description || "No description available.",
+                      })
+                    }
+                    width="130px"
+                    className="projectButton"
+                    color={inputColor}
+                    borderColor={borderColor}
+                    _hover={{
+                      background:
+                        "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                      color: "black",
+                    }}
+                  >
+                    View Details
+                  </Button>
+                </Box>
               </Box>
-            </Box>
-          ))}
-        </Carousel>
+            ))}
+          </Carousel>
+        </Box>
       </Box>
       <Modal
         isOpen={modalIsOpen}
@@ -503,7 +575,6 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                 src={require("../../images/panel.png")}
                 alt={selectedProject.name}
               />
-
               <Heading
                 marginTop="5px"
                 marginBottom="0px"

@@ -178,6 +178,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
                 marginRight="$10"
                 maxWidth="93%"
                 backgroundColor={backgroundColor2}
+                boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
               >
                 {/* Render Wallet component if wallet is not connected */}
                 <Flex justifyContent="center" alignItems="center" height="100%">

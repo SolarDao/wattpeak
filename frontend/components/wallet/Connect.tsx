@@ -1,5 +1,6 @@
 import { MouseEventHandler } from "react";
 import { Button as UIButton, IconName } from "@interchain-ui/react";
+import { useColorModeValue } from "@chakra-ui/react";
 
 export type ButtonProps = {
   text?: string;
@@ -10,6 +11,7 @@ export type ButtonProps = {
 };
 
 export type ConnectProps = Pick<ButtonProps, "text" | "loading" | "onClick">;
+
 
 function noop() {}
 
@@ -30,8 +32,12 @@ export function Button({
         style: {
           flex: 1,
           color: "black",
-          backgroundImage:
+          borderRadius: "13px",
+          backgroundColor: "#F0F8FF",
+          _hover: {
+            backgroundImage:
             "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+          },
         },
       }}
     >
@@ -40,30 +46,49 @@ export function Button({
   );
 }
 
-export const ButtonConnect = (
-  { text = "Connect Wallet", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonConnect = ({
+  text = "Connect Wallet",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);
 
-export const ButtonConnected = (
-  { text = "My Wallet", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonConnected = ({
+  text = "My Wallet",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);
 
-export const ButtonDisconnected = (
-  { text = "Connect Wallet", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonDisconnected = ({
+  text = "Connect Wallet",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);
 
-export const ButtonConnecting = (
-  { text = "Connecting ...", loading = true }: ConnectProps,
-) => <Button text={text} loading={loading} />;
+export const ButtonConnecting = ({
+  text = "Connecting ...",
+  loading = true,
+}: ConnectProps) => <Button text={text} loading={loading} />;
 
-export const ButtonRejected = (
-  { text = "Reconnect", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonRejected = ({
+  text = "Reconnect",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);
 
-export const ButtonError = (
-  { text = "Change Wallet", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonError = ({
+  text = "Change Wallet",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);
 
-export const ButtonNotExist = (
-  { text = "Install Wallet", onClick = noop }: ConnectProps,
-) => <Button text={text} icon="walletFilled" onClick={onClick} />;
+export const ButtonNotExist = ({
+  text = "Install Wallet",
+  onClick = noop,
+}: ConnectProps) => (
+  <Button text={text} icon="walletFilled" onClick={onClick} />
+);

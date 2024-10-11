@@ -43,6 +43,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
     "rgba(35, 35, 35, 1)"
   );
   const inputColor = useColorModeValue("black", "white");
+  const borderColor = useColorModeValue("1px solid black", "1px solid white");
 
   return (
     <Box
@@ -53,6 +54,7 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
       justifyContent="space-between"
       alignItems="center"
       gap={10}
+      boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
     >
       <Box display="flex" flexDirection="column" alignItems="center" gap={5}>
         <Box display="flex" gap={5} alignItems="center">
@@ -60,7 +62,13 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
             .filter((nft) => selectedMultipleNfts.includes(nft.tokenId))
             .slice(0, 5) // Limit to first 5 images
             .map((nft) => (
-              <Box key={nft.tokenId} width={50} height={50}>
+              <Box
+                key={nft.tokenId}
+                width={50}
+                height={50}
+                borderRadius="23px"
+                boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+              >
                 {" "}
                 {/* Match image box size */}
                 <Image
@@ -107,113 +115,71 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
 
       <>
         <Box display="flex" justifyContent="Center" gap={20} marginBottom={10}>
-          {tabIndex === 0 ? (
-            <>
-              <Box
-                background={modalBackgroundColor}
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                paddingLeft={20}
-                paddingRight={20}
-                borderRadius={15}
-              >
-                <Image
-                  src={require("../../../images/solarheroes.png")}
-                  alt={"Solar"}
-                  width={30}
-                  height={30}
-                />
-                <Box marginTop={10} fontSize={12}>
-                  Cyber Solar Hero
-                </Box>
+          <>
+            <Box
+              className="modalSwapBox"
+              display="flex"
+              flexDirection="column"
+              justifyContent="center"
+              alignItems="center"
+              background={modalBackgroundColor}
+              padding={20}
+              borderRadius="23px"
+              boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+            >
+              <Image
+                src={
+                  tabIndex === 0
+                    ? require("../../../images/solarheroes.png")
+                    : require("../../../images/solartoken.png")
+                }
+                alt={"Solar"}
+                width={30}
+                height={30}
+              />
+              <Box marginTop={10} fontSize={12}>
+                {tabIndex === 0 ? "Cyber Solar Heroes" : "Solar Tokens"}
               </Box>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Image
-                  src={require("../../../images/yellowarrow.png")}
-                  alt={"arrow"}
-                  width={15}
-                  height={15}
-                ></Image>
+            </Box>
+            <Box display="flex" justifyContent="center" alignItems="center">
+              <Image
+                src={require("../../../images/yellowarrow.png")}
+                alt={"arrow"}
+                width={15}
+                height={15}
+              ></Image>
+            </Box>
+            <Box
+              background={modalBackgroundColor}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              padding={20}
+              borderRadius="23px"
+              boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+            >
+              <Image
+                src={
+                  tabIndex === 0
+                    ? require("../../../images/solartoken.png")
+                    : require("../../../images/solarheroes.png")
+                }
+                alt={"Solar"}
+                width={30}
+                height={30}
+              />
+              <Box marginTop={10} fontSize={12}>
+                {tabIndex === 0 ? "Solar Tokens" : "Cyber Solar Heroes"}
               </Box>
-              <Box
-                className="modalSwapBox"
-                display="flex"
-                flexDirection="column"
-                justifyContent="center"
-                alignItems="center"
-                background={modalBackgroundColor}
-                padding={20}
-                borderRadius={15}
-              >
-                <Image
-                  src={require("../../../images/solartoken.png")}
-                  alt={"Solar"}
-                  width={30}
-                  height={30}
-                />
-                <Box marginTop={5} fontSize={12}>
-                  Solar Tokens
-                </Box>
-              </Box>
-            </>
-          ) : (
-            <>
-              <Box
-                className="modalSwapBox"
-                display="flex"
-                flexDirection="column"
-                justifyContent="center"
-                alignItems="center"
-                background={modalBackgroundColor}
-                padding={20}
-                borderRadius={15}
-              >
-                <Image
-                  src={require("../../../images/solartoken.png")}
-                  alt={"Solar"}
-                  width={30}
-                  height={30}
-                />
-                <Box marginTop={10} fontSize={12}>
-                  Solar Tokens
-                </Box>
-              </Box>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Image
-                  src={require("../../../images/yellowarrow.png")}
-                  alt={"arrow"}
-                  width={15}
-                  height={15}
-                ></Image>
-              </Box>
-              <Box
-                background={modalBackgroundColor}
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                padding={20}
-                borderRadius={15}
-              >
-                <Image
-                  src={require("../../../images/solarheroes.png")}
-                  alt={"Solar"}
-                  width={30}
-                  height={30}
-                />
-                <Box marginTop={10} fontSize={12}>
-                  Cyber Solar Hero
-                </Box>
-              </Box>
-            </>
-          )}
+            </Box>
+          </>
         </Box>
         <Box>
           <Box
             background={modalBackgroundColor}
-            borderRadius={20}
+            borderRadius="23px"
+            boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
             padding={20}
             fontSize={14}
             display="flex"
@@ -244,15 +210,21 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
               ? handleMultipleNftSwap()
               : handleMultipleSolarSwap();
           }}
-          background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
-          color="black"
-          borderRadius={50}
-          padding={10}
+          borderRadius="13px"
           width={150}
           height={30}
+          boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+          border={borderColor}
+          color={inputColor}
+          background={backgroundColor}
           cursor="pointer"
+          letterSpacing="0.1em"
+          _hover={{
+            background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+            color: "black",
+          }}
         >
-          Swap
+          SWAP
         </Button>
       </>
     </Box>

@@ -17,6 +17,7 @@ import {
   Heading,
   Link,
   Flex,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
@@ -296,73 +297,99 @@ export const Swap = ({ chainName }: { chainName: string }) => {
             </Box>
           )}
           <TabList marginLeft="42px">
-            <Tab
-              className="swapTabs"
-              borderColor={borderColor}
+            <Tooltip
               color={inputColor}
-              background={backgroundColor}
-              _selected={{
-                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-                color: "black",
-                transform: "translateX(0px)",
-                transition: "transform 0.3s ease",
-                zIndex: 2,
-              }}
+              label="Swap Cyber Solar Heroes for $SOLAR"
+              aria-label="Osmosis Tooltip"
+              placement="top"
             >
-              Sell NFTs
-            </Tab>
-            <Tab
-              className="swapTabs"
-              borderColor={borderColor}
+              <Tab
+                className="swapTabs"
+                boxShadow="0px 2px 4px rgba(0, 0, 0, 0.5)"
+                borderColor={borderColor}
+                color={inputColor}
+                background={backgroundColor}
+                _selected={{
+                  background:
+                    "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                  color: "black",
+                  transform: "translateX(0px)",
+                  transition: "transform 0.3s ease",
+                  zIndex: 2,
+                }}
+              >
+                Sell NFTs
+              </Tab>
+            </Tooltip>
+            <Tooltip
               color={inputColor}
-              background={backgroundColor}
-              _selected={{
-                background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
-                color: "black",
-                transform: "translateX(0px)",
-                transition: "transform 0.3s ease",
-                zIndex: 2,
-              }}
+              label="Swap $SOLAR for Cyber Solar Heroes"
+              aria-label="Osmosis Tooltip"
+              placement="top"
             >
-              Buy NFTs
-            </Tab>
+              <Tab
+                className="swapTabs"
+                boxShadow="0px 2px 4px rgba(0, 0, 0, 0.5)"
+                borderColor={borderColor}
+                color={inputColor}
+                background={backgroundColor}
+                _selected={{
+                  background:
+                    "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+                  color: "black",
+                  transform: "translateX(0px)",
+                  transition: "transform 0.3s ease",
+                  zIndex: 2,
+                }}
+              >
+                Buy NFTs
+              </Tab>
+            </Tooltip>
           </TabList>
           {!isMobile && (
-            <Button
-              className="multipleSelectBtn"
-              color={multipleSelect ? "black" : inputColor}
-              borderColor={borderColor}
-              onClick={() => setMultipleSelect(!multipleSelect)}
-              background={
-                multipleSelect
-                  ? "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
-                  : backgroundColor
-              }
+            <Tooltip
+              color={inputColor}
+              label="Swap multiple NFTs"
+              aria-label="Osmosis Tooltip"
+              placement="top"
             >
-              {inputColor === "white" && !multipleSelect ? (
-                <Image
-                  className="multipleSelectImg"
-                  src={require("../../images/frame.png")}
-                  alt={"multiple select"}
-                  width={20}
-                  height={20}
-                ></Image>
-              ) : (
-                <Image
-                  className="multipleSelectImg"
-                  src={require("../../images/frame_black.png")}
-                  alt={"multiple select"}
-                  width={20}
-                  height={20}
-                />
-              )}
-              Select Multiple
-            </Button>
+              <Button
+                className="multipleSelectBtn"
+                boxShadow="0px 2px 4px rgba(0, 0, 0, 0.5)"
+                color={multipleSelect ? "black" : inputColor}
+                borderColor={borderColor}
+                onClick={() => setMultipleSelect(!multipleSelect)}
+                background={
+                  multipleSelect
+                    ? "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
+                    : backgroundColor
+                }
+              >
+                {inputColor === "white" && !multipleSelect ? (
+                  <Image
+                    className="multipleSelectImg"
+                    src={require("../../images/frame.png")}
+                    alt={"multiple select"}
+                    width={20}
+                    height={20}
+                  ></Image>
+                ) : (
+                  <Image
+                    className="multipleSelectImg"
+                    src={require("../../images/frame_black.png")}
+                    alt={"multiple select"}
+                    width={20}
+                    height={20}
+                  />
+                )}
+                Select Multiple
+              </Button>
+            </Tooltip>
           )}
         </Box>
 
-        <TabPanels className="swapPanels" background={backgroundColor}>
-          <TabPanel>
+        <TabPanels className="swapPanels" background={backgroundColor} boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)">
+          <TabPanel >
             {walletNfts.length === 0 ? (
               <Box
                 display="flex"
@@ -421,6 +448,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                 {walletNfts.map((nft, index) => (
                   <ListItem
                     key={index}
+                    boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
                     className={`nft-item ${
                       multipleSelect &&
                       selectedMultipleNfts.includes(nft.tokenId)
@@ -490,6 +518,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               <UnorderedList className="nftList">
                 {contractNfts.map((nft, index) => (
                   <ListItem
+                  boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
                     key={index}
                     className={`nft-item ${
                       multipleSelect &&

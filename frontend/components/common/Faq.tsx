@@ -25,7 +25,7 @@ export const Faq = () => {
         {
           question: "What is SolarDAO?",
           answer:
-            "SolarDAO is a decentralized platform that allows users to participate in solar energy projects through minting, staking, and swapping tokens.",
+            "SolarDAO is a decentralized platform that allows users to participate in solar energy projects through minting and staking Wattpeak tokens.",
         },
         {
           question: "How can I connect my wallet?",
@@ -35,7 +35,7 @@ export const Faq = () => {
         {
           question: "Are there any fees involved?",
           answer:
-            "Yes, there are minimal transaction fees for minting, staking, and swapping to cover network costs. There is also a minting fee that goes to the treasury of SolarDAO",
+            "Yes, there are different fees associated with minting, staking, and swapping tokens. In addition to standard network and transaction fees the DAO also enforces swap fees and minting fees. It's therefore good to have a small amount of STARS and JUNO available to cover these fees. The current fees are displayed in the respective sections.",
         },
         {
           question:
@@ -56,7 +56,7 @@ export const Faq = () => {
         {
           question: "How do I mint tokens?",
           answer:
-            "To mint tokens, connect your wallet, select a solar project, and specify the amount you want to invest. Confirm the transaction, and the tokens will be minted to your wallet.",
+            "To mint tokens, connect your wallet, go to the Mint section, select a solar project, and specify the amount you want to invest. Confirm the transaction, and the tokens will be minted to your wallet.",
         },
         {
           question: "What is the benefit of minting Wattpeak tokens?",
@@ -81,12 +81,12 @@ export const Faq = () => {
         {
           question: "Can I withdraw my staked tokens anytime?",
           answer:
-            "Yes, you can unstake your tokens at any time. However, please note that unstaking may take a certain period to process, depending on network conditions.",
+            "Yes, you can unstake your tokens at any time. However, please note that when you unstake, you won't earn the rewards for the day that you unstaked.",
         },
         {
           question: "What rewards do I get from staking?",
           answer:
-            "By staking your Wattpeak tokens, you earn additional tokens as rewards. The reward rate may vary based on the total amount staked and the staking duration.",
+            "By staking your Wattpeak tokens, you earn additional tokens as rewards, distributed yearly when income from the real life Solar Park is distributed. The reward rate may vary based on the total amount staked and the staking duration.",
         },
       ],
     },
@@ -96,7 +96,7 @@ export const Faq = () => {
         {
           question: "What is swapping?",
           answer:
-            "Swapping allows you to exchange your Wattpeak tokens for other tokens or NFTs within the SolarDAO ecosystem.",
+            "Swapping allows you to exchange your Cyber Solar Heroes for Solar tokens or the other way around at a set price. The reason for this is to create a baseline value for the NFTs",
         },
         {
           question: "How do I swap tokens?",
@@ -106,12 +106,7 @@ export const Faq = () => {
         {
           question: "Are there any limits on swapping?",
           answer:
-            "There may be limits based on liquidity and the availability of tokens or NFTs. Please check the swapping interface for any specific limits.",
-        },
-        {
-          question: "What tokens can I swap Wattpeak tokens for?",
-          answer:
-            "You can swap Wattpeak tokens for supported tokens and NFTs listed on the Swapping page. The available options may change over time.",
+            "There may be limits based on liquidity and the availability of tokens or NFTs in the contract. Please check the swapping interface for the availability of Tokens and NFTs.",
         },
       ],
     },

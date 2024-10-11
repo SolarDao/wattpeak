@@ -17,7 +17,7 @@ export const formatDenom = (denom: string) => {
       formattedDenom = "WattPeak";
     }
   
-    if (formattedDenom === "som") {
+    if (formattedDenom === "solar") {
       formattedDenom = "$SOLAR";
     }
     return formattedDenom;
