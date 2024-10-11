@@ -230,7 +230,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         balance.denom === "ujunox" ||
         balance.denom === "ustars" ||
         balance.denom ===
-          "factory/juno1clr2yca5sphmspex9q6zvrrl7aaes5q8euhljrre89p4tqqslxcqjmks4w/som"
+          "solar"
     )
     .map((balance) => ({
       ...balance,
