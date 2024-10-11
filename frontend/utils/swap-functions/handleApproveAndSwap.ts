@@ -2,7 +2,6 @@
 import { toUtf8 } from "@cosmjs/encoding";
 import { toast } from "react-toastify";
 import { queryNftsByAddress } from "@/utils/queries/queryNfts";
-
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 export const handleApproveAndSwap = async ({

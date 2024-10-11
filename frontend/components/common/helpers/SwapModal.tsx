@@ -6,7 +6,6 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { Center, Button, Box, Text, Heading } from "@chakra-ui/react";
 import { useMediaQuery } from "react-responsive";
 import { formatBalanceNoConversion } from "@/utils/balances/formatBalances";
-import { text } from "stream/consumers";
 
 interface NftDetailsModalProps {
   isOpen: boolean;
@@ -51,7 +50,7 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
       backgroundColor: backgroundColor,
       color: textColor,
       borderRadius: "15px",
-      height: "76%",
+      height: "72%",
       boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.5)",
       width: isMobile ? "70%" : "400px",
     },
@@ -186,13 +185,13 @@ const NftDetailsModal: React.FC<NftDetailsModalProps> = ({
             borderRadius="13px"
             width={150}
             height={30}
-            onClick={tabIndex === 0 ? handleSolarSwap : swapNftToTokens}
+            onClick={tabIndex === 0 ? swapNftToTokens : handleSolarSwap }
             boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             border={borderColor}
             color={textColor}
             background={backgroundColor}
             cursor="pointer"
-            marginTop={15}
+            marginTop={25}
             letterSpacing="0.1em"
             _hover={{
               background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",

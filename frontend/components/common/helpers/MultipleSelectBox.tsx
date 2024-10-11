@@ -101,13 +101,19 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
 
         <Button
           onClick={() => setSelectedMultipleNfts([])}
-          background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
-          color="black"
-          borderRadius={50}
+          borderRadius={10}
           padding={10}
           width={70}
-          height={30}
+          height={25}
+          boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+          border={borderColor}
+          color={inputColor}
+          background={backgroundColor}
           cursor="pointer"
+          _hover={{
+            background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+            color: "black",
+          }}
         >
           Clear
         </Button>
