@@ -110,7 +110,10 @@ mod tests {
         let config = Config {
             admin: Addr::unchecked("admin"),          // Example admin address
             rewards_percentage: Decimal::percent(10), // Example rewards percentage
-            epoch_length: 86000,                      // Example epoch length
+            epoch_length: 86000,
+            wattpeak_denom: "watt".to_string(),
+            staking_fee_address: Addr::unchecked("staking_fee_address"),
+            staking_fee_percentage: Decimal::percent(5),
         };
         CONFIG.save(&mut deps.storage, &config).unwrap();
 
@@ -123,21 +126,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
 
@@ -197,7 +200,10 @@ mod tests {
         let config = Config {
             admin: Addr::unchecked("admin"),          // Example admin address
             rewards_percentage: Decimal::percent(10), // Example rewards percentage
-            epoch_length: 86000,                      // Example epoch length
+            epoch_length: 86000,
+            wattpeak_denom: "watt".to_string(),
+            staking_fee_address: Addr::unchecked("staking_fee_address"),
+            staking_fee_percentage: Decimal::percent(5),               // Example epoch length
         };
         CONFIG.save(&mut deps.storage, &config).unwrap();
 
@@ -210,21 +216,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
 
@@ -285,7 +291,10 @@ mod tests {
         let config = Config {
             admin: Addr::unchecked("admin"),          // Example admin address
             rewards_percentage: Decimal::percent(10), // Example rewards percentage
-            epoch_length: 86000,                      // Example epoch length
+            epoch_length: 86000, 
+            wattpeak_denom: "watt".to_string(),
+            staking_fee_address: Addr::unchecked("staking_fee_address"),
+            staking_fee_percentage: Decimal::percent(5),                     // Example epoch length
         };
         CONFIG.save(&mut deps.storage, &config).unwrap();
 
@@ -298,21 +307,21 @@ mod tests {
             "addr1",
             &[Coin::new(
                 100000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info2 = mock_info(
             "addr2",
             &[Coin::new(
                 200000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
         let staker_info3 = mock_info(
             "addr3",
             &[Coin::new(
                 300000000u128,
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb",
+                "watt",
             )],
         );
 

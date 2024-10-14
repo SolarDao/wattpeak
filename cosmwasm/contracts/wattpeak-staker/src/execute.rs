@@ -77,12 +77,12 @@ fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respo
         .funds
         .iter()
         //Change to correct contract address when minter is deployed
-        .find(|coin| coin.denom == "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")
+        .find(|coin| coin.denom == "watt")
         .map(|coin| coin.amount)
         .unwrap_or_else(Uint128::zero);
     // Verify the correct amount of tokens was sent to the contract
     //Change to correct contract address when minter is deployed
-    if !info.funds.iter().any(|coin| coin.denom == "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb") {
+    if !info.funds.iter().any(|coin| coin.denom == "watt") {
         return Err(StdError::generic_err(
             "Must stake WattPeak tokens to the contract",
         ));
@@ -125,11 +125,14 @@ fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respo
 }
 
 fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
+
+    let wattpeak_denom = CONFIG.load(deps.storage)?.wattpeak_denom;
+
     let amount = info
         .funds
         .iter()
         //Change to correct contract address when minter is deployed
-        .find(|coin| coin.denom == "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")
+        .find(|coin| coin.denom == wattpeak_denom)
         .map(|coin| coin.amount)
         .unwrap_or_else(Uint128::zero);
 
@@ -138,9 +141,9 @@ fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Resp
         return Err(StdError::generic_err("Unauthorized"));
     }
     //Change to correct contract address when minter is deployed
-    if !info.funds.iter().any(|coin| coin.denom == "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb") {
+    if !info.funds.iter().any(|coin| coin.denom == "watt") {
         return Err(StdError::generic_err(
-            "Must stake WattPeak tokens to the contract",
+            "Must deposit WattPeak tokens to the contract",
         ));
     }
 
@@ -192,7 +195,7 @@ fn unstake_wattpeak(
         amount: vec![Coin {
             //Change to correct contract address when minter is deployed
             denom:
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb"
+                "watt"
                     .to_string(),
             amount: amount,
         }],
@@ -223,8 +226,23 @@ fn claim_rewards(deps: DepsMut, _env: Env, info: MessageInfo) -> StdResult<Respo
     }
     let rewards = staker.claimable_rewards;
 
+    let staking_fee = CONFIG.load(deps.storage)?.staking_fee_percentage;
+
+    let staking_fee = rewards.checked_mul(staking_fee).unwrap();
+
+    let reward_payment = rewards.checked_sub(staking_fee).unwrap();
+
+    let reward_denom = CONFIG.load(deps.storage)?.wattpeak_denom;
+
     // Convert the rewards from Decimal to Uint128
-    let rewards_amount = if let Some(amount) = rewards.to_string().parse::<f64>().ok() {
+    let rewards_amount = if let Some(amount) = reward_payment.to_string().parse::<f64>().ok() {
+        Uint128::from(amount as u128) // safely truncating the decimal part
+    } else {
+        return Err(StdError::generic_err("Failed to parse rewards amount"));
+    };
+
+    // Convert the rewards from Decimal to Uint128
+    let staking_fee_amount = if let Some(amount) = staking_fee.to_string().parse::<f64>().ok() {
         Uint128::from(amount as u128) // safely truncating the decimal part
     } else {
         return Err(StdError::generic_err("Failed to parse rewards amount"));
@@ -235,10 +253,17 @@ fn claim_rewards(deps: DepsMut, _env: Env, info: MessageInfo) -> StdResult<Respo
         to_address: staker_address.to_string(),
         amount: vec![Coin {
             //Change to correct contract address when minter is deployed
-            denom:
-                "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb"
-                    .to_string(),
+            denom: reward_denom.clone(),
             amount: rewards_amount,
+        }],
+    };
+
+    let staking_fee_msg = BankMsg::Send {
+        to_address: CONFIG.load(deps.storage)?.staking_fee_address.to_string(),
+        amount: vec![Coin {
+            //Change to correct contract address when minter is deployed
+            denom: reward_denom.clone(),
+            amount: staking_fee_amount,
         }],
     };
 
@@ -258,6 +283,7 @@ fn claim_rewards(deps: DepsMut, _env: Env, info: MessageInfo) -> StdResult<Respo
     // Construct the response
     Ok(Response::new()
         .add_message(payment_msg)
+        .add_message(staking_fee_msg)
         .add_attribute("action", "claim_rewards")
         .add_attribute("from", info.sender.to_string())
         .add_attribute("amount", rewards.to_string()))
@@ -289,6 +315,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -307,6 +336,10 @@ mod tests {
                         admin: Addr::unchecked("admin"),
                         rewards_percentage: Decimal::percent(10),
                         epoch_length: 86400,
+                        wattpeak_denom: "watt".to_string(),
+                        staking_fee_address: Addr::unchecked("staking_fee_address"),
+                        staking_fee_percentage: Decimal::percent(5),
+
                     },
                 )
                 .unwrap();
@@ -323,6 +356,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -346,6 +382,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -372,6 +411,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -407,13 +449,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let res = execute(
                 deps.as_mut(),
@@ -445,13 +490,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(10),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
-            let info = mock_info("creator", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let info = mock_info("creator", &[Coin::new(100u128, "watt")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let _res = execute(
                 deps.as_mut(),
@@ -461,7 +509,7 @@ mod tests {
             )
             .unwrap();
 
-            let staker_info2 = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info2 = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let res = execute(
                 deps.as_mut(),
@@ -492,13 +540,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(10),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
-            let info = mock_info("creator", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let info = mock_info("creator", &[Coin::new(100u128, "watt")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(0u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(0u128, "watt")]);
 
             let res = execute(
                 deps.as_mut(),
@@ -522,10 +573,13 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(10),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
-            let info = mock_info("creator", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let info = mock_info("creator", &[Coin::new(100u128, "watt")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
             let staker_info = mock_info("staker", &[Coin::new(100u128, "random")]);
@@ -561,13 +615,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let _res = execute(
                 deps.as_mut(),
@@ -591,7 +648,7 @@ mod tests {
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                        denom: "watt".to_string(),
                         amount,
                     }],
                 })
@@ -616,13 +673,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let _res = execute(
                 deps.as_mut(),
@@ -656,6 +716,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -687,13 +750,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(0u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(0u128, "watt")]);
 
             let res = execute(
                 deps.as_mut(),
@@ -718,13 +784,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("creator", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
-            let staker_info = mock_info("staker", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info = mock_info("staker", &[Coin::new(100u128, "watt")]);
 
             let _res = execute(
                 deps.as_mut(),
@@ -768,15 +837,18 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
-            let info = mock_info("creator", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let info = mock_info("creator", &[Coin::new(100u128, "watt")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let deposit_amount = Uint128::from(574u128);
             let funds = Coin {
-                denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                denom: "watt".to_string(),
                 amount: deposit_amount,
             };
             let info = mock_info("random", &[funds]);
@@ -804,10 +876,13 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
-            let info = mock_info("admin", &[Coin::new(0u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let info = mock_info("admin", &[Coin::new(0u128, "watt")]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
             let res = execute(
@@ -845,15 +920,18 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("admin", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
-            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "watt")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "watt")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "watt")]);
             let deposit_amount = Uint128::from(574u128);
 
             execute(
@@ -882,7 +960,7 @@ mod tests {
 
             env = mock_env();
             let funds = Coin {
-                denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                denom: "watt".to_string(),
                 amount: deposit_amount,
             };
 
@@ -905,15 +983,25 @@ mod tests {
                 ExecuteMsg::ClaimReward {},
             )
             .unwrap();
-
-            assert_eq!(res.messages.len(), 1);
+            println!("{:?}", res);
+            assert_eq!(res.messages.len(), 2);
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
-                        amount: Uint128::from(95u128),
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(90u128),
+                    }],
+                })
+            );
+            assert_eq!(
+                res.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(4u128),
                     }],
                 })
             );
@@ -933,15 +1021,18 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("admin", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
-            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "watt")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "watt")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "watt")]);
             let deposit_amount = Uint128::from(574u128);
 
             execute(
@@ -974,7 +1065,7 @@ mod tests {
 
             env = mock_env();
             let funds = Coin {
-                denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                denom: "watt".to_string(),
                 amount: deposit_amount,
             };
 
@@ -1016,38 +1107,69 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(res.messages.len(), 1);
+            assert_eq!(res.messages.len(), 2);
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
-                        amount: Uint128::from(95u128),
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(90u128),
+                    }],
+                })
+            );
+            assert_eq!(
+                res.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(4u128),
                     }],
                 })
             );
 
-            assert_eq!(res2.messages.len(), 1);
+            assert_eq!(res2.messages.len(), 2);
             assert_eq!(
                 res2.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info2.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
-                        amount: Uint128::from(191u128),
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(181u128),
+                    }],
+                })
+            );
+            assert_eq!(
+                res2.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(9u128),
                     }],
                 })
             );
 
-            assert_eq!(res3.messages.len(), 1);
+            assert_eq!(res3.messages.len(), 2);
             assert_eq!(
                 res3.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info3.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
-                        amount: Uint128::from(287u128),
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(272u128),
+                    }],
+                })
+            );
+
+            assert_eq!(
+                res3.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(14u128),
                     }],
                 })
             );
@@ -1068,6 +1190,9 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
@@ -1097,15 +1222,18 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 86400,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("admin", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
-            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
-            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "watt")]);
+            let staker_info2 = mock_info("addr2", &[Coin::new(200u128, "watt")]);
+            let staker_info3 = mock_info("addr3", &[Coin::new(300u128, "watt")]);
             let deposit_amount = Uint128::from(574u128);
 
             execute(
@@ -1134,7 +1262,7 @@ mod tests {
 
             env = mock_env();
             let funds = Coin {
-                denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                denom: "watt".to_string(),
                 amount: deposit_amount,
             };
 
@@ -1158,14 +1286,25 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(res.messages.len(), 1);
+            assert_eq!(res.messages.len(), 2);
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
-                        amount: Uint128::from(95u128),
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(90u128),
+                    }],
+                })
+            );
+
+            assert_eq!(
+                res.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(4u128),
                     }],
                 })
             );
@@ -1196,13 +1335,16 @@ mod tests {
                     admin: Addr::unchecked("admin"),
                     rewards_percentage: Decimal::percent(5),
                     epoch_length: 1,
+                    wattpeak_denom: "watt".to_string(),
+                    staking_fee_address: Addr::unchecked("staking_fee_address"),
+                    staking_fee_percentage: Decimal::percent(5),
                 },
             };
 
             let info = mock_info("admin", &[]);
             let _res = instantiate(deps.as_mut(), env.clone(), info.clone(), msg).unwrap();
 
-            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb")]);
+            let staker_info1 = mock_info("addr1", &[Coin::new(100u128, "watt")]);
             let deposit_amount = Uint128::from(5000000u128);
 
             execute(
@@ -1221,7 +1363,7 @@ mod tests {
 
             env = mock_env();
             let funds = Coin {
-                denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string(),
+                denom: "watt".to_string(),
                 amount: deposit_amount,
             };
 
@@ -1245,15 +1387,25 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(res.messages.len(), 1);
+            assert_eq!(res.messages.len(), 2);
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "factory/juno1tf3uk5q52r6a6nvhrymdwunfz2lhfc9syf3a6ynky3cnc9850fnqzngpfm/uwattpeakb".to_string
+                        denom: "watt".to_string
                         (),
-                        amount: Uint128::from(5000000u128),
+                        amount: Uint128::from(4750000u128),
+                    }],
+                })
+            );
+            assert_eq!(
+                res.messages[1].msg,
+                CosmosMsg::Bank(BankMsg::Send {
+                    to_address: "staking_fee_address".to_string(),
+                    amount: vec![Coin {
+                        denom: "watt".to_string(),
+                        amount: Uint128::from(250000u128),
                     }],
                 })
             );

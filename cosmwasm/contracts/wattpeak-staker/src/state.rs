@@ -8,6 +8,9 @@ pub struct Config {
     pub rewards_percentage: Decimal,
     // Epoch length in seconds
     pub epoch_length: u64,
+    pub wattpeak_denom: String,
+    pub staking_fee_percentage: Decimal,
+    pub staking_fee_address: Addr,
 }
 
 impl Config {

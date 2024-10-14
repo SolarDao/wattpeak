@@ -76,6 +76,9 @@ mod tests {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
+                wattpeak_denom: "watt".to_string(),
+                staking_fee_address: Addr::unchecked("staking_fee_address"),
+                staking_fee_percentage: Decimal::percent(5),
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -95,6 +98,9 @@ mod tests {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
+                wattpeak_denom: "watt".to_string(),
+                staking_fee_address: Addr::unchecked("staking_fee_address"),
+                staking_fee_percentage: Decimal::percent(5),
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -123,6 +129,9 @@ mod tests {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
+                wattpeak_denom: "watt".to_string(),
+                staking_fee_address: Addr::unchecked("staking_fee_address"),
+                staking_fee_percentage: Decimal::percent(5),
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -161,6 +170,9 @@ mod tests {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
+                wattpeak_denom: "watt".to_string(),
+                staking_fee_address: Addr::unchecked("staking_fee_address"),
+                staking_fee_percentage: Decimal::percent(5),
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -178,6 +190,9 @@ mod tests {
                 admin: Addr::unchecked("admin"),
                 rewards_percentage: Decimal::percent(10),
                 epoch_length: 86400,
+                wattpeak_denom: "watt".to_string(),
+                staking_fee_address: Addr::unchecked("staking_fee_address"),
+                staking_fee_percentage: Decimal::percent(5),
             },
         };
         let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
