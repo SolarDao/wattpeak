@@ -42,6 +42,7 @@ export const handleMultipleSolarSwapUtilFunction = async ({
 
   try {
     setSwapping(true);
+    let amount = (Number(config.price_per_nft) + Number(config.swap_fee));
 
     // Prepare all swap messages
     const msgs = selectedMultipleNfts.map((tokenId) => {
@@ -57,34 +58,10 @@ export const handleMultipleSolarSwapUtilFunction = async ({
           sender: address,
           contract: SWAP_CONTRACT_ADDRESS,
           msg: toUtf8(JSON.stringify(swapMsg)),
-          funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
+          funds: [{ denom: config.token_denom, amount: amount}],
         },
       };
     });
-
-    // Calculate the total swap fee amount
-    const totalSwapFeeAmount = (
-      BigInt(config.swap_fee) * BigInt(selectedMultipleNfts.length)
-    ).toString();
-
-    // Create the swap fee transaction message
-    const swapFeeMsg = {
-      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-      value: {
-        fromAddress: address,
-        toAddress: SWAP_CONTRACT_ADDRESS,
-        amount: [
-          {
-            denom: config.swap_fee_denom,
-            amount: totalSwapFeeAmount,
-          },
-        ],
-      },
-    };
-
-    // Add the swap fee message to the messages array
-    //@ts-ignore
-    msgs.push(swapFeeMsg);
 
     // Adjust the gas estimate to account for the additional message
     const fee = {

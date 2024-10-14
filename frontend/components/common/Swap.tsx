@@ -84,7 +84,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   const [selectedMultipleNfts, setSelectedMultipleNfts] = useState<string[]>(
     []
   );
-
+  
   const [config, setConfig] = useState({
     price_per_nft: "5",
     token_denom: "ustars",
@@ -92,6 +92,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     swap_fee_denom: "",
     swap_fee_address: "",
   });
+  console.log(config);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
   useEffect(() => {
@@ -251,7 +252,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     setSelectedNftDetails(null);
     setSelectedMultipleNfts([]);
   };
-
+  
   if (loading || swapping) {
     return <Loading />;
   }
@@ -289,10 +290,12 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                   {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
                   $SOLAR
                 </Box>
+                {tabIndex === 1 && (
                 <Box fontSize="12px" textAlign="center" color={inputColor}>
                   Swap Fee: {formatBalance(Number(config.swap_fee))}{" "}
                   {formatDenom(config.swap_fee_denom)}
                 </Box>
+              )}
               </Box>
             </Box>
           )}

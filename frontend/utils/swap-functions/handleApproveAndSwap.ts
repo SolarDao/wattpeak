@@ -1,4 +1,3 @@
-// src/utils/swapUtils.js
 import { toUtf8 } from "@cosmjs/encoding";
 import { toast } from "react-toastify";
 import { queryNftsByAddress } from "@/utils/queries/queryNfts";
@@ -84,12 +83,14 @@ export const handleApproveAndSwap = async ({
       });
     }
 
-    // Add swap message
+    // Add swap message (price_per_nft + swap_fee)
     const swapMsg = {
       swap_token: {
         nft_id: selectedNft,
       },
     };
+
+    const amount = Number(config.price_per_nft) + Number(config.swap_fee);
 
     msgs.push({
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
@@ -97,21 +98,12 @@ export const handleApproveAndSwap = async ({
         sender: address,
         contract: SWAP_CONTRACT_ADDRESS,
         msg: toUtf8(JSON.stringify(swapMsg)),
-        funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
+        // Provide the funds required for swap (price_per_nft and swap_fee)
+        funds: [
+          { denom: config.token_denom, amount: amount },
+        ],
       },
     });
-
-    // Add swap fee transaction
-    const swapFeeMsg = {
-      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-      value: {
-        fromAddress: address,
-        toAddress: SWAP_CONTRACT_ADDRESS,
-        amount: [{ denom: config.swap_fee_denom, amount: config.swap_fee }],
-      },
-    };
-
-    msgs.push(swapFeeMsg);
 
     const fee = {
       amount: [{ denom: "ustars", amount: "7500" }],
@@ -125,6 +117,7 @@ export const handleApproveAndSwap = async ({
       throw new Error(`Error executing transaction: ${result.rawLog}`);
     }
 
+    // Update wallet and contract NFTs
     const walletNftsResult = await queryNftsByAddress(address);
     setWalletNfts(walletNftsResult);
 
