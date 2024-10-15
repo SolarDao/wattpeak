@@ -265,6 +265,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               <Image
                 src={require("../../images/crypto-wallet.png")}
                 width={22}
+                height={22}
                 alt={"Hallo"}
               />
             </Heading>{" "}

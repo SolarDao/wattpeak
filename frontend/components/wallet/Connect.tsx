@@ -1,7 +1,7 @@
 import { MouseEventHandler } from "react";
-import { Button, IconName, useColorModeValue } from "@interchain-ui/react";
-import { color } from "framer-motion";
-import { border } from "@chakra-ui/react";
+import { IconName, useColorModeValue } from "@interchain-ui/react";
+import { Button } from "@chakra-ui/react";
+import Image from "next/image";
 
 export type ButtonProps = {
   text?: string;
@@ -31,28 +31,37 @@ export function Button1({
   return (
     <Button
       onClick={onClick}
-      leftIcon={icon}
-      disabled={disabled}
-      isLoading={loading}
       className="connect-button"
-      domAttributes={{
-        style: {
-          backgroundColor: backgroundColor,
-          borderColor: borderColor,
-          color: inputColor,
-          flex: 1,
-          borderRadius: "13px",
-          fontSize: "16px",
-          height: "40px",
-          width: "200px",
-          border: "1px solid white",
-        },
-      }}
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+      color={inputColor}
+      isLoading={loading}
+      disabled={disabled}
+      borderRadius="13px"
+      min-width="230px"
+      paddingLeft="30px"
+      paddingRight="30px"
+      height="40px"
+      fontWeight="bold"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }} // Flex styling for alignment
     >
+      <Image
+        src={require("../../images/crypto-wallet.png")}
+        width={20}
+        height={20}
+        alt="Crypto Wallet"
+        style={{ marginRight: "8px", marginBottom: "3px" }} // Spacing between image and text
+      />
       {text}
     </Button>
   );
 }
+
+<Image src="/images/crypto-wallet.png" width={22} height={22} alt="Hallo" />;
 
 export const ButtonConnect = ({
   text = "Connect Wallet",
