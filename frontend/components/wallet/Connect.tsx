@@ -1,5 +1,7 @@
 import { MouseEventHandler } from "react";
 import { Button, IconName, useColorModeValue } from "@interchain-ui/react";
+import { color } from "framer-motion";
+import { border } from "@chakra-ui/react";
 
 export type ButtonProps = {
   text?: string;
@@ -21,10 +23,11 @@ export function Button1({
   onClick = noop,
 }: ButtonProps) {
   const backgroundColor = useColorModeValue(
-    "rgba(0, 0, 0, 0.04)",
+    "rgb(240, 240, 240)",
     "rgb(52, 52, 52)"
   );
-  const borderColor = useColorModeValue("1px solid black", "1px solid white");
+  const borderColor = useColorModeValue("black", "white");
+  const inputColor = useColorModeValue("black", "white");
   return (
     <Button
       onClick={onClick}
@@ -34,12 +37,12 @@ export function Button1({
       className="connect-button"
       domAttributes={{
         style: {
-          backgroundColor,
-          borderColor,
+          backgroundColor: backgroundColor,
+          borderColor: borderColor,
+          color: inputColor,
           flex: 1,
-          fontFamily: "Roboto",
           borderRadius: "13px",
-          fontSize: "17px",
+          fontSize: "16px",
           height: "40px",
           width: "200px",
           border: "1px solid white",
