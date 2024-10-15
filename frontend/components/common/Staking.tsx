@@ -26,6 +26,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./helpers/Loading";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { WalletStatus } from "cosmos-kit";
+import { formatBalance } from "@/utils/balances/formatBalances";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -193,7 +194,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       setBalances([...balancesResult]);
       const stakersResult = await queryStakers(address || "");
       setStakers(stakersResult);
-      setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
+      setClaimableRewards(stakersResult.claimable_rewards); // Update claimable rewards
       setAmount(0);
       toast.success("Tokens unstaked successfully!");
     } catch (err) {
@@ -310,7 +311,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             marginTop="30px"
           >
             <Box textAlign="center" fontSize={20}>
-              You have {claimableRewards} WattPeak ready to be claimed!
+              You have {formatBalance(claimableRewards)} $WP ready to be claimed!
             </Box>
             <br />
             <Button

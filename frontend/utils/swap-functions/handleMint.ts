@@ -83,7 +83,7 @@ export const handleMint = async ({
       balances?.find(
         (balance) =>
           balance.denom ===
-          "factory/juno16g2g3fx3h9syz485ydqu26zjq8plr3yusykdkw3rjutaprvl340sm9s2gn/uwattpeaka"
+          process.env.NEXT_PUBLIC_WATTPEAK_DENOM
       )?.amount / 1000000 || 0
     );
     toast.success("Minting successful");
