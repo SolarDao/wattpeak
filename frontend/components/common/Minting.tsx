@@ -3,7 +3,6 @@ import { useChain } from "@cosmos-kit/react";
 import {
   Box,
   Container,
-  Spinner,
   useColorModeValue,
 } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
@@ -73,11 +72,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     "rgba(52, 52, 52, 1)"
   );
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
-
-  const boxShadow = useColorModeValue(
-    "0px 4px 4px rgba(0, 0, 0, 0.25)",
-    "0px 2px 2px rgba(255, 255, 255, 0.726)"
-  );
 
   const handleMintClick = async () => {
     if (!signingClient || !address) {

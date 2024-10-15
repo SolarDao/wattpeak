@@ -1,4 +1,5 @@
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { MsgExecuteContractEncodeObject, SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { coins, Coin } from "@cosmjs/stargate";
 import { toast } from "react-toastify";
 import { toBase64, toUtf8 } from "@cosmjs/encoding";
 
@@ -36,16 +37,44 @@ export const handleMultipleNftSwapFunctionUtil = async ({
   setError,
   setSwapping,
 }: HandleMultipleNftSwapProps) => {
-  if (!signingClient || selectedMultipleNfts.length === 0) {
-    console.error("Signing client or selected NFTs not initialized");
+  // Validation Checks
+  if (
+    !signingClient ||
+    selectedMultipleNfts.length === 0 ||
+    !address ||
+    !HERO_CONTRACT_ADDRESS ||
+    !SWAP_CONTRACT_ADDRESS
+  ) {
+    console.error("Signing client, selected NFTs, address, or contract addresses not initialized");
+    toast.error("Initialization error: Please ensure all parameters are set.");
     return;
   }
 
   try {
     setSwapping(true);
 
-    // Prepare all messages for sending NFTs
-    const msgs = selectedMultipleNfts.map((tokenId) => {
+    // Step 1: Calculate total swap fee
+    const totalSwapFeeAmount = (BigInt(config.swap_fee) * BigInt(selectedMultipleNfts.length)).toString();
+
+    // Step 2: Prepare the swap fee message
+    const swapFeeCoin: Coin = {
+      denom: config.swap_fee_denom, // Correct denomination for swap fee
+      amount: totalSwapFeeAmount,
+    };
+
+    // Assuming your smart contract expects a specific message to handle swap fees
+    const swapFeeMsg: MsgExecuteContractEncodeObject = {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: {
+        sender: address,
+        contract: SWAP_CONTRACT_ADDRESS,
+        msg: toUtf8(JSON.stringify({ receive_swap_fee: {} })), // Adjust based on your contract's expected message
+        funds: [swapFeeCoin],
+      },
+    };
+
+    // Step 3: Prepare all send_nft messages
+    const sendNftMsgs: MsgExecuteContractEncodeObject[] = selectedMultipleNfts.map((tokenId) => {
       const msgDetails = {
         amount: config.price_per_nft,
         denom: config.token_denom,
@@ -71,62 +100,40 @@ export const handleMultipleNftSwapFunctionUtil = async ({
       };
     });
 
-    // Calculate the total swap fee
-    const totalSwapFeeAmount = (
-      BigInt(config.swap_fee) * BigInt(selectedMultipleNfts.length)
-    ).toString();
+    // Step 4: Combine the messages with swap fee first
+    const messages: MsgExecuteContractEncodeObject[] = [swapFeeMsg, ...sendNftMsgs];
 
-    // Create the swap fee transaction message
-    const swapFeeMsg = {
-      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-      value: {
-        fromAddress: address,
-        toAddress: SWAP_CONTRACT_ADDRESS,
-        amount: [
-          {
-            denom: config.swap_fee_denom,
-            amount: totalSwapFeeAmount,
-          },
-        ],
-      },
-    };
-
-    // Add the swap fee message to the messages array
-    //@ts-ignore
-    msgs.push(swapFeeMsg);
-
-    // Adjust the gas estimate to account for the additional message
+    // Step 5: Define the transaction fee
     const fee = {
-      amount: [{ denom: "ustars", amount: "7500" }],
-      gas: (300000 * selectedMultipleNfts.length + 80000).toString(), // Added 80,000 gas for the swap fee transaction
+      amount: coins(7500, config.swap_fee_denom), // Adjust fee based on network requirements
+      gas: (300000 * selectedMultipleNfts.length + 80000).toString(), // Adjust gas limit as necessary
     };
 
-    // Sign and broadcast the transaction
-    const result = await signingClient.signAndBroadcast(address ?? "", msgs, fee);
+    // Step 6: Broadcast the transaction
+    const result = await signingClient.signAndBroadcast(address, messages, fee);
 
+    // Step 7: Check transaction result
     if (result.code !== 0) {
-      throw new Error(`Error executing transaction: ${result.rawLog}`);
+      throw new Error(`Transaction failed with code ${result.code}: ${result.rawLog}`);
     }
 
-    // Update wallet and contract NFTs
-    const walletNftsResult = await queryNftsByAddress(address ?? "");
+    // Step 8: Update wallet and contract NFTs
+    const walletNftsResult = await queryNftsByAddress(address);
     setWalletNfts(walletNftsResult);
-
-    if (!SWAP_CONTRACT_ADDRESS) {
-      throw new Error("SWAP_CONTRACT_ADDRESS is undefined");
-    }
 
     const contractNftsResult = await queryNftsByAddress(SWAP_CONTRACT_ADDRESS);
     setContractNfts(contractNftsResult);
 
-    // Reset selected NFTs and display success message
+    // Step 9: Reset selected NFTs and display success message
     setSelectedMultipleNfts([]);
     toast.success("NFTs successfully swapped!");
   } catch (err) {
+    // Handle errors and notify the user
     setError(err);
     toast.error("Error swapping NFTs");
     console.error("Error executing multiple swap:", err);
   } finally {
+    // Reset swapping state regardless of success or failure
     setSwapping(false);
   }
 };

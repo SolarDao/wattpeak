@@ -2,10 +2,7 @@ import React from "react";
 import { useColorModeValue } from "@interchain-ui/react";
 import Image from "next/image";
 import { Button, Box } from "@chakra-ui/react";
-import {
-  formatBalance,
-  formatBalanceNoConversion,
-} from "@/utils/balances/formatBalances";
+import { formatBalance } from "@/utils/balances/formatBalances";
 import { formatDenom } from "@/utils/balances/formatDenoms";
 
 interface MultipleSelectBoxProps {
@@ -101,13 +98,19 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
 
         <Button
           onClick={() => setSelectedMultipleNfts([])}
-          background="linear-gradient(180deg, #FFD602 0%, #FFA231 100%)"
-          color="black"
-          borderRadius={50}
+          borderRadius={10}
           padding={10}
           width={70}
-          height={30}
+          height={25}
+          boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+          border={borderColor}
+          color={inputColor}
+          background={backgroundColor}
           cursor="pointer"
+          _hover={{
+            background: "linear-gradient(180deg, #FFD602 0%, #FFA231 100%)",
+            color: "black",
+          }}
         >
           Clear
         </Button>
@@ -191,10 +194,10 @@ const MultipleSelectBox: React.FC<MultipleSelectBoxProps> = ({
           >
             <Box>
               {tabIndex === 0 ? "Amount to receive: " : "Total Price: "}
-              {formatBalanceNoConversion(
+              {formatBalance(
                 Number(config.price_per_nft) * selectedMultipleNfts.length
               )}{" "}
-              $SOLAR
+              {formatDenom(config.token_denom)}
             </Box>
             <Box>
               Total Swap Fee:{" "}

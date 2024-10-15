@@ -208,6 +208,27 @@ a {
     letter-spacing: 0.1em;
   }
 
+  .connect-button {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: #070D1C;
+    padding: 10px 20px;
+    background: #070D1C;
+    box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.5);
+    border-width: 2px;
+    border-radius: 23px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+  }
+
+  .connect-button:hover {
+    background: linear-gradient(180deg, #FFD602 0%, #FFA231 100%);
+    color: black;
+  }
+
   .mintBtn:hover {
     background: linear-gradient(180deg, #FFD602 0%, #FFA231 100%);
     color: black;

@@ -412,10 +412,9 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         <Heading
           display={"flex"}
           gap={"5px"}
-          textAlign="left"
+          justifyContent="center"
           marginBottom="10px"
           marginTop="30px"
-          marginLeft="15px"
           color={inputColor}
           fontSize="22px"
           lineHeight="19.36px"
