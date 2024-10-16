@@ -18,7 +18,6 @@ interface HandleMintProps {
   setMinting: (minting: boolean) => void;
   balances: any[];
 }
-
 export const handleMint = async ({
   signingClient,
   address,
@@ -64,28 +63,32 @@ export const handleMint = async ({
         gas: "3000000", // gas limit
       },
       "", // Optional memo
-      [{ denom: "ujunox", amount: (Number(price)).toFixed(0).toString()}] // Funds sent with transaction
+      [{ denom: "ujunox", amount: Number(price).toFixed(0).toString() }] // Funds sent with transaction
     );
+
     const projects = await queryProjects();
     const projectsWithId = projects.map((project, index) => ({
       ...project,
       projectId: index + 1,
     }));
     setProjects(projectsWithId);
-    getBalances(address || "").then((result) => {
-      setBalances(result);
-    });
+
+    // Fetch updated balances
+    const updatedBalances = await getBalances(address || "");
+    setBalances(updatedBalances);
+
+    // Update balances using the updated balances
     setJunoBalance(
-      balances?.find((balance) => balance.denom === "ujunox")?.amount /
+      updatedBalances?.find((balance) => balance.denom === "ujunox")?.amount /
         1000000 || 0
     );
     setWattpeakBalance(
-      balances?.find(
+      updatedBalances?.find(
         (balance) =>
-          balance.denom ===
-          process.env.NEXT_PUBLIC_WATTPEAK_DENOM
+          balance.denom === process.env.NEXT_PUBLIC_WATTPEAK_DENOM
       )?.amount / 1000000 || 0
     );
+
     toast.success("Minting successful");
   } catch (err) {
     setError(err);

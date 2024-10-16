@@ -75,9 +75,8 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       toast.error("Wallet not connected");
       return;
     }
-
     // Proceed with handleMint function
-    handleMint({
+    await handleMint({
       signingClient,
       address,
       amount,
@@ -214,24 +213,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
     // Update the state with the calculated values
     setAmount(Number(maxWp));
-    setCryptoAmount(junoBalance); // Convert to standard units (Juno)
-  };
-
-  const handleBlurAmount = () => {
-    // Convert amount to a number before calling toFixed
-    if (amount > (calculateMax() ?? 0)) {
-      const maxWp = calculateMax();
-      setCryptoAmount(junoBalance);
-      setAmount(maxWp || 0);
-    }
-  };
-
-  const handleBlurCryptoAmount = () => {
-    if (amount > (calculateMax() ?? 0)) {
-      const maxWp = calculateMax();
-      setCryptoAmount(junoBalance);
-      setAmount(maxWp || 0);
-    }
+    setCryptoAmount(junoBalance - 0.002); // Convert to standard units (Juno)
   };
 
   useEffect(() => {
@@ -336,12 +318,13 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     };
 
     fetchBalances();
-  }, [status, address, getSigningCosmWasmClient]);
+  }, [status, address, getSigningCosmWasmClient],);
 
   useEffect(() => {
     if (config && amount) {
-      // Convert minting price from micro-units to standard units (Juno)
-      const mintingPriceInJuno = parseFloat(config.minting_price.amount);
+      // Convert minting price from micro-units to standard units (JUNO)
+      const mintingPriceInJuno =
+        parseFloat(config.minting_price.amount);
 
       // Parse the minting fee percentage
       const mintingFeePercentage = parseFloat(
@@ -369,7 +352,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       setPrice(totalCost.toFixed(6));
 
       // Set the minting fee amount state
-      setMintingFeeAmount(parseFloat(feeAmount.toFixed(6)) / 1000000);
+      setMintingFeeAmount(parseFloat((feeAmount).toFixed(6))); // No division needed
     } else {
       setPrice("0"); // Default to 0 if config or amount is not available
       setMintingFeeAmount(0);
@@ -522,7 +505,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             //onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
             min="1"
-            max={junoBalance}
+            max={junoBalance - 0.002}
             color={inputColor}
           />
         </Box>
@@ -579,7 +562,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
                 {formatDenom(config.minting_price.denom)} for {amount} Wattpeak
               </Text>
               <Text>
-                Minting fee: {mintingFeeAmount}{" "}
+                Minting fee: {(mintingFeeAmount / 1000000).toFixed(6)}{" "}
                 {formatDenom(config.minting_price.denom)}
               </Text>
             </>

@@ -290,7 +290,8 @@ pub fn mint_tokens_msg(
     {
         return Err(ContractError::TooMuchFunds {});
     }
-
+    println!("Minting price: {:?}", formatted_minting_price);
+    println!("Minting fee: {:?}", formatted_minting_fee);
     // Prepare messages for the payment and fee transfers
     let payment_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: config.minting_payment_address.to_string(),
