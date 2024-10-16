@@ -77,7 +77,9 @@ export const swapNftToTokens = async ({
       value: {
         sender: address,
         contract: SWAP_CONTRACT_ADDRESS,
-        msg: toUtf8(JSON.stringify({ receive_swap_fee: {} })), // Adjust based on your contract's expected message
+        msg: toUtf8(JSON.stringify({ receive_swap_fee: {
+          amount_of_nft: "1",
+        } })), 
         funds: [swapFeeCoin],
       },
     };

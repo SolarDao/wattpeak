@@ -59,7 +59,7 @@ a {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    margin-bottom: 20%;
+    margin-bottom: 10%;
     margin-right: 10px;
     margin-left: 10px;
     border-radius: 23px;
@@ -216,7 +216,6 @@ a {
     border-width: 2px;
     cursor: pointer;
     font-size: 20px;
-    letter-spacing: 0.05em;
   }
 
   .connect-button:hover {

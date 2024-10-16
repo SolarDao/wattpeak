@@ -25,7 +25,17 @@ export const Faq = () => {
         {
           question: "What is SolarDAO?",
           answer:
-            "SolarDAO is a decentralized platform that allows users to participate in solar energy projects through minting and staking Wattpeak tokens.",
+            "SolarDAO is a decentralized organization that allows users to participate in solar energy projects through minting and staking Wattpeak tokens. The governance of the DAO is managed by the community through voting, and currently resides on the Juno blcockhain and is managed through DaoDao.",
+        },
+        {
+          question: "What is the goal of SolarDAO?",
+          answer:
+            "SolarDAO aims to speed up the shift to renewable and green energy by actively crowdsourcing new solar energy production around the world and building or supporting technology to make the green shift happen. Ultimately SolarDAO should aim to become the worlds largest decentralised solar energy producer. SolarDAO can choose to invest and get ownership in utility scale solar parks and through various solutions and technologies. The SolarDAO will work to create value, for the DAO and thus for the DAO members.",
+        },
+        {
+          question: "Which Solar Parks does SolarDAO invest in?",
+          answer:
+            "SolarDAO invests in utility scale solar parks around the world. The DAO aims to invest in solar parks that are already operational and producing energy, as well as new solar parks that are in the planning or construction phase. To see the current projects, go to the Home page for more information and a map showing the location of the different Parks, or go to the Mint section to mint $WP from one of the projects that has $WP available to mint..",
         },
         {
           question: "How can I connect my wallet?",
@@ -35,13 +45,25 @@ export const Faq = () => {
         {
           question: "Are there any fees involved?",
           answer:
-            "Yes, there are different fees associated with minting, staking, and swapping tokens. In addition to standard network and transaction fees the DAO also enforces swap fees and minting fees. It's therefore good to have a small amount of STARS and JUNO available to cover these fees. The current fees are displayed in the respective sections.",
+            "Yes, there are different fees associated with minting, staking, and swapping tokens. In addition to standard network and transaction fees the DAO also enforces swap fees, minting fees and staking reward fees. It's therefore good to have a small amount of extra $SOLAR and JUNO available to cover these fees. The current fees are displayed in the respective sections.",
         },
         {
           question:
             "Is there a minimum amount required for minting or staking?",
           answer:
             "The minimum amount may vary depending on the project. Please check the specific project details for more information.",
+        },
+        {
+          question:
+            "Which Blockchain does the dApp run on?",
+          answer:
+            "The SolarDAO and our dApp runs on  Juno and Stargaze, two Cosmos SDK based blockchains. The reason for this is that the Solar DAO and original $Solar token was created on the Juno blockchain, and the Cyber Solar Heroes were created on the Stargaze blockchain. The dApp is therefore running on both blockchains to support both tokens and NFTs.",
+        },
+        {
+          question:
+            "What limitations and complications does running on two Blockchains mean for the dApp?",
+          answer:
+            "One of the bigger complications at the moment is that in order for the user to swap $Solar tokens for Cyber Solar Heroes the user needs to have access to bridged $Solar tokens on the Stargaze blockchain. This is because the Cyber Solar Heroes are created on the Stargaze blockchain. When the dApp is deployed on the mainnets, the user will be able to bridge $Solar tokens from the Juno blockchain to the Stargaze blockchain. This will be done through the dApp, and the user will not have to leave the dApp to bridge the tokens.",
         },
       ],
     },
@@ -58,6 +80,12 @@ export const Faq = () => {
           answer:
             "To mint tokens, connect your wallet, go to the Mint section, select a solar project, and specify the amount you want to invest. Confirm the transaction, and the tokens will be minted to your wallet.",
         },
+
+        {
+          question: "What are WattPeak tokens?",
+          answer:
+            "$WattPeak are Solar-asset tokens, which each represent 1 wp of solar production capacity in utility scale solar parks. The revenue from each wp of production. represented by a $WattPeak , is reinvested into more solar production capacity and new $WattPeaks are issued to the holders pro-rata."
+        },
         {
           question: "What is the benefit of minting Wattpeak tokens?",
           answer:
@@ -72,6 +100,11 @@ export const Faq = () => {
           question: "What is staking?",
           answer:
             "Staking lets you lock your Wattpeak tokens to earn rewards over time. By staking, you ensure to get your share of the income generated by the solar parks that the DAO owns a stake in.",
+        },
+        {
+          question: "What are Interest WattPeaks ($IWP)?",
+          answer:
+            "Interest WattPeak is a representation of the interest you earn by staking your Wattpeak tokens. The more tokens you stake, the more Interest WattPeak you earn. Since the profit from the Solar Parks are distributed as pro rata to how many tokens that are staked, the Interest WattPeak is a representation of how much you will earn of the rewards being distributed. Therefore you will not be rewarded with the same amount of WattPeak Tokens as the amount of  Interest WattPeak you have earned, since it will be relative to how many other tokens are staked and how much profit the Solar Parks generate.",
         },
         {
           question: "How do I stake my tokens?",

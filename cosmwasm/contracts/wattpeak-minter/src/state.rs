@@ -18,8 +18,35 @@ pub struct Config {
 
 #[cw_serde]
 pub struct Location {
-    pub latitude: Decimal,
-    pub longitude: Decimal,
+    pub latitude: String,
+    pub longitude: String,
+}
+
+impl Location {
+    pub fn validate(&self) -> StdResult<()> {
+        let lat = self
+            .latitude
+            .parse::<f64>()
+            .map_err(|_| StdError::generic_err("Invalid latitude format"))?;
+        let lon = self
+            .longitude
+            .parse::<f64>()
+            .map_err(|_| StdError::generic_err("Invalid longitude format"))?;
+
+        // Latitude must be between -90 and +90
+        if lat < -90.0 || lat > 90.0 {
+            return Err(StdError::generic_err(
+                "Latitude must be between -90 and +90 degrees",
+            ));
+        }
+        // Longitude must be between -180 and +180
+        if lon < -180.0 || lon > 180.0 {
+            return Err(StdError::generic_err(
+                "Longitude must be between -180 and +180 degrees",
+            ));
+        }
+        Ok(())
+    }
 }
 
 // Implement a validation function for the config
@@ -105,7 +132,7 @@ pub const TOTAL_WATTPEAK_MINTED_COUNT: Item<u64> = Item::new("total_wattpeak_min
 
 pub const FULL_DENOM: Item<String> = Item::new("token_full_denom");
 
-pub const SUBDENOM: &str = "uwattpeakb";
+pub const SUBDENOM: &str = "uwattpeakt";
 pub const DESCRIPTION: &str =
     "wattpeak is a token that represents the amount of wattpeak that a solarpanel represents";
 pub const SYMBOL: &str = "WTP";

@@ -6,7 +6,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { color } from '@chakra-ui/react';
 
 // Register necessary chart components
 ChartJS.register(ArcElement, Tooltip, Legend);

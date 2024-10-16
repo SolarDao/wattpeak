@@ -56,6 +56,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   const [totalStakedWattpeak, setTotalStakedWattpeak] = useState(0);
   const [stakerMintedWattpeak, setStakerMintedWattpeak] = useState(0);
   const [stakerStakedWattpeak, setStakerStakedWattpeak] = useState(0);
+  const [interestWattPeakEarned, setInterestWattPeakEarned] = useState(0);
   const [totalWattpeak, setTotalWattpeak] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -133,6 +134,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
 
           setStakers(stakersResult);
           setStakerStakedWattpeak(stakersResult.wattpeak_staked);
+          setInterestWattPeakEarned(stakersResult.interest_wattpeak || 0);
 
           const convertedBalances = [
             ...balancesResult,
@@ -142,7 +144,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             denom: balance.denom,
           }));
           setBalances(convertedBalances);
-
+          
           setTotalStakedWattpeak(stakedWattpeakResults);
 
           const wattpeakBalance = balancesResult.find(
@@ -230,12 +232,19 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         balance.denom === "ujunox" ||
         balance.denom === "ustars" ||
         balance.denom ===
-          "solar"
+          "solar" 
+         // || balance.denom === process.env.NEXT_PUBLIC_SOLAR_STARGAZE_DENOM
     )
     .map((balance) => ({
       ...balance,
       formattedAmount: formatBalance(balance.amount),
     }));
+
+    filteredBalances.push({
+      denom: "$IWP",
+      amount: interestWattPeakEarned,
+      formattedAmount: formatBalance(interestWattPeakEarned),
+    });
 
   return (
     <Box color={inputColor}>
@@ -279,7 +288,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               justifyContent="center"
               boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
-              <Flex flexDirection="column" gap="25px" padding="20px">
+              <Flex flexDirection="column" gap="20px" padding="20px">
                 <Heading
                   fontSize="20px"
                   textAlign="center"

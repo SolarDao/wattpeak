@@ -42,7 +42,6 @@ export function Button1({
       paddingLeft="30px"
       paddingRight="30px"
       height="40px"
-      fontWeight="bold"
       style={{
         display: "flex",
         alignItems: "center",
