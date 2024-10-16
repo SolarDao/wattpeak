@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use crate::state::Location;
 use crate::state::{
-    Config, Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, FULL_DENOM, PROJECTS, PROJECT_DEALS_COUNT, TOTAL_WATTPEAK_MINTED_COUNT
+    Project, AVAILABLE_WATTPEAK_COUNT, CONFIG, FULL_DENOM, PROJECTS, PROJECT_DEALS_COUNT,
+    TOTAL_WATTPEAK_MINTED_COUNT,
 };
 use crate::{error::ContractError, msg::ExecuteMsg};
 use cosmwasm_std::{
@@ -123,12 +124,12 @@ pub fn edit_project(
     deps: DepsMut,
     info: MessageInfo,
     id: u64,
-    name: String,
-    description: String,
-    document_deal_link: String,
-    max_wattpeak: u64,
-    image_link: String,
-    location: Location,
+    name: Option<String>,
+    description: Option<String>,
+    document_deal_link: Option<String>,
+    max_wattpeak: Option<u64>,
+    image_link: Option<String>,
+    location: Option<Location>,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can edit a project
     let config = CONFIG.load(deps.as_ref().storage)?;
@@ -137,33 +138,50 @@ pub fn edit_project(
     }
 
     let mut project = PROJECTS.load(deps.storage, id)?;
-    
+
     // Save the old max_wattpeak for comparison
     let old_max_wattpeak = project.max_wattpeak;
 
-    project.name = name;
-    project.description = description;
-    project.document_deal_link = document_deal_link;
-    project.max_wattpeak = max_wattpeak;
-    project.image_link = image_link;
-    project.location = location;
+    // Update fields if they are Some
+    if let Some(name) = name {
+        project.name = name;
+    }
+    if let Some(description) = description {
+        project.description = description;
+    }
+    if let Some(document_deal_link) = document_deal_link {
+        project.document_deal_link = document_deal_link;
+    }
+    if let Some(max_wattpeak) = max_wattpeak {
+        project.max_wattpeak = max_wattpeak;
+    }
+    if let Some(image_link) = image_link {
+        project.image_link = image_link;
+    }
+    if let Some(location) = location {
+        project.location = location;
+    }
 
     project.validate()?;
 
     PROJECTS.save(deps.storage, id, &project)?;
 
     // Update AVAILABLE_WATTPEAK_COUNT based on the change in max_wattpeak
-    if max_wattpeak > old_max_wattpeak {
+    if max_wattpeak > Some(old_max_wattpeak) {
         // If new max_wattpeak is higher, adds the difference to AVAILABLE_WATTPEAK_COUNT
         AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
-            let diff = max_wattpeak - old_max_wattpeak;
-            available_wattpeak_count.checked_add(diff).ok_or(ContractError::Overflow {})
+            let diff = max_wattpeak.unwrap() - old_max_wattpeak;
+            available_wattpeak_count
+                .checked_add(diff)
+                .ok_or(ContractError::Overflow {})
         })?;
-    } else if max_wattpeak < old_max_wattpeak {
+    } else if max_wattpeak < Some(old_max_wattpeak) {
         // If new max_wattpeak is lower, subtracts the difference from AVAILABLE_WATTPEAK_COUNT
         AVAILABLE_WATTPEAK_COUNT.update(deps.storage, |available_wattpeak_count| {
-            let diff = old_max_wattpeak - max_wattpeak;
-            available_wattpeak_count.checked_sub(diff).ok_or(ContractError::Overflow {})
+            let diff = old_max_wattpeak - max_wattpeak.unwrap();
+            available_wattpeak_count
+                .checked_sub(diff)
+                .ok_or(ContractError::Overflow {})
         })?;
     }
 
@@ -173,34 +191,45 @@ pub fn edit_project(
         .add_attribute("new_wattpeak", project.max_wattpeak.to_string()))
 }
 
-
-
 pub fn update_config(
     deps: DepsMut,
     info: MessageInfo,
-    admin: Addr,
-    minting_price: Coin,
-    minting_payment_address: Addr,
-    minting_fee_percentage: Decimal,
-    minting_fee_address: Addr,
+    admin: Option<Addr>,
+    minting_price: Option<Coin>,
+    minting_payment_address: Option<Addr>,
+    minting_fee_percentage: Option<Decimal>,
+    minting_fee_address: Option<Addr>,
 ) -> Result<Response<TokenFactoryMsg>, ContractError> {
     // Only admin can update the contract configuration
-    let config = CONFIG.load(deps.as_ref().storage)?;
+    let mut config = CONFIG.load(deps.as_ref().storage)?;
     if config.admin != info.sender {
         return Err(ContractError::Unauthorized {});
     }
 
-    let new_config = Config {
-        admin,
-        minting_price,
-        minting_payment_address,
-        minting_fee_percentage,
-        minting_fee_address,
-    };
+    // Update the admin address if it was provided
+    if let Some(admin) = admin {
+        config.admin = Addr::unchecked(admin);
+    }
 
-    new_config.validate(deps.as_ref())?;
+    if let Some(minting_price) = minting_price {
+        config.minting_price = minting_price;
+    }
 
-    CONFIG.save(deps.storage, &new_config)?;
+    if let Some(minting_payment_address) = minting_payment_address {
+        config.minting_payment_address = Addr::unchecked(minting_payment_address);
+    }
+
+    if let Some(minting_fee_percentage) = minting_fee_percentage {
+        config.minting_fee_percentage = minting_fee_percentage;
+    }
+
+    if let Some(minting_fee_address) = minting_fee_address {
+        config.minting_fee_address = Addr::unchecked(minting_fee_address);
+    }
+
+    config.validate(deps.as_ref())?;
+
+    CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new().add_attribute("action", "update_config"))
 }
@@ -227,27 +256,48 @@ pub fn mint_tokens_msg(
     }
 
     // Calculate the total cost and fee based on the amount to mint
-    let minting_price = amount.checked_mul(config.minting_price.amount).unwrap();
+    let formatted_amount = Decimal::from_ratio(amount, Uint128::new(1000000));
+    let minting_price = formatted_amount
+        .checked_mul(Decimal::from_ratio(
+            config.minting_price.amount,
+            Uint128::new(1),
+        ))
+        .unwrap();
     let minting_fee_calculation = Decimal::from_str(&minting_price.to_string())
         .unwrap()
         .checked_mul(config.minting_fee_percentage)
         .unwrap();
-    let minting_fee = Uint128::from(minting_fee_calculation.to_string().parse::<u128>().unwrap());
-    let total_cost = minting_price.checked_add(minting_fee).unwrap();
+    let minting_fee = minting_fee_calculation.to_uint_floor();
+    let formatted_minting_price = Uint128::from_str(&minting_price.to_string()).unwrap();
+    let formatted_minting_fee = Uint128::from_str(&minting_fee.to_string()).unwrap();
 
-    if info.funds.iter().any(|coin| coin.amount < total_cost) {
+    let total_cost = minting_price
+        .checked_add(Decimal::from_ratio(minting_fee, Uint128::new(1)))
+        .unwrap();
+    let formatted_total_cost = Uint128::from_str(&total_cost.to_string()).unwrap();
+
+    if info
+        .funds
+        .iter()
+        .any(|coin| coin.amount < formatted_total_cost)
+    {
         return Err(ContractError::InsufficientFunds {});
     }
-    if info.funds.iter().any(|coin| coin.amount > total_cost) {
+    if info
+        .funds
+        .iter()
+        .any(|coin| coin.amount > formatted_total_cost)
+    {
         return Err(ContractError::TooMuchFunds {});
     }
-
+    println!("Minting price: {:?}", formatted_minting_price);
+    println!("Minting fee: {:?}", formatted_minting_fee);
     // Prepare messages for the payment and fee transfers
     let payment_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: config.minting_payment_address.to_string(),
         amount: vec![Coin {
             denom: config.minting_price.denom.clone(),
-            amount: minting_price,
+            amount: formatted_minting_price,
         }],
     });
 
@@ -255,12 +305,12 @@ pub fn mint_tokens_msg(
         to_address: config.minting_fee_address.to_string(),
         amount: vec![Coin {
             denom: config.minting_price.denom.clone(),
-            amount: minting_fee,
+            amount: formatted_minting_fee,
         }],
     });
 
     let full_denom = FULL_DENOM.load(deps.storage).unwrap();
-    
+
     // Prepare the minting message
     let mint_msg = TokenFactoryMsg::MintTokens {
         denom: full_denom,
@@ -301,7 +351,7 @@ mod tests {
             admin: Addr::unchecked(MOCK_ADMIN),
             minting_payment_address: Addr::unchecked("mock_address_1"),
             minting_fee_percentage: Decimal::percent(5),
-            minting_price: coin(5, "umpwr"),
+            minting_price: coin(1000000, "umpwr"),
             minting_fee_address: Addr::unchecked("mock_address_2"),
         }
     }
@@ -311,10 +361,10 @@ mod tests {
         use crate::execute::execute;
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
         use crate::msg::{ExecuteMsg, InstantiateMsg};
-        use crate::state::{PROJECTS, PROJECT_DEALS_COUNT, Location};
+        use crate::state::{Location, PROJECTS, PROJECT_DEALS_COUNT};
         use crate::{instantiate, state};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, Decimal, StdError};
+        use cosmwasm_std::{coins, StdError};
 
         #[test]
         fn test_upload_project() {
@@ -337,8 +387,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -398,8 +448,8 @@ mod tests {
                 max_wattpeak: 0,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
@@ -432,8 +482,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let non_admin_info = mock_info("non_admin", &[]);
@@ -461,8 +511,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -474,8 +524,8 @@ mod tests {
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image2".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -487,8 +537,8 @@ mod tests {
                 max_wattpeak: 3000,
                 image_link: "ipfs://test-image3".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -524,9 +574,9 @@ mod tests {
         use crate::execute::tests::{mock_config, MOCK_ADMIN};
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
-        use crate::state::{PROJECTS, Location};
+        use crate::state::{Location, PROJECTS};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-        use cosmwasm_std::{coins, Decimal, StdError};
+        use cosmwasm_std::{coins, StdError};
 
         #[test]
         fn test_edit_project() {
@@ -549,23 +599,23 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
             let edit_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "new name".to_string(),
-                description: "new description".to_string(),
-                document_deal_link: "ipfs://new-link".to_string(),
-                max_wattpeak: 2000,
-                image_link: "ipfs://new-image".to_string(),
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("new name".to_string()),
+                description: Some("new description".to_string()),
+                document_deal_link: Some("ipfs://new-link".to_string()),
+                max_wattpeak: Some(2000),
+                image_link: Some("ipfs://new-image".to_string()),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), edit_msg).unwrap();
             assert_eq!(res.attributes.len(), 3);
@@ -601,8 +651,8 @@ mod tests {
                 max_wattpeak: 1000,
                 image_link: "ipfs://test-image".to_string(),
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
@@ -610,15 +660,15 @@ mod tests {
             // Attempt to edit the project with an invalid max_wattpeak
             let edit_msg_max_wattpeak = ExecuteMsg::EditProject {
                 id: 1,
-                name: "new name".to_string(),
-                description: "new description".to_string(),
-                document_deal_link: "ipfs://new-link".to_string(),
-                image_link: "ipfs://new-image".to_string(),
-                max_wattpeak: 0,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("new name".to_string()),
+                description: Some("new description".to_string()),
+                document_deal_link: Some("ipfs://new-link".to_string()),
+                image_link: Some("ipfs://new-image".to_string()),
+                max_wattpeak: Some(0),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let err_max_wattpeak = execute(
                 deps.as_mut(),
@@ -637,15 +687,15 @@ mod tests {
             // Attempt to edit the project with an empty name
             let edit_msg_empty_name = ExecuteMsg::EditProject {
                 id: 1,
-                name: "".to_string(),
-                description: "new description".to_string(),
-                document_deal_link: "ipfs://new-link".to_string(),
-                image_link: "ipfs://new-image".to_string(),
-                max_wattpeak: 500,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("".to_string()),
+                description: Some("new description".to_string()),
+                document_deal_link: Some("ipfs://new-link".to_string()),
+                image_link: Some("ipfs://new-image".to_string()),
+                max_wattpeak: Some(500),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let err_empty_name =
                 execute(deps.as_mut(), mock_env(), info.clone(), edit_msg_empty_name).unwrap_err();
@@ -659,15 +709,15 @@ mod tests {
             // Attempt to edit the project with an empty description
             let edit_msg_empty_description = ExecuteMsg::EditProject {
                 id: 1,
-                name: "new name".to_string(),
-                description: "".to_string(),
-                document_deal_link: "ipfs://new-link".to_string(),
-                image_link: "ipfs://new-image".to_string(),
-                max_wattpeak: 500,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("new name".to_string()),
+                description: Some("".to_string()),
+                document_deal_link: Some("ipfs://new-link".to_string()),
+                image_link: Some("ipfs://new-image".to_string()),
+                max_wattpeak: Some(500),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let err_empty_description = execute(
                 deps.as_mut(),
@@ -705,23 +755,23 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
             let edit_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "new name".to_string(),
-                description: "new description".to_string(),
-                document_deal_link: "ipfs://new-link".to_string(),
-                image_link: "ipfs://new-image".to_string(),
-                max_wattpeak: 2000,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("new name".to_string()),
+                description: Some("new description".to_string()),
+                document_deal_link: Some("ipfs://new-link".to_string()),
+                image_link: Some("ipfs://new-image".to_string()),
+                max_wattpeak: Some(2000),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err =
@@ -760,11 +810,11 @@ mod tests {
             let new_minting_fee_address = Addr::unchecked("new_minting_fee_address");
 
             let msg = ExecuteMsg::UpdateConfig {
-                admin: new_admin.clone(),
-                minting_price: new_minting_price.clone(),
-                minting_payment_address: new_minting_payment_address.clone(),
-                minting_fee_percentage: new_minting_fee_percentage,
-                minting_fee_address: new_minting_fee_address.clone(),
+                admin: Some(new_admin.clone()),
+                minting_price: Some(new_minting_price.clone()),
+                minting_payment_address: Some(new_minting_payment_address.clone()),
+                minting_fee_percentage: Some(new_minting_fee_percentage),
+                minting_fee_address: Some(new_minting_fee_address.clone()),
             };
             let res = execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
             assert_eq!(res.attributes.len(), 1);
@@ -792,11 +842,11 @@ mod tests {
             .unwrap();
 
             let msg = crate::msg::ExecuteMsg::UpdateConfig {
-                admin: Addr::unchecked("new_admin"),
-                minting_price: Coin::new(2, "WattPeak".to_string()),
-                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
-                minting_fee_percentage: Decimal::percent(10),
-                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+                admin: Some(Addr::unchecked("new_admin")),
+                minting_price: Some(Coin::new(2, "WattPeak".to_string())),
+                minting_payment_address: Some(Addr::unchecked("new_minting_payment_address")),
+                minting_fee_percentage: Some(Decimal::percent(10)),
+                minting_fee_address: Some(Addr::unchecked("new_minting_fee_address")),
             };
             let non_admin_info = mock_info("non_admin", &[]);
             let err = execute(deps.as_mut(), mock_env(), non_admin_info.clone(), msg).unwrap_err();
@@ -820,11 +870,11 @@ mod tests {
             // Define new configuration with an invalid minting price (zero amount)
             let invalid_minting_price: Coin = Coin::new(0, "WattPeak".to_string());
             let msg = crate::msg::ExecuteMsg::UpdateConfig {
-                admin: Addr::unchecked("new_admin"),
-                minting_price: invalid_minting_price.clone(),
-                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
-                minting_fee_percentage: Decimal::percent(10),
-                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+                admin: Some(Addr::unchecked("new_admin")),
+                minting_price: Some(invalid_minting_price.clone()),
+                minting_payment_address: Some(Addr::unchecked("new_minting_payment_address")),
+                minting_fee_percentage: Some(Decimal::percent(10)),
+                minting_fee_address: Some(Addr::unchecked("new_minting_fee_address")),
             };
 
             // Call the update_config function and expect an error
@@ -854,11 +904,11 @@ mod tests {
             // Define new configuration with an invalid minting price (empty denom)
             let invalid_minting_price: Coin = Coin::new(1, "".to_string());
             let msg = crate::msg::ExecuteMsg::UpdateConfig {
-                admin: Addr::unchecked("new_admin"),
-                minting_price: invalid_minting_price.clone(),
-                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
-                minting_fee_percentage: Decimal::percent(10),
-                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+                admin: Some(Addr::unchecked("new_admin")),
+                minting_price: Some(invalid_minting_price.clone()),
+                minting_payment_address: Some(Addr::unchecked("new_minting_payment_address")),
+                minting_fee_percentage: Some(Decimal::percent(10)),
+                minting_fee_address: Some(Addr::unchecked("new_minting_fee_address")),
             };
 
             // Call the update_config function and expect an error
@@ -888,11 +938,11 @@ mod tests {
             // Define new configuration with an invalid minting fee percentage
             let invalid_minting_fee_percentage = Decimal::percent(101);
             let msg = crate::msg::ExecuteMsg::UpdateConfig {
-                admin: Addr::unchecked("new_admin"),
-                minting_price: Coin::new(1, "WattPeak".to_string()),
-                minting_payment_address: Addr::unchecked("new_minting_payment_address"),
-                minting_fee_percentage: invalid_minting_fee_percentage,
-                minting_fee_address: Addr::unchecked("new_minting_fee_address"),
+                admin: Some(Addr::unchecked("new_admin")),
+                minting_price: Some(Coin::new(1, "WattPeak".to_string())),
+                minting_payment_address: Some(Addr::unchecked("new_minting_payment_address")),
+                minting_fee_percentage: Some(invalid_minting_fee_percentage),
+                minting_fee_address: Some(Addr::unchecked("new_minting_fee_address")),
             };
 
             // Call the update_config function and expect an error
@@ -915,7 +965,7 @@ mod tests {
         use crate::execute::{execute, mint_tokens_msg};
         use crate::instantiate;
         use crate::msg::{ExecuteMsg, InstantiateMsg};
-        use crate::state::{AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS, Location};
+        use crate::state::{Location, AVAILABLE_WATTPEAK_COUNT, CONFIG, PROJECTS};
         use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
         use cosmwasm_std::{coins, BankMsg, Coin, CosmosMsg, StdError, Uint128};
         use token_bindings::TokenFactoryMsg;
@@ -935,18 +985,18 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 1000,
+                max_wattpeak: 1000000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(1987343);
 
             // Scenario: Exact funds provided
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(2086710).into(), "umpwr");
             let info = mock_info("user", &funds_provided);
 
             let res = mint_tokens_msg(
@@ -961,31 +1011,31 @@ mod tests {
             let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(wp_after_mint, 500);
+            assert_eq!(wp_after_mint, 998012657);
             let project_wattpeak_after_mint = PROJECTS
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint, 500);
+            assert_eq!(project_wattpeak_after_mint, 1987343);
             assert_eq!(3, res.messages.len());
             assert_eq!(
                 res.messages[0].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: "mock_address_1".to_string(),
-                    amount: vec![Coin::new(2500, "umpwr".to_string())],
+                    amount: vec![Coin::new(1987343, "umpwr".to_string())],
                 })
             );
             assert_eq!(
                 res.messages[1].msg,
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: "mock_address_2".to_string(),
-                    amount: vec![Coin::new(125, "umpwr".to_string())],
+                    amount: vec![Coin::new(99367, "umpwr".to_string())],
                 })
             );
             assert_eq!(
                 res.messages[2].msg,
                 CosmosMsg::Custom(TokenFactoryMsg::MintTokens {
-                    denom: "factory/cosmos2contract/uwattpeakb".to_string(),
+                    denom: "factory/cosmos2contract/uwattpeakt".to_string(),
                     amount: amount_to_mint,
                     mint_to_address: "mint_to_addr".to_string(),
                 })
@@ -1012,8 +1062,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1054,8 +1104,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1096,8 +1146,8 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 1000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1150,7 +1200,7 @@ mod tests {
         #[test]
         fn multiple_projects_minted() {
             let mut deps = mock_dependencies();
-            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+            let info = mock_info(MOCK_ADMIN, &coins(10000000, "WattPeak"));
 
             let config = mock_config();
             let msg = InstantiateMsg {
@@ -1163,10 +1213,10 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 1000,
+                max_wattpeak: 10000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
@@ -1176,18 +1226,18 @@ mod tests {
                 description: "test description2".to_string(),
                 document_deal_link: "ipfs://test-link2".to_string(),
                 image_link: "ipfs://test-image2".to_string(),
-                max_wattpeak: 1000,
+                max_wattpeak: 10000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
-            let info = mock_info("user", &funds_provided);
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
+            let info: cosmwasm_std::MessageInfo = mock_info("user", &funds_provided);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1198,15 +1248,15 @@ mod tests {
             )
             .unwrap();
 
-            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+            let wp_after_mint: u64 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(wp_after_mint, 1500);
+            assert_eq!(wp_after_mint, 15000000);
             let project_wattpeak_after_mint = PROJECTS
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint, 500);
+            assert_eq!(project_wattpeak_after_mint, 5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1220,17 +1270,17 @@ mod tests {
             let wp_after_mint2 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(wp_after_mint2, 1000);
+            assert_eq!(wp_after_mint2, 10000000);
             let project2_wattpeak_after_mint = PROJECTS
                 .load(deps.as_ref().storage, 2)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project2_wattpeak_after_mint, 500);
+            assert_eq!(project2_wattpeak_after_mint, 5000000);
         }
         #[test]
         fn mint_out_a_project_then_increase_it() {
             let mut deps = mock_dependencies();
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1244,15 +1294,15 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1271,25 +1321,25 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint1, 500);
+            assert_eq!(project_wattpeak_after_mint1, 5000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 2000,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("test name".to_string()),
+                description: Some("test description".to_string()),
+                document_deal_link: Some("ipfs://test-link".to_string()),
+                image_link: Some("ipfs://test-image".to_string()),
+                max_wattpeak: Some(20000000),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info("user", &funds_provided);
 
             mint_tokens_msg(
@@ -1304,12 +1354,12 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint2, 1000);
+            assert_eq!(project_wattpeak_after_mint2, 10000000);
         }
         #[test]
         fn mint_then_edit_project_minted_wattpeak_higher_than_available() {
             let mut deps = mock_dependencies();
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1323,15 +1373,15 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1350,19 +1400,19 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint1, 500);
+            assert_eq!(project_wattpeak_after_mint1, 5000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 400,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("test name".to_string()),
+                description: Some("test description".to_string()),
+                document_deal_link: Some("ipfs://test-link".to_string()),
+                image_link: Some("ipfs://test-image".to_string()),
+                max_wattpeak: Some(400),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let err = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
             assert_eq!(
@@ -1375,7 +1425,7 @@ mod tests {
         #[test]
         fn mint_then_edit_project_lowering_max_wattpeak() {
             let mut deps = mock_dependencies();
-            let mut funds_provided = coins(Uint128::new(1575).into(), "umpwr");
+            let mut funds_provided = coins(Uint128::new(3150000).into(), "umpwr");
             let mut info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1389,15 +1439,15 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(300);
+            let amount_to_mint = Uint128::new(3000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1410,15 +1460,15 @@ mod tests {
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 300,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("test name".to_string()),
+                description: Some("test description".to_string()),
+                document_deal_link: Some("ipfs://test-link".to_string()),
+                image_link: Some("ipfs://test-image".to_string()),
+                max_wattpeak: Some(3000000),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             let _ = execute(deps.as_mut(), mock_env(), info.clone(), project_msg);
 
@@ -1434,13 +1484,14 @@ mod tests {
             )
             .unwrap_err();
 
-            assert_eq!(err, ContractError::InsufficientWattpeak{});
+            assert_eq!(err, ContractError::InsufficientWattpeak {});
         }
+
         #[test]
-        fn several_mints_and_edits() {
+        fn edit_only_one_parameter() {
             let mut deps = mock_dependencies();
-            let mut funds_provided = coins(Uint128::new(1050).into(), "umpwr");
-            let mut info = mock_info(MOCK_ADMIN, &funds_provided);
+            let funds_provided = coins(Uint128::new(1050).into(), "umpwr");
+            let info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
             let msg = InstantiateMsg {
@@ -1455,13 +1506,54 @@ mod tests {
                 image_link: "ipfs://test-image".to_string(),
                 max_wattpeak: 500,
                 location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
                 },
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let mut amount_to_mint = Uint128::new(200);
+            let project_msg = ExecuteMsg::EditProject {
+                id: 1,
+                name: None,
+                description: None,
+                document_deal_link: None,
+                image_link: None,
+                max_wattpeak: Some(100),
+                location: None,
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let count_after_edit = AVAILABLE_WATTPEAK_COUNT
+                .load(deps.as_ref().storage)
+                .unwrap();
+            assert_eq!(count_after_edit, 100);
+        }
+        #[test]
+        fn several_mints_and_edits() {
+            let mut deps = mock_dependencies();
+            let mut funds_provided = coins(Uint128::new(2100000).into(), "umpwr");
+            let mut info = mock_info(MOCK_ADMIN, &funds_provided);
+
+            let config = mock_config();
+            let msg = InstantiateMsg {
+                config: config.clone(),
+            };
+
+            let _res = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+            let project_msg = ExecuteMsg::UploadProject {
+                name: "test name".to_string(),
+                description: "test description".to_string(),
+                document_deal_link: "ipfs://test-link".to_string(),
+                image_link: "ipfs://test-image".to_string(),
+                max_wattpeak: 5000000,
+                location: Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                },
+            };
+            execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
+
+            let mut amount_to_mint = Uint128::new(2000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1475,30 +1567,29 @@ mod tests {
             let count_after_mint = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_mint, 300);
+            assert_eq!(count_after_mint, 3000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 400,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("test name".to_string()),
+                description: Some("test description".to_string()),
+                document_deal_link: Some("ipfs://test-link".to_string()),
+                image_link: Some("ipfs://test-image".to_string()),
+                max_wattpeak: Some(4000000),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
             let count_after_edit = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_edit, 200);
+            assert_eq!(count_after_edit, 2000000);
 
-
-            amount_to_mint = Uint128::new(100);
-            funds_provided = coins(Uint128::new(525).into(), "umpwr");
+            amount_to_mint = Uint128::new(1000000);
+            funds_provided = coins(Uint128::new(1050000).into(), "umpwr");
             info = mock_info(MOCK_ADMIN, &funds_provided);
 
             mint_tokens_msg(
@@ -1513,19 +1604,19 @@ mod tests {
             let count_after_mint2 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_mint2, 100);
+            assert_eq!(count_after_mint2, 1000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
-                name: "test name".to_string(),
-                description: "test description".to_string(),
-                document_deal_link: "ipfs://test-link".to_string(),
-                image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 300,
-                location: Location {
-                    latitude: Decimal::from_ratio(1u64, 1u64),
-                    longitude: Decimal::from_ratio(1u64, 1u64),
-                },
+                name: Some("test name".to_string()),
+                description: Some("test description".to_string()),
+                document_deal_link: Some("ipfs://test-link".to_string()),
+                image_link: Some("ipfs://test-image".to_string()),
+                max_wattpeak: Some(3000000),
+                location: Some(Location {
+                    latitude: "1".to_string(),
+                    longitude: "-1".to_string(),
+                }),
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
@@ -1533,7 +1624,6 @@ mod tests {
                 .load(deps.as_ref().storage)
                 .unwrap();
             assert_eq!(count_after_edit2, 0);
-
         }
     }
 }

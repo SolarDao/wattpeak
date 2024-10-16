@@ -1,7 +1,7 @@
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 const rpcEndpoint = "https://rpc.elgafar-1.stargaze-apis.com/"
-const swapContractAddress = "stars1knftyvjup3j2rjjxeqj2js4hvw45x9u7yx5mxql27l8np7xkcsys7pweft"
+const swapContractAddress = "stars1cxvnq7cv8uzfpqxz0ql9xjfamzl957247vmncxr3387nskj838fqm8c9m5"
 export default async function handler(req: any, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { error: string; }): void; new(): any; }; }; }) {
   try {
     const client = await CosmWasmClient.connect(rpcEndpoint);

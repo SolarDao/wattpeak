@@ -6,7 +6,9 @@ export const queryNftsByAddress = async (address: string | undefined) => {
   }
 
   const response = await fetch(
-    `/api/queryNftsByAddress?address=${encodeURIComponent(address)}`
+    `/api/queryNftsByAddress?address=${encodeURIComponent(address)}`, {
+      cache: 'no-store',
+    }
   );
 
   const data = await response.json();

@@ -1,16 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useChain } from "@cosmos-kit/react";
-import {
-  Box,
-  Container,
-  Spinner,
-  useColorModeValue,
-} from "@interchain-ui/react";
+import { Box, Container, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
 import { queryProjects } from "../../utils/queries/queryProjects";
 import "react-multi-carousel/lib/styles.css";
 import Image from "next/image";
-import { Button, Heading, Input, Text } from "@chakra-ui/react";
+import { Button, Heading, Input, Text, Tooltip } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Carousel from "react-multi-carousel";
 import { Loading } from "./helpers/Loading";
@@ -53,7 +48,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
 
   const { status, address, getSigningCosmWasmClient } = useChain(chainName);
   const [config, setConfig] = useState<Config | null>(null);
-  const [amount, setAmount] = useState<number>(1);
+  const [amount, setAmount] = useState<number>(0.95);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [price, setPrice] = useState("0");
   const [signingClient, setSigningClient] =
@@ -64,9 +59,10 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     null
   );
   const [loading, setLoading] = useState(true);
-  const [cryptoAmount, setCryptoAmount] = useState<number>(0);
+  const [cryptoAmount, setCryptoAmount] = useState<number>(1);
   const [junoBalance, setJunoBalance] = useState(0);
   const [wattpeakBalance, setWattpeakBalance] = useState(0);
+  const [mintingFeeAmount, setMintingFeeAmount] = useState<number>(0);
   const [error, setError] = useState<Error | null>(null);
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
@@ -74,19 +70,13 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   );
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
-  const boxShadow = useColorModeValue(
-    "0px 4px 4px rgba(0, 0, 0, 0.25)",
-    "0px 2px 2px rgba(255, 255, 255, 0.726)"
-  );
-
   const handleMintClick = async () => {
     if (!signingClient || !address) {
       toast.error("Wallet not connected");
       return;
     }
-
     // Proceed with handleMint function
-    handleMint({
+    await handleMint({
       signingClient,
       address,
       amount,
@@ -104,7 +94,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       balances,
     });
   };
-
   const handleAmountChange = (e: { target: { value: any } }) => {
     let newAmount = e.target.value;
 
@@ -116,12 +105,31 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       }
     }
 
-    setAmount(newAmount);
-    if (!isNaN(parseFloat(newAmount)) && newAmount !== "") {
-      const calculatedAmount =
-        parseFloat(newAmount) *
-        parseFloat(config?.minting_price?.amount || "0");
-      setCryptoAmount(parseFloat(calculatedAmount.toFixed(6))); // Store as number
+    const parsedAmount = parseFloat(newAmount);
+
+    setAmount(parsedAmount);
+
+    if (!isNaN(parsedAmount) && newAmount !== "" && config) {
+      // Convert minting price from micro-units to standard units (Juno)
+      const mintingPriceInJuno =
+        parseFloat(config.minting_price.amount) / 1_000_000;
+
+      if (mintingPriceInJuno === 0) {
+        setCryptoAmount(0);
+      } else {
+        // Parse the minting fee percentage
+        const mintingFeePercentage = parseFloat(
+          config.minting_fee_percentage.toString()
+        ); // e.g., 0.05 for 5%
+
+        // Calculate the total cost per WattPeak including the minting fee
+        const totalCostPerWp = mintingPriceInJuno * (1 + mintingFeePercentage);
+
+        // Calculate the total cost including minting fee
+        const totalCost = parsedAmount * totalCostPerWp;
+
+        setCryptoAmount(parseFloat(totalCost.toFixed(6))); // Optional: restrict to 6 decimal places
+      }
     } else {
       setCryptoAmount(0); // Set to 0 or another default value
     }
@@ -138,55 +146,74 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       }
     }
 
-    setCryptoAmount(newCryptoAmount);
-    if (!isNaN(newCryptoAmount) && newCryptoAmount !== "" && config) {
-      setAmount(
-        parseFloat(
-          (
-            parseFloat(newCryptoAmount) /
-            parseFloat(config?.minting_price?.amount || "0")
-          ).toFixed(6)
-        )
-      );
+    const parsedCryptoAmount = parseFloat(newCryptoAmount);
+
+    setCryptoAmount(parsedCryptoAmount);
+
+    if (!isNaN(parsedCryptoAmount) && newCryptoAmount !== "" && config) {
+      // Convert minting price from micro-units to standard units (Juno)
+      const mintingPriceInJuno =
+        parseFloat(config.minting_price.amount) / 1_000_000;
+
+      if (mintingPriceInJuno === 0) {
+        setAmount(0);
+      } else {
+        // Parse the minting fee percentage
+        const mintingFeePercentage = parseFloat(
+          config.minting_fee_percentage.toString()
+        );
+
+        // Calculate the total cost per WattPeak including the minting fee
+        const totalCostPerWp = mintingPriceInJuno * (1 + mintingFeePercentage);
+
+        // Calculate the net amount of WattPeak
+        const netAmount = parsedCryptoAmount / totalCostPerWp;
+
+        // Update the amount state
+        setAmount(parseFloat(netAmount.toFixed(6)));
+      }
     } else {
       setAmount(0);
     }
   };
 
+  const calculateMax = () => {
+    // Parse configuration values
+    const mintingPricePerWp = parseFloat(config?.minting_price.amount); // in uJunox per Wp
+    const mintingFeePercentage =
+      config?.minting_fee_percentage !== undefined
+        ? parseFloat(config.minting_fee_percentage.toString())
+        : 0; // e.g., 0.05 for 5%
+
+    if (mintingPricePerWp === 0) {
+      console.error("Minting price cannot be zero.");
+      setAmount(0);
+      setCryptoAmount(0);
+      return;
+    }
+
+    // Calculate the total cost per Wp, including the minting fee
+    const totalCostPerWp = mintingPricePerWp * (1 + mintingFeePercentage);
+
+    // Calculate the maximum amount of Wp that can be minted with the available Juno balance
+    const maxWp = ((junoBalance / totalCostPerWp) * 1_000_000).toFixed(6); // Convert to micro units
+
+    return parseFloat(maxWp);
+  };
+
   const handleMaxClick = () => {
-    const numericAmount = Number(amount);
-
-    if (!isNaN(numericAmount)) {
-      setAmount(Number(numericAmount.toFixed(6)));
-    } else {
-      console.error("Invalid amount: Cannot convert to number");
+    if (!config || !config.minting_price || !config.minting_fee_percentage) {
+      console.error("Configuration is incomplete.");
+      setAmount(0);
+      setCryptoAmount(0);
+      return;
     }
-    setAmount(
-      parseFloat(
-        (junoBalance / (config?.minting_price?.amount || 0)).toFixed(6)
-      )
-    ); // Set as number
-    setCryptoAmount(junoBalance);
-  };
 
-  const handleBlurAmount = () => {
-    // Convert amount to a number before calling toFixed
-    const numericAmount = Number(amount);
+    const maxWp = calculateMax();
 
-    if (!isNaN(numericAmount)) {
-      setAmount(Number(numericAmount.toFixed(6)));
-    } else {
-      console.error("Invalid amount: Cannot convert to number");
-    }
-  };
-
-  const handleBlurCryptoAmount = () => {
-    const numericAmount = Number(amount);
-    if (!isNaN(numericAmount)) {
-      setAmount(Number(numericAmount.toFixed(6)));
-    } else {
-      console.error("Invalid amount: Cannot convert to number");
-    }
+    // Update the state with the calculated values
+    setAmount(Number(maxWp));
+    setCryptoAmount(junoBalance - 0.002); // Convert to standard units (Juno)
   };
 
   useEffect(() => {
@@ -245,7 +272,9 @@ export const Minting = ({ chainName }: { chainName: string }) => {
         setConfig(configResult);
 
         // Set crypto amount based on config
-        setCryptoAmount(parseFloat(configResult.minting_price.amount));
+        setCryptoAmount(
+          parseFloat(configResult.minting_price.amount) / 1000000
+        );
       } catch (err) {
         setError(err as Error);
         console.error("Error fetching projects or config:", err);
@@ -289,12 +318,46 @@ export const Minting = ({ chainName }: { chainName: string }) => {
     };
 
     fetchBalances();
-  }, [status, address, getSigningCosmWasmClient]);
+  }, [status, address, getSigningCosmWasmClient],);
 
   useEffect(() => {
-    let payable_amount = ((amount + amount * 0.05) * 5 * 1000000).toString();
-    setPrice(payable_amount);
-  }, [amount]);
+    if (config && amount) {
+      // Convert minting price from micro-units to standard units (JUNO)
+      const mintingPriceInJuno =
+        parseFloat(config.minting_price.amount);
+
+      // Parse the minting fee percentage
+      const mintingFeePercentage = parseFloat(
+        config.minting_fee_percentage.toString()
+      );
+
+      // Check for zero minting price to prevent division errors
+      if (mintingPriceInJuno === 0) {
+        console.error("Minting price cannot be zero.");
+        setPrice("0");
+        setMintingFeeAmount(0);
+        return;
+      }
+
+      // Calculate the base cost (without fee)
+      const baseCost = amount * mintingPriceInJuno;
+
+      // Calculate the minting fee amount
+      const feeAmount = baseCost * mintingFeePercentage;
+
+      // Calculate the total cost including minting fee
+      const totalCost = baseCost + feeAmount;
+
+      // Set the price state
+      setPrice(totalCost.toFixed(6));
+
+      // Set the minting fee amount state
+      setMintingFeeAmount(parseFloat((feeAmount).toFixed(6))); // No division needed
+    } else {
+      setPrice("0"); // Default to 0 if config or amount is not available
+      setMintingFeeAmount(0);
+    }
+  }, [amount, config]);
 
   if (loading || !config || !projects.length || minting) {
     return <Loading />;
@@ -303,16 +366,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   return (
     <Container>
       <Box mt={10} width="100%" margin="auto">
-        <Heading
-          fontSize="25px"
-          color={inputColor}
-          marginBottom="0px"
-          marginTop="22px"
-          textAlign="center"
-          paddingLeft={isMobile ? "0px" : "15px"}
-        >
-          WattPeak Minter
-        </Heading>
         <Box
           className="headerBox"
           display="flex"
@@ -321,25 +374,53 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           marginRight="25px"
           marginLeft="10px"
         >
-          <Box
-            fontSize="20px"
-            fontWeight={700}
+          <Heading
+            display={"flex"}
+            gap={"5px"}
+            justifyContent="center"
+            marginBottom="0px"
+            marginTop="57px"
             color={inputColor}
-            marginTop="10px"
+            fontSize="24px"
+            fontWeight="500"
+            lineHeight="19.36px"
+            marginLeft="10px"
+          >
+            <Box paddingTop="10px">Solar Parks</Box>
+            <Image
+              src={require("../../images/solar-panel.png")}
+              width={24}
+              alt={"Hallo"}
+              style={{ marginTop: "7px" }}
+            />
+          </Heading>{" "}
+          <Heading
+            fontSize="30px"
+            fontWeight="500"
+            color={inputColor}
+            marginBottom="40px"
+            marginTop="20px"
+            textAlign="center"
             paddingLeft={isMobile ? "0px" : "15px"}
           >
-            Solar Parks
-          </Box>
+            WattPeak Minter
+          </Heading>
           {!isMobile && (
             <Box
               display="flex"
               flexDirection="column"
               alignItems="center"
               justifyContent="center"
+              backgroundColor={backgroundColor}
+              borderRadius="13px"
+              padding="10px"
+              marginTop="35px"
+              height="fit-content"
+              boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
               gap={10}
             >
               <Box fontSize="12px" textAlign="center" marginBottom="3px">
-                Price per WP: {formatBalance(config?.minting_price.amount)}{" "}
+                Price per $WP: {formatBalance(config?.minting_price.amount)}{" "}
                 {formatDenom(config?.minting_price.denom)}
               </Box>
 
@@ -364,9 +445,9 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             >
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
               <Box className="project-details">
-                <Text>{project.name}</Text>
-                <Text>
-                  Available WattPeak:{" "}
+                <Text fontSize="18px">{project.name}</Text>
+                <Text fontSize="14px">
+                  Available $WP:{" "}
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
                 </Text>
@@ -421,10 +502,10 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             value={cryptoAmount}
             className="mintJunoInput"
             onChange={handleCryptoAmountChange}
-            onBlur={handleBlurCryptoAmount}
+            //onBlur={handleBlurCryptoAmount}
             placeholder="Juno"
             min="1"
-            max={junoBalance}
+            max={junoBalance - 0.002}
             color={inputColor}
           />
         </Box>
@@ -446,9 +527,9 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             value={amount}
             className="mintWattpeakInput"
             onChange={handleAmountChange}
-            onBlur={handleBlurAmount}
+            //onBlur={handleBlurAmount}
             min="1"
-            max={junoBalance / config?.minting_price.amount}
+            max={calculateMax()}
             placeholder="Wattpeak"
             color={inputColor}
           />
@@ -460,35 +541,59 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           backgroundColor={backgroundColor}
           boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
         >
-          <Text fontSize="20px" fontWeight={700}>
-            You will pay{" "}
-            {parseFloat(
-              (
-                (Number(cryptoAmount) || 0) +
-                (Number(cryptoAmount) || 0) *
-                  (Number(config?.minting_fee_percentage) || 0)
-              ).toFixed(6)
-            ).toString()}{" "}
-            uJunox for {amount} Wattpeak
-          </Text>
-
-          <p>
-            Minting fee:{" "}
-            {parseFloat(
-              (cryptoAmount * config?.minting_fee_percentage).toFixed(6)
-            ).toString()}{" "}
-            uJunox
-          </p>
+          {/* Check for invalid conditions first */}
+          {cryptoAmount === 0 ||
+          isNaN(cryptoAmount) ||
+          cryptoAmount == null ||
+          amount === 0 ||
+          isNaN(amount) ||
+          amount == null ? (
+            <Text color="red" fontSize="20px">
+              No value can be zero
+            </Text>
+          ) : cryptoAmount > junoBalance || amount > (calculateMax() ?? 0) ? (
+            <Text color="red" fontSize="20px">
+              Insufficient balance
+            </Text>
+          ) : (
+            <>
+              <Text fontSize="20px" fontWeight={700}>
+                You will pay {cryptoAmount}{" "}
+                {formatDenom(config.minting_price.denom)} for {amount} Wattpeak
+              </Text>
+              <Text>
+                Minting fee: {(mintingFeeAmount / 1000000).toFixed(6)}{" "}
+                {formatDenom(config.minting_price.denom)}
+              </Text>
+            </>
+          )}
         </Box>
-        <Button
-          onClick={handleMintClick}
-          className="mintBtn"
+        <Tooltip
+          label={
+            cryptoAmount > junoBalance
+              ? "Insufficient Juno balance"
+              : amount > (calculateMax() ?? 0)
+              ? "Amount exceeds max Wattpeak"
+              : !selectedProjectId
+              ? "Please select a project"
+              : "Ready to mint"
+          }
+          fontSize="20px"
           color={inputColor}
-          borderColor={borderColor}
-          backgroundColor={backgroundColor}
         >
-          MINT
-        </Button>
+          <Button
+            onClick={handleMintClick}
+            className="mintBtn"
+            color={inputColor}
+            borderColor={borderColor}
+            backgroundColor={backgroundColor}
+            isDisabled={
+              cryptoAmount > junoBalance || amount > (calculateMax() ?? 0)
+            }
+          >
+            MINT
+          </Button>
+        </Tooltip>
       </Box>
     </Container>
   );

@@ -1,5 +1,6 @@
 import { SigningCosmWasmClient, MsgExecuteContractEncodeObject } from "@cosmjs/cosmwasm-stargate";
-import { coins, MsgSendEncodeObject, Coin } from "@cosmjs/stargate";
+import { toUtf8 } from "@cosmjs/encoding";
+import { Coin, coins } from "@cosmjs/stargate";
 import { toast } from "react-toastify";
 
 interface SwapNftToTokensParams {
@@ -63,6 +64,25 @@ export const swapNftToTokens = async ({
         msg: msgBase64,
       },
     };
+    
+    // Step 2: Prepare the swap fee message
+    const swapFeeCoin: Coin = {
+      denom: config.swap_fee_denom, // Correct denomination for swap fee
+      amount: config.swap_fee,
+    };
+
+    // Assuming your smart contract expects a specific message to handle swap fees
+    const swapFeeMsg: MsgExecuteContractEncodeObject = {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: {
+        sender: address,
+        contract: SWAP_CONTRACT_ADDRESS,
+        msg: toUtf8(JSON.stringify({ receive_swap_fee: {
+          amount_of_nft: "1",
+        } })), 
+        funds: [swapFeeCoin],
+      },
+    };
 
     // Create the execute contract message for send_nft
     const executeContractMsg: MsgExecuteContractEncodeObject = {
@@ -70,28 +90,13 @@ export const swapNftToTokens = async ({
       value: {
         sender: address,
         contract: HERO_CONTRACT_ADDRESS,
-        msg: Buffer.from(JSON.stringify(sendNftMsg)),
+        msg: toUtf8(JSON.stringify(sendNftMsg)),
         funds: [], // No funds are sent to the NFT contract
       },
     };
 
-    // Create the bank send message to send swap_fee to the swap contract
-    const swapFeeCoin: Coin = {
-      denom: config.swap_fee_denom,
-      amount: config.swap_fee,
-    };
-
-    const sendSwapFeeMsg: MsgSendEncodeObject = {
-      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-      value: {
-        fromAddress: address,
-        toAddress: SWAP_CONTRACT_ADDRESS,
-        amount: [swapFeeCoin],
-      },
-    };
-
     // Combine the messages
-    const messages = [executeContractMsg, sendSwapFeeMsg];
+    const messages = [ swapFeeMsg, executeContractMsg];
 
     // Estimate fee
     const fee = {

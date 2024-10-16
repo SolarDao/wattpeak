@@ -23,4 +23,13 @@ pub enum ContractError {
 
     #[error("overflows")]
     Overflow {},
+
+    #[error("invalid minting price")]
+    InvalidMintingPrice {},
+
+    #[error("invalid amount")]
+    InvalidAmount {},
+
+    #[error("math error")]
+    MathError {},
 }

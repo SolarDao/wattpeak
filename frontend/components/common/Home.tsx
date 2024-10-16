@@ -3,7 +3,7 @@ import { queryStakers } from "../../utils/queries/queryStaker";
 import { Box, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "@/utils/balances/junoBalances";
 import { getStargazeBalances } from "@/utils/balances/stargazeBalances";
-import { Flex, Button, Heading, Center } from "@chakra-ui/react";
+import { Flex, Button, Heading, Center, Text } from "@chakra-ui/react";
 import Carousel from "react-multi-carousel";
 import Modal from "react-modal";
 import { queryProjects } from "@/utils/queries/queryProjects";
@@ -56,6 +56,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
   const [totalStakedWattpeak, setTotalStakedWattpeak] = useState(0);
   const [stakerMintedWattpeak, setStakerMintedWattpeak] = useState(0);
   const [stakerStakedWattpeak, setStakerStakedWattpeak] = useState(0);
+  const [interestWattPeakEarned, setInterestWattPeakEarned] = useState(0);
   const [totalWattpeak, setTotalWattpeak] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -133,6 +134,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
 
           setStakers(stakersResult);
           setStakerStakedWattpeak(stakersResult.wattpeak_staked);
+          setInterestWattPeakEarned(stakersResult.interest_wattpeak || 0);
 
           const convertedBalances = [
             ...balancesResult,
@@ -142,7 +144,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             denom: balance.denom,
           }));
           setBalances(convertedBalances);
-
+          
           setTotalStakedWattpeak(stakedWattpeakResults);
 
           const wattpeakBalance = balancesResult.find(
@@ -230,12 +232,19 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         balance.denom === "ujunox" ||
         balance.denom === "ustars" ||
         balance.denom ===
-          "solar"
+          "solar" 
+         // || balance.denom === process.env.NEXT_PUBLIC_SOLAR_STARGAZE_DENOM
     )
     .map((balance) => ({
       ...balance,
       formattedAmount: formatBalance(balance.amount),
     }));
+
+    filteredBalances.push({
+      denom: "$IWP",
+      amount: interestWattPeakEarned,
+      formattedAmount: formatBalance(interestWattPeakEarned),
+    });
 
   return (
     <Box color={inputColor}>
@@ -258,13 +267,15 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               marginBottom="10px"
               marginLeft="15px"
               color={inputColor}
-              fontSize="22px"
+              fontSize="24px"
               lineHeight="19.36px"
+              fontWeight="500"
             >
-              <Box>Portfolio</Box>
+              <Box paddingTop="2px">Portfolio</Box>
               <Image
                 src={require("../../images/crypto-wallet.png")}
                 width={22}
+                height={22}
                 alt={"Hallo"}
               />
             </Heading>{" "}
@@ -278,7 +289,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               justifyContent="center"
               boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
-              <Flex flexDirection="column" gap="25px" padding="20px">
+              <Flex flexDirection="column" gap="20px" padding="20px">
                 <Heading
                   fontSize="20px"
                   textAlign="center"
@@ -286,6 +297,8 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   color={inputColor}
                   marginBottom="0"
                   marginLeft="7px"
+                  lineHeight="19.36px"
+                  fontWeight="500"
                 >
                   Balances
                 </Heading>
@@ -297,7 +310,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   filteredBalances.map((balance) => (
                     <Box
                       key={balance.denom}
-                      fontSize="18px"
+                      fontSize="16px"
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
@@ -318,13 +331,14 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   fontSize="20px"
                   textAlign="center"
                   marginTop="0px"
+                  fontWeight="500"
                   color={inputColor}
                 >
-                  Staked WattPeak
+                  Staked $WP
                 </Heading>
                 {stakerMintedWattpeak === 0 && stakerStakedWattpeak === 0 ? (
                   <Center height="200px" width="200px">
-                    No WattPeak in Wallet
+                    No $WP in Wallet
                   </Center>
                 ) : (
                   <DonutChart
@@ -349,10 +363,11 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               textAlign="left"
               marginBottom="10px"
               color={inputColor}
-              fontSize="22px"
+              fontSize="24px"
               lineHeight="19.36px"
+              fontWeight="500"
             >
-              <Box>Tokens Global</Box>
+              <Box paddingTop="2px">Tokens Global</Box>
               <Image
                 src={require("../../images/pngegg.png")}
                 width={22}
@@ -376,8 +391,9 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   textAlign="center"
                   marginTop="0px"
                   color={inputColor}
+                  fontWeight="500"
                 >
-                  Minted Wattpeak
+                  Minted $WP
                 </Heading>
                 <WattpeakPieChart
                   totalMinted={parseFloat(
@@ -395,8 +411,9 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   textAlign="center"
                   marginTop="0px"
                   color={inputColor}
+                  fontWeight="500"
                 >
-                  Staked WattPeak
+                  Staked $WP
                 </Heading>
                 <StakedWattpeakPieChart
                   totalStaked={totalStakedWattpeak / 1000000}
@@ -412,15 +429,15 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
         <Heading
           display={"flex"}
           gap={"5px"}
-          textAlign="left"
+          justifyContent="center"
           marginBottom="10px"
           marginTop="30px"
-          marginLeft="15px"
           color={inputColor}
-          fontSize="22px"
+          fontSize="24px"
           lineHeight="19.36px"
+          fontWeight="500"
         >
-          <Box>Solar Parks</Box>
+          <Box paddingTop="4px">Solar Parks</Box>
           <Image
             src={require("../../images/solar-panel.png")}
             width={24}
@@ -489,7 +506,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
                   flexDirection="column"
                   alignItems="center"
                 >
-                  <h4>{project.name}</h4>
+                  <Text fontSize="18px" marginBottom="10px">{project.name}</Text>
                   <Button
                     onClick={() =>
                       openModal({
@@ -533,7 +550,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
             bottom: "auto",
             marginRight: "-50%",
             transform: "translate(-50%, -50%)",
-            borderRadius: "10px",
+            borderRadius: "23px",
             maxWidth: "250px",
             maxHeight: "600px",
             width: "100%",
@@ -574,6 +591,7 @@ export const Home = ({ walletStatus, currentSection }: HomeProps) => {
               <Image
                 src={require("../../images/panel.png")}
                 alt={selectedProject.name}
+                style={{ borderRadius: "13px" }}
               />
               <Heading
                 marginTop="5px"

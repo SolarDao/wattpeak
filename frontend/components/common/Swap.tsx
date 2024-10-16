@@ -32,11 +32,9 @@ import { Loading } from "./helpers/Loading";
 import { useMediaQuery } from "react-responsive";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
-import {
-  formatBalance,
-  formatBalanceNoConversion,
-} from "@/utils/balances/formatBalances";
+import { formatBalance } from "@/utils/balances/formatBalances";
 import { formatDenom } from "@/utils/balances/formatDenoms";
+import { format } from "path";
 
 const HERO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_SOLAR_HERO_CONTRACT_ADDRESS;
@@ -57,7 +55,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
 
   const [walletNfts, setWalletNfts] = useState<Nft[]>([]);
   const [contractNfts, setContractNfts] = useState<Nft[]>([]);
-  const [ustarsBalance, setUstarsBalance] = useState<string>("0");
+  const [solarBalance, setSolarBalance] = useState<string>("0");
   const [loading, setLoading] = useState(true);
   const [swapping, setSwapping] = useState(false);
   const [error, setError] = useState(null);
@@ -104,8 +102,11 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           setSigningClient(client as unknown as SigningCosmWasmClient);
 
           // Fetch balance of ustars
-          const balanceResult = await client.getBalance(address, "ustars");
-          setUstarsBalance(balanceResult.amount);
+          const balanceResult = await client.getBalance(
+            address,
+            config.token_denom
+          );
+          setSolarBalance(balanceResult.amount);
 
           // Start fetch operations simultaneously after client is ready
           const [walletNftsResult, contractNftsResult, configResult] =
@@ -141,13 +142,16 @@ export const Swap = ({ chainName }: { chainName: string }) => {
     };
 
     fetchNftsAndConfig();
-  }, [status, address, getSigningCosmWasmClient]);
+  }, [status, address, getSigningCosmWasmClient, config.token_denom]);
 
   const fetchUstarsBalance = async () => {
     if (signingClient && address) {
       try {
-        const balanceResult = await signingClient.getBalance(address, "ustars");
-        setUstarsBalance(balanceResult.amount);
+        const balanceResult = await signingClient.getBalance(
+          address,
+          config.token_denom
+        );
+        setSolarBalance(balanceResult.amount);
       } catch (error) {
         console.error("Error fetching ustars balance:", error);
       }
@@ -257,25 +261,31 @@ export const Swap = ({ chainName }: { chainName: string }) => {
   }
   return (
     <Box>
+      <Heading
+        fontSize="30px"
+        textAlign="center"
+        color={inputColor}
+        marginBottom="5px"
+        marginTop="22px"
+        fontWeight="500"
+      >
+        Cyber Solar Hero Swapper
+      </Heading>
       <Tabs index={tabIndex} onChange={handleTabsChange}>
         <Box className="swapTabsBox">
           {!isMobile && (
             <Box paddingLeft="15px">
-              <Heading
-                fontSize="20px"
-                textAlign="center"
-                color={inputColor}
-                marginBottom="5px"
-                marginTop="0"
+              <Box
+                backgroundColor={backgroundColor}
+                boxShadow="0px 2px 4px rgba(0, 0, 0, 0.5)"
+                borderRadius="13px"
+                padding="10px"
               >
-                Cyber Solar Heroes
-              </Heading>
-              <Box>
                 {address && (
                   <Box fontSize="12px" textAlign="center" marginBottom="3px">
                     <Box color={inputColor}>
-                      Wallet Balance:{" "}
-                      {formatBalanceNoConversion(Number(ustarsBalance))} $SOLAR
+                      Wallet Balance: {formatBalance(Number(solarBalance))}{" "}
+                      {formatDenom(config.token_denom)}
                     </Box>
                   </Box>
                 )}
@@ -285,9 +295,8 @@ export const Swap = ({ chainName }: { chainName: string }) => {
                   color={inputColor}
                   marginBottom="3px"
                 >
-                  Price per NFT:{" "}
-                  {formatBalanceNoConversion(Number(config.price_per_nft))}{" "}
-                  $SOLAR
+                  Price per NFT: {formatBalance(Number(config.price_per_nft))}{" "}
+                  {formatDenom(config.token_denom)}
                 </Box>
                 <Box fontSize="12px" textAlign="center" color={inputColor}>
                   Swap Fee: {formatBalance(Number(config.swap_fee))}{" "}
@@ -388,8 +397,12 @@ export const Swap = ({ chainName }: { chainName: string }) => {
           )}
         </Box>
 
-        <TabPanels className="swapPanels" background={backgroundColor} boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)">
-          <TabPanel >
+        <TabPanels
+          className="swapPanels"
+          background={backgroundColor}
+          boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
+        >
+          <TabPanel>
             {walletNfts.length === 0 ? (
               <Box
                 display="flex"
@@ -518,7 +531,7 @@ export const Swap = ({ chainName }: { chainName: string }) => {
               <UnorderedList className="nftList">
                 {contractNfts.map((nft, index) => (
                   <ListItem
-                  boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+                    boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
                     key={index}
                     className={`nft-item ${
                       multipleSelect &&

@@ -26,25 +26,25 @@ pub enum ExecuteMsg {
     },
     EditProject {
         id: u64,
-        name: String,
-        description: String,
-        document_deal_link: String,
-        max_wattpeak: u64,
-        image_link: String,
-        location: Location,
+        name: Option<String>,
+        description: Option<String>,
+        document_deal_link: Option<String>,
+        max_wattpeak: Option<u64>,
+        image_link: Option<String>,
+        location: Option<Location>,
     },
     /// Update contract configuration
     UpdateConfig {
         /// new admin address
-        admin: Addr,
+        admin: Option<Addr>,
         /// new minting price
-        minting_price: Coin,
+        minting_price: Option<Coin>,
         /// new minting payment address
-        minting_payment_address: Addr,
+        minting_payment_address: Option<Addr>,
         /// new minting fee percentage
-        minting_fee_percentage: Decimal,
+        minting_fee_percentage: Option<Decimal>,
         /// new minting fee address
-        minting_fee_address: Addr,
+        minting_fee_address: Option<Addr>,
     },
 
     MintTokens {

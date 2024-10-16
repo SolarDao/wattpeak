@@ -92,28 +92,18 @@ export const handleApproveAndSwap = async ({
       },
     };
 
+    const total_price = Number(config.price_per_nft) + Number(config.swap_fee);
+
     msgs.push({
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: {
         sender: address,
         contract: SWAP_CONTRACT_ADDRESS,
         msg: toUtf8(JSON.stringify(swapMsg)),
-        funds: [{ denom: config.token_denom, amount: config.price_per_nft }],
+        funds: [{ denom: config.token_denom, amount: total_price.toString() }],
       },
     });
-
-    // Add swap fee transaction
-    const swapFeeMsg = {
-      typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-      value: {
-        fromAddress: address,
-        toAddress: SWAP_CONTRACT_ADDRESS,
-        amount: [{ denom: config.swap_fee_denom, amount: config.swap_fee }],
-      },
-    };
-
-    msgs.push(swapFeeMsg);
-
+    
     const fee = {
       amount: [{ denom: "ustars", amount: "7500" }],
       gas: (200000 + 300000 + 80000).toString(), // Adjusted gas to include the extra message
@@ -121,6 +111,7 @@ export const handleApproveAndSwap = async ({
 
     // Sign and broadcast the transaction
     const result = await signingClient.signAndBroadcast(address, msgs, fee);
+    
 
     if (result.code !== 0) {
       throw new Error(`Error executing transaction: ${result.rawLog}`);

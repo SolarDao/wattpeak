@@ -14,6 +14,8 @@ import {
   Heading,
   Tooltip,
   border,
+  GridItem,
+  Grid,
 } from "@chakra-ui/react";
 import { Spinner, useColorModeValue } from "@interchain-ui/react";
 import { getBalances } from "../../utils/balances/junoBalances";
@@ -26,6 +28,8 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { Loading } from "./helpers/Loading";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { WalletStatus } from "cosmos-kit";
+import { formatBalance } from "@/utils/balances/formatBalances";
+import { queryTotalInterestWattpeak } from "@/utils/queries/queryTotalInterestWattpeak";
 
 const STAKER_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_WATTPEAK_STAKER_CONTRACT_ADDRESS;
@@ -45,7 +49,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
   const [staker, setStakers] = useState<{
     wattpeak_staked: number;
     claimable_rewards: number;
-  }>({ wattpeak_staked: 0, claimable_rewards: 0 });
+    interest_wattpeak: number;
+  }>({ wattpeak_staked: 0, claimable_rewards: 0, interest_wattpeak: 0 });
   const [balances, setBalances] = useState<any[]>([]);
   const [signingClient, setSigningClient] =
     useState<SigningCosmWasmClient | null>(null);
@@ -62,6 +67,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       : 0;
 
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
+  const interestWattpeakEarned = formatBalance(staker.interest_wattpeak) || 0;
+  const [shareOfRewards, setShareOfRewards] = useState(0);
+  const [totalInterestWattpeak, setTotalInterestWattpeak] = useState(0);
   const borderColor = useColorModeValue("black", "white");
 
   const inputColor = useColorModeValue("#000000B2", "white");
@@ -81,15 +89,22 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           const balancesPromise = getBalances(address);
           const stakersPromise = queryStakers(address);
           const configPromise = queryStakingConfig();
+          const totalInterestWattpeakPromise = queryTotalInterestWattpeak();
 
           // Wait for all promises to resolve
-          const [client, balancesResult, stakersResult, configResult] =
-            await Promise.all([
-              clientPromise,
-              balancesPromise,
-              stakersPromise,
-              configPromise,
-            ]);
+          const [
+            client,
+            balancesResult,
+            stakersResult,
+            configResult,
+            totalInterestWattpeakResult,
+          ] = await Promise.all([
+            clientPromise,
+            balancesPromise,
+            stakersPromise,
+            configPromise,
+            totalInterestWattpeakPromise,
+          ]);
 
           setSigningClient(client as any);
           setBalances([...balancesResult] as any[]);
@@ -101,6 +116,24 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           // Handle claimable rewards
           const claimable = stakersResult.claimable_rewards / 1000000;
           setClaimableRewards(claimable);
+          setTotalInterestWattpeak(
+            parseFloat((totalInterestWattpeakResult / 1000000).toFixed(6))
+          );
+          if (
+            Number(totalInterestWattpeak) > 0 &&
+            Number(interestWattpeakEarned) > 0
+          ) {
+            setShareOfRewards(
+              parseFloat(
+                (
+                  (parseFloat(interestWattpeakEarned.toString()) /
+                    totalInterestWattpeak) *
+                  100
+                ).toFixed(2)
+              )
+            );
+          }
+
           if (claimable > 0) {
             setModalIsOpen(true);
           }
@@ -115,14 +148,24 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         // Reset state when wallet is not connected
         setSigningClient(null);
         setBalances([]);
-        setStakers({ wattpeak_staked: 0, claimable_rewards: 0 });
+        setStakers({
+          wattpeak_staked: 0,
+          claimable_rewards: 0,
+          interest_wattpeak: 0,
+        });
         setConfig(null);
         setLoading(false);
       }
     };
 
     fetchClient();
-  }, [status, address, getSigningCosmWasmClient]);
+  }, [
+    status,
+    address,
+    getSigningCosmWasmClient,
+    totalInterestWattpeak,
+    interestWattpeakEarned,
+  ]);
 
   const handleStake = async () => {
     if (!signingClient) {
@@ -193,7 +236,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       setBalances([...balancesResult]);
       const stakersResult = await queryStakers(address || "");
       setStakers(stakersResult);
-      setClaimableRewards(stakersResult.claimable_rewards / 1000000); // Update claimable rewards
+      setClaimableRewards(stakersResult.claimable_rewards); // Update claimable rewards
       setAmount(0);
       toast.success("Tokens unstaked successfully!");
     } catch (err) {
@@ -271,19 +314,146 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       width="100%"
       maxW="500px"
       mx="auto"
-      mt="25px"
-      p="20px"
+      padding="20px"
       borderRadius="10px"
       borderWidth="1px"
     >
       <Heading
-        fontSize="25px"
+        fontSize="30px"
         color={inputColor}
-        marginBottom="40px"
+        marginBottom="25px"
+        marginTop="2px"
+        fontWeight="500"
         textAlign="center"
       >
         WattPeak Staker
       </Heading>
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        margin="auto"
+        justifyContent="center"
+        marginBottom="25px"
+        width="70%"
+        borderRadius="23px"
+        padding="10px"
+        backgroundColor={backgroundColor}
+        color={inputColor}
+        boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
+      >
+        {/* Grid Layout for Label-Value Pairs */}
+        <Grid
+          templateColumns="2.5fr 1fr"
+          gap={7}
+          width="100%"
+          paddingLeft="20px"
+          paddingRight="20px"
+        >
+          {/* $IWP Earned */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              Earned $IWP:
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {interestWattpeakEarned}
+            </Text>
+          </GridItem>
+
+          {/* Total $IWP (Global) */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              Total $IWP (Global):
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {totalInterestWattpeak}
+            </Text>
+          </GridItem>
+
+          {/* Current share of Rewards */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              Share of Rewards:
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {shareOfRewards} %
+            </Text>
+          </GridItem>
+
+          {/* Current ROI per year */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              ROI per year:
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {config.rewards_percentage * 100} %
+            </Text>
+          </GridItem>
+
+          {/* Claimable Rewards */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              Claimable $WP:
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {formatBalance(claimableRewards)}
+            </Text>
+          </GridItem>
+
+          {/* Rewards fee */}
+          <GridItem>
+            <Text fontSize="15px" textAlign="left" margin="0">
+              Rewards fee:
+            </Text>
+          </GridItem>
+          <GridItem>
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              5 %
+            </Text>
+          </GridItem>
+        </Grid>
+      </Box>
+
       {claimableRewards > 0 && (
         <Modal
           isOpen={modalIsOpen}
@@ -310,7 +480,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             marginTop="30px"
           >
             <Box textAlign="center" fontSize={20}>
-              You have {claimableRewards} WattPeak ready to be claimed!
+              You have {formatBalance(claimableRewards)} $WP ready to be
+              claimed!
             </Box>
             <br />
             <Button
@@ -335,9 +506,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         <TabList className="tabListStaking">
           <Tooltip
             color={inputColor}
-            label="Stake $WP to Earn Rewards"
+            label="Stake $WP to Earn $IWP"
             aria-label="Osmosis Tooltip"
-            placement="top"
+            placement="bottom"
           >
             <Tab
               className="stakeTab"
@@ -360,7 +531,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             color={inputColor}
             label="Unstake Your Staked $WP"
             aria-label="Osmosis Tooltip"
-            placement="top"
+            placement="bottom"
           >
             <Tab
               className="stakeTab"
@@ -380,6 +551,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Tab>
           </Tooltip>
         </TabList>
+
         <TabPanels className="tabPanelsStaking">
           <TabPanel>
             <Box
@@ -388,7 +560,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box className="stakingBalanceWrapper">
-                <Text>Balance: {wattpeakBalance}</Text>
+                <Text>Balance: {wattpeakBalance} $WP</Text>
                 <Button
                   onClick={() => setAmount(wattpeakBalance)}
                   mb="10px"
@@ -424,17 +596,14 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                   backgroundColor={backgroundColor}
                   boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
                 >
-                  <h3>You will stake {amount} WattPeak</h3>
-                  <p>
-                    Current ROI: {config.rewards_percentage * 100} % per year
-                  </p>
-                  <p>
+                  <Heading fontSize="20px">You will stake {amount} $WP</Heading>
+                  <Text>
                     Reward:{" "}
                     {parseFloat((amount * config.rewards_percentage).toFixed(6))
                       .toString()
                       .replace(/(\.[0-9]*[1-9])0+$|\.0*$/, "$1")}{" "}
-                    WattPeak per year
-                  </p>
+                    $IWP per year
+                  </Text>
                 </Box>
                 <Center>
                   <Button
@@ -459,9 +628,9 @@ export const Staking = ({ chainName }: { chainName: string }) => {
               boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
             >
               <Box className="stakingBalanceWrapper">
-                <p>Staked: {staker.wattpeak_staked / 1000000}</p>
+                <p>Staked: {stakedWattpeak} $WP</p>
                 <Button
-                  onClick={() => setAmount(staker.wattpeak_staked / 1000000)}
+                  onClick={() => setAmount(stakedWattpeak)}
                   mb="10px"
                   className="maxButtonStaking"
                   color={inputColor}
@@ -497,7 +666,10 @@ export const Staking = ({ chainName }: { chainName: string }) => {
                   backgroundColor={backgroundColor}
                   boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
                 >
-                  <h3>You will unstake {amount} WattPeak</h3>
+                  <Heading fontSize="20px">
+                    You will unstake {amount} $WP{" "}
+                  </Heading>
+                  <Text>You won&apos;t earn any $IWP for today </Text>
                 </Box>
                 <Center>
                   <Button

@@ -8,6 +8,9 @@ pub struct Config {
     pub rewards_percentage: Decimal,
     // Epoch length in seconds
     pub epoch_length: u64,
+    pub wattpeak_denom: String,
+    pub staking_fee_percentage: Decimal,
+    pub staking_fee_address: Addr,
 }
 
 impl Config {
@@ -18,7 +21,9 @@ impl Config {
             return Err(StdError::generic_err("epoch_length cannot be zero"));
         }
         if self.rewards_percentage > Decimal::percent(100) {
-            return Err(StdError::generic_err("rewards_percentage cannot be greater than 100%"));
+            return Err(StdError::generic_err(
+                "rewards_percentage cannot be greater than 100%",
+            ));
         }
         Ok(())
     }
@@ -31,6 +36,17 @@ pub struct Staker {
     pub interest_wattpeak: Decimal,
     pub stake_start_time: u64,
     pub claimable_rewards: Decimal,
+}
+
+impl Default for Staker {
+    fn default() -> Self {
+        Staker {
+            wattpeak_staked: Uint128::zero(),
+            interest_wattpeak: Decimal::zero(),
+            stake_start_time: 0,
+            claimable_rewards: Decimal::zero(),
+        }
+    }
 }
 
 /// CONFIG is the configuration of the contract
