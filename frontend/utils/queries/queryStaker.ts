@@ -16,6 +16,7 @@ export async function queryStakers(address: string) {
       return {
         wattpeak_staked: 0,
         claimable_rewards: 0,
+        interest_wattpeak: 0,
       };
     }
 
@@ -27,6 +28,7 @@ export async function queryStakers(address: string) {
     return {
       wattpeak_staked: 0,
       claimable_rewards: 0,
+      interest_wattpeak: 0,
     };
   }
 }

@@ -62,6 +62,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   const [cryptoAmount, setCryptoAmount] = useState<number>(1);
   const [junoBalance, setJunoBalance] = useState(0);
   const [wattpeakBalance, setWattpeakBalance] = useState(0);
+  const [mintingFeeAmount, setMintingFeeAmount] = useState<number>(0);
   const [error, setError] = useState<Error | null>(null);
   const backgroundColor = useColorModeValue(
     "rgba(0, 0, 0, 0.04)",
@@ -105,9 +106,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       }
     }
 
-    setAmount(newAmount);
+    const parsedAmount = parseFloat(newAmount);
 
-    if (!isNaN(parseFloat(newAmount)) && newAmount !== "" && config) {
+    setAmount(parsedAmount);
+
+    if (!isNaN(parsedAmount) && newAmount !== "" && config) {
       // Convert minting price from micro-units to standard units (Juno)
       const mintingPriceInJuno =
         parseFloat(config.minting_price.amount) / 1_000_000;
@@ -120,11 +123,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           config.minting_fee_percentage.toString()
         ); // e.g., 0.05 for 5%
 
+        // Calculate the total cost per WattPeak including the minting fee
+        const totalCostPerWp = mintingPriceInJuno * (1 + mintingFeePercentage);
+
         // Calculate the total cost including minting fee
-        const totalCost =
-          parseFloat(newAmount) *
-          mintingPriceInJuno *
-          (1 + mintingFeePercentage);
+        const totalCost = parsedAmount * totalCostPerWp;
 
         setCryptoAmount(parseFloat(totalCost.toFixed(6))); // Optional: restrict to 6 decimal places
       }
@@ -144,7 +147,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
       }
     }
 
-    // Parse the newCryptoAmount to a float
     const parsedCryptoAmount = parseFloat(newCryptoAmount);
 
     setCryptoAmount(parsedCryptoAmount);
@@ -162,11 +164,11 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           config.minting_fee_percentage.toString()
         );
 
-        // Calculate the gross amount of WattPeak
-        const grossAmount = parsedCryptoAmount / mintingPriceInJuno;
+        // Calculate the total cost per WattPeak including the minting fee
+        const totalCostPerWp = mintingPriceInJuno * (1 + mintingFeePercentage);
 
-        // Deduct the minting fee from the gross amount
-        const netAmount = grossAmount * (1 - mintingFeePercentage);
+        // Calculate the net amount of WattPeak
+        const netAmount = parsedCryptoAmount / totalCostPerWp;
 
         // Update the amount state
         setAmount(parseFloat(netAmount.toFixed(6)));
@@ -337,9 +339,43 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   }, [status, address, getSigningCosmWasmClient]);
 
   useEffect(() => {
-    let payable_amount = ((amount + amount * 0.05) * 1000000).toString();
-    setPrice(payable_amount);
-  }, [amount]);
+    if (config && amount) {
+      // Convert minting price from micro-units to standard units (Juno)
+      const mintingPriceInJuno =
+        parseFloat(config.minting_price.amount);
+
+      // Parse the minting fee percentage
+      const mintingFeePercentage = parseFloat(
+        config.minting_fee_percentage.toString()
+      );
+
+      // Check for zero minting price to prevent division errors
+      if (mintingPriceInJuno === 0) {
+        console.error("Minting price cannot be zero.");
+        setPrice("0");
+        setMintingFeeAmount(0);
+        return;
+      }
+
+      // Calculate the base cost (without fee)
+      const baseCost = amount * mintingPriceInJuno;
+
+      // Calculate the minting fee amount
+      const feeAmount = baseCost * mintingFeePercentage;
+
+      // Calculate the total cost including minting fee
+      const totalCost = baseCost + feeAmount;
+
+      // Set the price state
+      setPrice(totalCost.toFixed(6));
+
+      // Set the minting fee amount state
+      setMintingFeeAmount(parseFloat(feeAmount.toFixed(6)) / 1000000);
+    } else {
+      setPrice("0"); // Default to 0 if config or amount is not available
+      setMintingFeeAmount(0);
+    }
+  }, [amount, config]);
 
   if (loading || !config || !projects.length || minting) {
     return <Loading />;
@@ -366,16 +402,25 @@ export const Minting = ({ chainName }: { chainName: string }) => {
           marginRight="25px"
           marginLeft="10px"
         >
-          <Box
-            fontSize="20px"
-            fontWeight={700}
+          <Heading
+            display={"flex"}
+            gap={"5px"}
+            justifyContent="center"
+            marginBottom="0px"
+            marginTop="30px"
             color={inputColor}
-            marginTop="10px"
-            paddingLeft={isMobile ? "0px" : "15px"}
-            paddingTop="30px"
+            fontSize="22px"
+            lineHeight="19.36px"
+            marginLeft="px"
           >
-            Solar Parks
-          </Box>
+            <Box paddingTop="10px">Solar Parks</Box>
+            <Image
+              src={require("../../images/solar-panel.png")}
+              width={24}
+              alt={"Hallo"}
+              style={{ marginTop: "7px" }}
+            />
+          </Heading>{" "}
           {!isMobile && (
             <Box
               display="flex"
@@ -526,20 +571,16 @@ export const Minting = ({ chainName }: { chainName: string }) => {
               Insufficient balance
             </Text>
           ) : (
-              <>
-                <Text fontSize="20px" fontWeight={700}>
-                  You will pay {cryptoAmount}{" "}
-                  {formatDenom(config.minting_price.denom)} for {amount}{" "}
-                  Wattpeak
-                </Text>
-                <Text>
-                  Minting fee:{" "}
-                  {parseFloat(
-                    (cryptoAmount * config?.minting_fee_percentage).toFixed(6)
-                  ).toString()}{" "}
-                  uJunox
-                </Text>
-              </>
+            <>
+              <Text fontSize="20px" fontWeight={700}>
+                You will pay {cryptoAmount}{" "}
+                {formatDenom(config.minting_price.denom)} for {amount} Wattpeak
+              </Text>
+              <Text>
+                Minting fee: {mintingFeeAmount}{" "}
+                {formatDenom(config.minting_price.denom)}
+              </Text>
+            </>
           )}
         </Box>
         <Tooltip

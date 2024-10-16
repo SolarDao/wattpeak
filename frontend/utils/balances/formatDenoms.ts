@@ -13,7 +13,7 @@ export const formatDenom = (denom: string) => {
       formattedDenom = formattedDenom.toUpperCase();
     }
   
-    if (formattedDenom === "wattpeakb") {
+    if (formattedDenom === "wattpeakt") {
       formattedDenom = "$WP";
     }
   

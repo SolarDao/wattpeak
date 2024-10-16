@@ -64,7 +64,7 @@ export const handleMint = async ({
         gas: "3000000", // gas limit
       },
       "", // Optional memo
-      [{ denom: "ujunox", amount: (Number(price).toFixed(0)).toString() }] // Funds sent with transaction
+      [{ denom: "ujunox", amount: (Number(price)).toFixed(0).toString()}] // Funds sent with transaction
     );
     const projects = await queryProjects();
     const projectsWithId = projects.map((project, index) => ({
