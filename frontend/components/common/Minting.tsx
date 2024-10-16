@@ -341,8 +341,7 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   useEffect(() => {
     if (config && amount) {
       // Convert minting price from micro-units to standard units (Juno)
-      const mintingPriceInJuno =
-        parseFloat(config.minting_price.amount);
+      const mintingPriceInJuno = parseFloat(config.minting_price.amount);
 
       // Parse the minting fee percentage
       const mintingFeePercentage = parseFloat(
@@ -384,16 +383,6 @@ export const Minting = ({ chainName }: { chainName: string }) => {
   return (
     <Container>
       <Box mt={10} width="100%" margin="auto">
-        <Heading
-          fontSize="30px"
-          color={inputColor}
-          marginBottom="0px"
-          marginTop="22px"
-          textAlign="center"
-          paddingLeft={isMobile ? "0px" : "15px"}
-        >
-          WattPeak Minter
-        </Heading>
         <Box
           className="headerBox"
           display="flex"
@@ -407,11 +396,12 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             gap={"5px"}
             justifyContent="center"
             marginBottom="0px"
-            marginTop="30px"
+            marginTop="57px"
             color={inputColor}
-            fontSize="22px"
+            fontSize="24px"
+            fontWeight="500"
             lineHeight="19.36px"
-            marginLeft="px"
+            marginLeft="10px"
           >
             <Box paddingTop="10px">Solar Parks</Box>
             <Image
@@ -421,6 +411,17 @@ export const Minting = ({ chainName }: { chainName: string }) => {
               style={{ marginTop: "7px" }}
             />
           </Heading>{" "}
+          <Heading
+            fontSize="30px"
+            fontWeight="500"
+            color={inputColor}
+            marginBottom="40px"
+            marginTop="20px"
+            textAlign="center"
+            paddingLeft={isMobile ? "0px" : "15px"}
+          >
+            WattPeak Minter
+          </Heading>
           {!isMobile && (
             <Box
               display="flex"
@@ -430,7 +431,8 @@ export const Minting = ({ chainName }: { chainName: string }) => {
               backgroundColor={backgroundColor}
               borderRadius="13px"
               padding="10px"
-              marginBottom="10px"
+              marginTop="35px"
+              height="fit-content"
               boxShadow="0px 1px 2px rgba(0, 0, 0, 0.5)"
               gap={10}
             >
@@ -460,9 +462,9 @@ export const Minting = ({ chainName }: { chainName: string }) => {
             >
               <Image src={require("../../images/panel.png")} alt={"Hallo"} />
               <Box className="project-details">
-                <Text>{project.name}</Text>
-                <Text>
-                  Available WattPeak:{" "}
+                <Text fontSize="18px">{project.name}</Text>
+                <Text fontSize="14px">
+                  Available $WP:{" "}
                   {(project.max_wattpeak - project.minted_wattpeak_count) /
                     1000000}
                 </Text>

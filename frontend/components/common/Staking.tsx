@@ -67,8 +67,8 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       : 0;
 
   const stakedWattpeak = staker.wattpeak_staked / 1000000;
-  const interestWattpeakEarned = (
-    formatBalance(staker.interest_wattpeak) || 0)
+  const interestWattpeakEarned = formatBalance(staker.interest_wattpeak) || 0;
+  const [shareOfRewards, setShareOfRewards] = useState(0);
   const [totalInterestWattpeak, setTotalInterestWattpeak] = useState(0);
   const borderColor = useColorModeValue("black", "white");
 
@@ -119,6 +119,21 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           setTotalInterestWattpeak(
             parseFloat((totalInterestWattpeakResult / 1000000).toFixed(6))
           );
+          if (
+            Number(totalInterestWattpeak) > 0 &&
+            Number(interestWattpeakEarned) > 0
+          ) {
+            setShareOfRewards(
+              parseFloat(
+                (
+                  (parseFloat(interestWattpeakEarned.toString()) /
+                    totalInterestWattpeak) *
+                  100
+                ).toFixed(2)
+              )
+            );
+          }
+
           if (claimable > 0) {
             setModalIsOpen(true);
           }
@@ -144,7 +159,13 @@ export const Staking = ({ chainName }: { chainName: string }) => {
     };
 
     fetchClient();
-  }, [status, address, getSigningCosmWasmClient]);
+  }, [
+    status,
+    address,
+    getSigningCosmWasmClient,
+    totalInterestWattpeak,
+    interestWattpeakEarned,
+  ]);
 
   const handleStake = async () => {
     if (!signingClient) {
@@ -293,16 +314,16 @@ export const Staking = ({ chainName }: { chainName: string }) => {
       width="100%"
       maxW="500px"
       mx="auto"
-      mt="25px"
-      p="20px"
+      padding="20px"
       borderRadius="10px"
       borderWidth="1px"
     >
       <Heading
         fontSize="30px"
         color={inputColor}
-        marginBottom="15px"
-        marginTop="10px"
+        marginBottom="25px"
+        marginTop="2px"
+        fontWeight="500"
         textAlign="center"
       >
         WattPeak Staker
@@ -322,7 +343,13 @@ export const Staking = ({ chainName }: { chainName: string }) => {
         boxShadow="0px 4px 6px rgba(0, 0, 0, 0.5)"
       >
         {/* Grid Layout for Label-Value Pairs */}
-        <Grid templateColumns="2.5fr 1fr" gap={7} width="100%" paddingLeft="20px" paddingRight="20px">
+        <Grid
+          templateColumns="2.5fr 1fr"
+          gap={7}
+          width="100%"
+          paddingLeft="20px"
+          paddingRight="20px"
+        >
           {/* $IWP Earned */}
           <GridItem>
             <Text fontSize="15px" textAlign="left" margin="0">
@@ -330,7 +357,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0">
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
               {interestWattpeakEarned}
             </Text>
           </GridItem>
@@ -342,7 +374,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0"> 
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
               {totalInterestWattpeak}
             </Text>
           </GridItem>
@@ -350,16 +387,17 @@ export const Staking = ({ chainName }: { chainName: string }) => {
           {/* Current share of Rewards */}
           <GridItem>
             <Text fontSize="15px" textAlign="left" margin="0">
-             Share of Rewards:
+              Share of Rewards:
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0">
-              {(
-                (parseFloat(interestWattpeakEarned.toString()) / totalInterestWattpeak) *
-                100
-              ).toFixed(2)}{" "}
-              %
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
+              {shareOfRewards} %
             </Text>
           </GridItem>
 
@@ -370,7 +408,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0">
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
               {config.rewards_percentage * 100} %
             </Text>
           </GridItem>
@@ -382,7 +425,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0">
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
               {formatBalance(claimableRewards)}
             </Text>
           </GridItem>
@@ -394,7 +442,12 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             </Text>
           </GridItem>
           <GridItem>
-            <Text fontSize="15px" fontWeight="bold" textAlign="right" margin="0">
+            <Text
+              fontSize="15px"
+              fontWeight="bold"
+              textAlign="right"
+              margin="0"
+            >
               5 %
             </Text>
           </GridItem>
@@ -455,7 +508,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             color={inputColor}
             label="Stake $WP to Earn $IWP"
             aria-label="Osmosis Tooltip"
-            placement="top"
+            placement="bottom"
           >
             <Tab
               className="stakeTab"
@@ -478,7 +531,7 @@ export const Staking = ({ chainName }: { chainName: string }) => {
             color={inputColor}
             label="Unstake Your Staked $WP"
             aria-label="Osmosis Tooltip"
-            placement="top"
+            placement="bottom"
           >
             <Tab
               className="stakeTab"

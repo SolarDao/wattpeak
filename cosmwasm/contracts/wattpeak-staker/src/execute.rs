@@ -72,17 +72,22 @@ fn update_config(
 
 fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let staker_address = &info.sender;
+    let config = CONFIG.load(deps.storage)?;
 
     let amount = info
         .funds
         .iter()
         //Change to correct contract address when minter is deployed
-        .find(|coin| coin.denom == "watt")
+        .find(|coin| coin.denom == config.wattpeak_denom)
         .map(|coin| coin.amount)
         .unwrap_or_else(Uint128::zero);
     // Verify the correct amount of tokens was sent to the contract
     //Change to correct contract address when minter is deployed
-    if !info.funds.iter().any(|coin| coin.denom == "watt") {
+    if !info
+        .funds
+        .iter()
+        .any(|coin| coin.denom == config.wattpeak_denom)
+    {
         return Err(StdError::generic_err(
             "Must stake WattPeak tokens to the contract",
         ));
@@ -125,7 +130,6 @@ fn stake_wattpeak(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Respo
 }
 
 fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
-
     let wattpeak_denom = CONFIG.load(deps.storage)?.wattpeak_denom;
 
     let amount = info
@@ -141,7 +145,7 @@ fn deposit_rewards(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Resp
         return Err(StdError::generic_err("Unauthorized"));
     }
     //Change to correct contract address when minter is deployed
-    if !info.funds.iter().any(|coin| coin.denom == "watt") {
+    if !info.funds.iter().any(|coin| coin.denom == wattpeak_denom) {
         return Err(StdError::generic_err(
             "Must deposit WattPeak tokens to the contract",
         ));
@@ -171,6 +175,7 @@ fn unstake_wattpeak(
     }
 
     let staker_address = &info.sender;
+    let wattpeak_denom = CONFIG.load(deps.storage)?.wattpeak_denom;
 
     let mut staker = STAKERS
         .load(deps.storage, staker_address.clone())
@@ -194,9 +199,7 @@ fn unstake_wattpeak(
         to_address: staker_address.to_string(),
         amount: vec![Coin {
             //Change to correct contract address when minter is deployed
-            denom:
-                "watt"
-                    .to_string(),
+            denom: wattpeak_denom,
             amount: amount,
         }],
     };
@@ -339,7 +342,6 @@ mod tests {
                         wattpeak_denom: "watt".to_string(),
                         staking_fee_address: Addr::unchecked("staking_fee_address"),
                         staking_fee_percentage: Decimal::percent(5),
-
                     },
                 )
                 .unwrap();
@@ -1393,8 +1395,7 @@ mod tests {
                 CosmosMsg::Bank(BankMsg::Send {
                     to_address: staker_info1.sender.to_string(),
                     amount: vec![Coin {
-                        denom: "watt".to_string
-                        (),
+                        denom: "watt".to_string(),
                         amount: Uint128::from(4750000u128),
                     }],
                 })

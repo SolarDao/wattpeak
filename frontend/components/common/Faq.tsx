@@ -12,9 +12,9 @@ import {
 import { useColorModeValue } from "@interchain-ui/react";
 
 export const Faq = () => {
-  const inputColor = useColorModeValue("black", "white");
+  const inputColor = useColorModeValue("#000000B2", "white");
   const backgroundColor = useColorModeValue(
-    "rgba(0, 0, 0, 0.09)",
+    "rgba(0, 0, 0, 0.04)",
     "rgba(52, 52, 52, 1)"
   );
 
@@ -149,16 +149,15 @@ export const Faq = () => {
     <Box
       maxW="600px"
       mx="auto"
-      py={8}
-      px={4}
+      marginTop="22px"
       color={inputColor}
     >
-      <Heading as="h1" size="xl" mb={6} textAlign="center">
+      <Heading fontSize="30" fontWeight="500" mb={6} textAlign="center">
         Frequently Asked Questions
       </Heading>
       {faqSections.map((section, idx) => (
         <Box key={idx} mb={10} marginBottom="30px">
-          <Heading as="h2" size="lg" mb={4}>
+          <Heading fontSize="22px" fontWeight="500" mb={4}>
             {section.sectionTitle}
           </Heading>
           <Accordion allowMultiple>

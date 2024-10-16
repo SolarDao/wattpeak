@@ -1199,7 +1199,7 @@ mod tests {
         #[test]
         fn multiple_projects_minted() {
             let mut deps = mock_dependencies();
-            let info = mock_info(MOCK_ADMIN, &coins(1000, "WattPeak"));
+            let info = mock_info(MOCK_ADMIN, &coins(10000000, "WattPeak"));
 
             let config = mock_config();
             let msg = InstantiateMsg {
@@ -1212,7 +1212,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 1000,
+                max_wattpeak: 10000000,
                 location: Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1225,7 +1225,7 @@ mod tests {
                 description: "test description2".to_string(),
                 document_deal_link: "ipfs://test-link2".to_string(),
                 image_link: "ipfs://test-image2".to_string(),
-                max_wattpeak: 1000,
+                max_wattpeak: 10000000,
                 location: Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1233,10 +1233,10 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
-            let info = mock_info("user", &funds_provided);
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
+            let info: cosmwasm_std::MessageInfo = mock_info("user", &funds_provided);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1247,15 +1247,15 @@ mod tests {
             )
             .unwrap();
 
-            let wp_after_mint = AVAILABLE_WATTPEAK_COUNT
+            let wp_after_mint: u64 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(wp_after_mint, 1500);
+            assert_eq!(wp_after_mint, 15000000);
             let project_wattpeak_after_mint = PROJECTS
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint, 500);
+            assert_eq!(project_wattpeak_after_mint, 5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1269,17 +1269,17 @@ mod tests {
             let wp_after_mint2 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(wp_after_mint2, 1000);
+            assert_eq!(wp_after_mint2, 10000000);
             let project2_wattpeak_after_mint = PROJECTS
                 .load(deps.as_ref().storage, 2)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project2_wattpeak_after_mint, 500);
+            assert_eq!(project2_wattpeak_after_mint, 5000000);
         }
         #[test]
         fn mint_out_a_project_then_increase_it() {
             let mut deps = mock_dependencies();
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1293,7 +1293,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1301,7 +1301,7 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1320,7 +1320,7 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint1, 500);
+            assert_eq!(project_wattpeak_after_mint1, 5000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
@@ -1328,7 +1328,7 @@ mod tests {
                 description: Some("test description".to_string()),
                 document_deal_link: Some("ipfs://test-link".to_string()),
                 image_link: Some("ipfs://test-image".to_string()),
-                max_wattpeak: Some(2000),
+                max_wattpeak: Some(20000000),
                 location: Some(Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1336,9 +1336,9 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info("user", &funds_provided);
 
             mint_tokens_msg(
@@ -1353,12 +1353,12 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint2, 1000);
+            assert_eq!(project_wattpeak_after_mint2, 10000000);
         }
         #[test]
         fn mint_then_edit_project_minted_wattpeak_higher_than_available() {
             let mut deps = mock_dependencies();
-            let funds_provided = coins(Uint128::new(2625).into(), "umpwr");
+            let funds_provided = coins(Uint128::new(5250000).into(), "umpwr");
             let info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1372,7 +1372,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1380,7 +1380,7 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let amount_to_mint = Uint128::new(500);
+            let amount_to_mint = Uint128::new(5000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1399,7 +1399,7 @@ mod tests {
                 .load(deps.as_ref().storage, 1)
                 .unwrap()
                 .minted_wattpeak_count;
-            assert_eq!(project_wattpeak_after_mint1, 500);
+            assert_eq!(project_wattpeak_after_mint1, 5000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
@@ -1530,7 +1530,7 @@ mod tests {
         #[test]
         fn several_mints_and_edits() {
             let mut deps = mock_dependencies();
-            let mut funds_provided = coins(Uint128::new(1050).into(), "umpwr");
+            let mut funds_provided = coins(Uint128::new(2100000).into(), "umpwr");
             let mut info = mock_info(MOCK_ADMIN, &funds_provided);
 
             let config = mock_config();
@@ -1544,7 +1544,7 @@ mod tests {
                 description: "test description".to_string(),
                 document_deal_link: "ipfs://test-link".to_string(),
                 image_link: "ipfs://test-image".to_string(),
-                max_wattpeak: 500,
+                max_wattpeak: 5000000,
                 location: Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1552,7 +1552,7 @@ mod tests {
             };
             execute(deps.as_mut(), mock_env(), info.clone(), project_msg).unwrap();
 
-            let mut amount_to_mint = Uint128::new(200);
+            let mut amount_to_mint = Uint128::new(2000000);
 
             mint_tokens_msg(
                 deps.as_mut(),
@@ -1566,7 +1566,7 @@ mod tests {
             let count_after_mint = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_mint, 300);
+            assert_eq!(count_after_mint, 3000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
@@ -1574,7 +1574,7 @@ mod tests {
                 description: Some("test description".to_string()),
                 document_deal_link: Some("ipfs://test-link".to_string()),
                 image_link: Some("ipfs://test-image".to_string()),
-                max_wattpeak: Some(400),
+                max_wattpeak: Some(4000000),
                 location: Some(Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
@@ -1585,10 +1585,10 @@ mod tests {
             let count_after_edit = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_edit, 200);
+            assert_eq!(count_after_edit, 2000000);
 
-            amount_to_mint = Uint128::new(100);
-            funds_provided = coins(Uint128::new(525).into(), "umpwr");
+            amount_to_mint = Uint128::new(1000000);
+            funds_provided = coins(Uint128::new(1050000).into(), "umpwr");
             info = mock_info(MOCK_ADMIN, &funds_provided);
 
             mint_tokens_msg(
@@ -1603,7 +1603,7 @@ mod tests {
             let count_after_mint2 = AVAILABLE_WATTPEAK_COUNT
                 .load(deps.as_ref().storage)
                 .unwrap();
-            assert_eq!(count_after_mint2, 100);
+            assert_eq!(count_after_mint2, 1000000);
 
             let project_msg = ExecuteMsg::EditProject {
                 id: 1,
@@ -1611,7 +1611,7 @@ mod tests {
                 description: Some("test description".to_string()),
                 document_deal_link: Some("ipfs://test-link".to_string()),
                 image_link: Some("ipfs://test-image".to_string()),
-                max_wattpeak: Some(300),
+                max_wattpeak: Some(3000000),
                 location: Some(Location {
                     latitude: "1".to_string(),
                     longitude: "-1".to_string(),
